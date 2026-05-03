@@ -1,0 +1,25 @@
+---
+// Hub — Japanese placeholder.
+// TODO(copywriter): replace with hero copy from PRD §5.
+// TODO(designer/uiux): full layout & sections (Works / Manifesto / About / Footer).
+import { t } from '@ttsui/i18n';
+const locale = 'ja';
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tipsy Tap Studio</title>
+    <meta name="description" content="Tipsy Tap Studio — coming soon." />
+  </head>
+  <body>
+    <main>
+      <h1>{t('hub_hero_title', locale)}</h1>
+      <p>{t('hub_hero_subtitle', locale)}</p>
+      <p><small>Tipsy Tap Studio — coming soon.</small></p>
+      <p><a href="/en/">English</a></p>
+    </main>
+  </body>
+</html>

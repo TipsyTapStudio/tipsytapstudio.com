@@ -1,0 +1,14 @@
+---
+// "← tipsytapstudio.com" back-link displayed on every product LP header.
+// Renders as a plain link so it works without any client-side JS.
+// TODO(designer): mini studio logo + final visual treatment.
+interface Props {
+  locale?: 'ja' | 'en';
+}
+const { locale = 'ja' } = Astro.props;
+const href = `https://tipsytapstudio.com/${locale}/`;
+---
+
+<a class="studio-back-link" href={href} rel="home">
+  &larr; tipsytapstudio.com
+</a>

@@ -1,0 +1,12 @@
+---
+// Shared footer stub.
+// TODO(designer/uiux): final layout, links, locale-aware copy.
+interface Props {
+  locale?: 'ja' | 'en';
+}
+const { locale = 'ja' } = Astro.props;
+---
+
+<footer data-locale={locale}>
+  <!-- TODO(designer/uiux): contact, GitHub Org, RSS, license boundary, copyright -->
+</footer>

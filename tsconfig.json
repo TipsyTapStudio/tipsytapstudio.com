@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@ttsui/ui": ["packages/ui/index.ts"],
+      "@ttsui/ui/*": ["packages/ui/*"],
+      "@ttsui/i18n": ["packages/i18n/index.ts"],
+      "@ttsui/i18n/*": ["packages/i18n/*"],
+      "@ttsui/tokens": ["packages/tokens/index.ts"],
+      "@ttsui/tokens/*": ["packages/tokens/*"]
+    }
+  },
+  "exclude": ["**/dist", "**/.astro", "**/node_modules"]
+}

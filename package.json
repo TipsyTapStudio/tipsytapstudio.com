@@ -1,0 +1,35 @@
+{
+  "name": "tipsytapstudio.com",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Tipsy Tap Studio web monorepo (studio hub + product LPs).",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.12.0 <23"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:hub": "npm run dev --workspace @ttsui/hub",
+    "dev:spv": "npm run dev --workspace @ttsui/spv",
+    "build:hub": "npm run build --workspace @ttsui/hub",
+    "build:spv": "npm run build --workspace @ttsui/spv",
+    "build": "npm run check:locales && npm run build:hub && npm run build:spv",
+    "preview:hub": "npm run preview --workspace @ttsui/hub",
+    "preview:spv": "npm run preview --workspace @ttsui/spv",
+    "check:locales": "node scripts/check-locale-parity.mjs",
+    "prebuild": "npm run check:locales",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "eslint": "^9.13.0",
+    "globals": "^15.11.0",
+    "prettier": "^3.3.3",
+    "prettier-plugin-astro": "^0.14.1"
+  }
+}

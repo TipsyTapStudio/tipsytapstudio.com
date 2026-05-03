@@ -1,0 +1,22 @@
+{
+  "name": "@ttsui/hub",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@ttsui/i18n": "*",
+    "@ttsui/tokens": "*",
+    "@ttsui/ui": "*",
+    "astro": "^6.2.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "typescript": "^5.6.3"
+  }
+}

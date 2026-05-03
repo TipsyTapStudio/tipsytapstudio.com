@@ -1,0 +1,12 @@
+{
+  "name": "@ttsui/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./locales/ja.json": "./locales/ja.json",
+    "./locales/en.json": "./locales/en.json"
+  }
+}
