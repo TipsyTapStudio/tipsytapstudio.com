@@ -11,7 +11,7 @@ export const colors = {
     // Hub stays monochrome (PRD §4 "色階層"). Saturation = 0 by design.
     background: '#0B0B0B', // near-black, slightly off true #000 to ease eyes
     foreground: '#EDEDED', // off-white, primary text
-    muted: '#7A7A7A',      // secondary text / dividers
+    muted: '#9A9A9A',      // secondary text / dividers — WCAG AA on #0B0B0B (6.79:1)
     rule: '#1F1F1F',       // hairline borders if ever needed
   },
   spv: {
@@ -25,8 +25,8 @@ export const colors = {
 
 export const typography = {
   // 1 family across every subdomain (PRD §4 "タイポグラフィ").
-  // Inter is loaded via Google Fonts in Base layouts; system stack is the
-  // graceful fallback when the network/font fails.
+  // Inter is bundled via @fontsource/inter (self-hosted, same-origin) in
+  // Base layouts; system stack is the graceful fallback when the font fails.
   // 暫定値、デザイナー確定待ち。
   fontFamily:
     '"Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif',
@@ -34,8 +34,8 @@ export const typography = {
   // visual quirk (PRD §4: "ドキュメント・論文ぽさ").
   headingTracking: '0.04em',
   bodyTracking: '0.01em',
-  // Weights actually requested from Google Fonts. Keep this list in sync
-  // with the <link rel="stylesheet"> in apps/hub/src/layouts/Base.astro.
+  // Weights actually bundled. Keep this list in sync with the
+  // @fontsource/inter imports in apps/hub/src/layouts/Base.astro.
   weights: {
     regular: 400,
     medium: 500,

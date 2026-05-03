@@ -5,9 +5,15 @@
 // - Mobile-first, single-column, generous whitespace.
 // - JS-zero by default. Motion = CSS only, respects prefers-reduced-motion.
 // - Monochrome (PRD §4 "色階層"). Hub stays desaturated; product LPs colorize.
-// - One typographic family (Inter via Google Fonts) shared across subdomains.
+// - One typographic family (Inter, self-hosted via @fontsource) shared across subdomains.
 
 import { t, type Locale } from '@ttsui/i18n';
+
+// Self-hosted Inter via @fontsource (same-origin, no third-party requests).
+// Keep weight list in sync with typography.weights in @ttsui/tokens.
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
 
 interface Props {
   locale: Locale;
@@ -43,14 +49,8 @@ const githubLabel = t('common_footer_github', locale);
     <title>{siteTitle}</title>
     <meta name="description" content={siteDescription} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-
-    {/* Inter via Google Fonts — only the weights we actually use. */}
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
-    />
+    {/* Inter is bundled via @fontsource/inter (imported in frontmatter).
+        No external font requests — privacy-friendly and zero third-party DNS. */}
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -76,7 +76,7 @@ const githubLabel = t('common_footer_github', locale);
   :root {
     --bg: #0b0b0b;
     --fg: #ededed;
-    --muted: #7a7a7a;
+    --muted: #9a9a9a;
     --rule: #1f1f1f;
 
     --font-sans:
@@ -133,6 +133,20 @@ const githubLabel = t('common_footer_github', locale);
     flex-direction: column;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Heading tracking — euro-Latin gets the 0.04em document feel.
+     Japanese (kana/kanji) looks airy and broken at that value, so reset to 0. */
+  h1,
+  h2,
+  h3 {
+    letter-spacing: var(--tracking-heading);
+  }
+
+  :lang(ja) h1,
+  :lang(ja) h2,
+  :lang(ja) h3 {
+    letter-spacing: 0;
   }
 
   main {
