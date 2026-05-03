@@ -1,0 +1,199 @@
+---
+// Hub base layout — global <html>/<head>/<body>/<main>/<footer> shell.
+//
+// Design principles:
+// - Mobile-first, single-column, generous whitespace.
+// - JS-zero by default. Motion = CSS only, respects prefers-reduced-motion.
+// - Monochrome (PRD §4 "色階層"). Hub stays desaturated; product LPs colorize.
+// - One typographic family (Inter via Google Fonts) shared across subdomains.
+
+import { t, type Locale } from '@ttsui/i18n';
+
+interface Props {
+  locale: Locale;
+  title?: string;
+  description?: string;
+}
+
+const { locale, title, description } = Astro.props;
+
+const siteTitle = title ?? 'Tipsy Tap Studio';
+const siteDescription =
+  description ??
+  'An experimental room for music as interactive experience — Tipsy Tap Studio.';
+
+// Locale switcher target. Pages live under /ja/ and /en/ only, so flipping
+// the prefix is enough until deeper routes exist.
+const otherLocale: Locale = locale === 'ja' ? 'en' : 'ja';
+const switchHref = `/${otherLocale}/`;
+const switchLabel = t('common_locale_switch', locale);
+
+const contactHref = 'mailto:tipsytapstudio@gmail.com';
+const githubHref = 'https://github.com/TipsyTapStudio';
+const contactLabel = t('common_footer_contact', locale);
+const githubLabel = t('common_footer_github', locale);
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>{siteTitle}</title>
+    <meta name="description" content={siteDescription} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    {/* Inter via Google Fonts — only the weights we actually use. */}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+    />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <nav aria-label="Site links">
+        <a href={contactHref}>{contactLabel}</a>
+        <span class="dot" aria-hidden="true">·</span>
+        <a href={githubHref} rel="noopener">{githubLabel}</a>
+        <span class="dot" aria-hidden="true">·</span>
+        <a href={switchHref} hreflang={otherLocale}>{switchLabel}</a>
+      </nav>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  /* --- Tokens (mirrored from @ttsui/tokens for global CSS) --- */
+  :root {
+    --bg: #0b0b0b;
+    --fg: #ededed;
+    --muted: #7a7a7a;
+    --rule: #1f1f1f;
+
+    --font-sans:
+      'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+      'Hiragino Sans', 'Noto Sans JP', sans-serif;
+
+    --tracking-heading: 0.04em;
+    --tracking-body: 0.01em;
+
+    --space-2xs: 0.5rem;
+    --space-xs: 0.75rem;
+    --space-sm: 1rem;
+    --space-md: 1.5rem;
+    --space-lg: 2rem;
+    --space-xl: 3rem;
+    --space-2xl: 4.5rem;
+    --space-3xl: 6rem;
+
+    --fs-sm: clamp(0.875rem, 0.84rem + 0.18vw, 0.95rem);
+    --fs-base: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
+    --fs-lg: clamp(1.125rem, 1.05rem + 0.4vw, 1.375rem);
+    --fs-xl: clamp(2rem, 1.4rem + 3vw, 3.75rem);
+    --fs-2xl: clamp(2.5rem, 1.6rem + 4.5vw, 5rem);
+
+    --max-content: 56rem; /* ~896px — comfortable single-column reading width */
+  }
+
+  /* --- Minimal reset --- */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: var(--fs-base);
+    line-height: 1.6;
+    letter-spacing: var(--tracking-body);
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  main {
+    flex: 1 0 auto;
+    width: 100%;
+  }
+
+  a {
+    color: inherit;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+
+  a:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  /* --- Skip link (a11y) --- */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--fg);
+    color: var(--bg);
+    padding: var(--space-2xs) var(--space-sm);
+    z-index: 10;
+  }
+  .skip-link:focus {
+    left: var(--space-sm);
+    top: var(--space-sm);
+  }
+
+  /* --- Footer (minimal stub) --- */
+  .site-footer {
+    flex-shrink: 0;
+    padding: var(--space-lg) var(--space-md);
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    text-align: center;
+  }
+
+  .site-footer nav {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-xs);
+    align-items: center;
+    justify-content: center;
+  }
+
+  .site-footer a {
+    color: var(--muted);
+    text-decoration: none;
+  }
+
+  .site-footer a:hover,
+  .site-footer a:focus-visible {
+    color: var(--fg);
+    text-decoration: underline;
+  }
+
+  .site-footer .dot {
+    color: var(--rule);
+  }
+</style>

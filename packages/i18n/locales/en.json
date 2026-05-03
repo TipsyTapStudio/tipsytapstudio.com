@@ -1,9 +1,11 @@
 {
   "common_nav_back_to_studio": "TODO: translate",
-  "common_footer_contact": "TODO: translate",
-  "common_footer_github": "TODO: translate",
-  "hub_hero_title": "TODO: translate",
-  "hub_hero_subtitle": "TODO: translate",
+  "common_footer_contact": "Contact",
+  "common_footer_github": "GitHub",
+  "common_locale_switch": "日本語",
+  "hub_hero_title": "Tipsy Tap Studio",
+  "hub_hero_subtitle": "Music you can play with.",
+  "hub_hero_substatement": "An experimental room for music as interactive experience.",
   "spv_hero_title": "TODO: translate",
   "spv_hero_subtitle": "TODO: translate"
 }

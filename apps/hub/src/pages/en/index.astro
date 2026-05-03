@@ -1,25 +1,97 @@
 ---
-// Hub — English placeholder.
-// TODO(copywriter): replace with hero copy from PRD §5.
-// TODO(designer/uiux): full layout & sections (Works / Manifesto / About / Footer).
+// Hub — English landing page (Hero only, Phase 1).
+//
+// Copy is held in @ttsui/i18n (provisional values, marketing-owned).
+// Layout/typography is intentionally minimal — refinement is the designer's
+// job, not the engineer's.
+
+import Base from '../../layouts/Base.astro';
 import { t } from '@ttsui/i18n';
+
 const locale = 'en';
+
+const title = t('hub_hero_title', locale);
+const subtitle = t('hub_hero_subtitle', locale);
+const substatement = t('hub_hero_substatement', locale);
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Tipsy Tap Studio</title>
-    <meta name="description" content="Tipsy Tap Studio — coming soon." />
-  </head>
-  <body>
-    <main>
-      <h1>{t('hub_hero_title', locale)}</h1>
-      <p>{t('hub_hero_subtitle', locale)}</p>
-      <p><small>Tipsy Tap Studio — coming soon.</small></p>
-      <p><a href="/ja/">日本語</a></p>
-    </main>
-  </body>
-</html>
+<Base locale={locale} title={title} description={substatement}>
+  <section class="hero" aria-labelledby="hero-title">
+    <h1 id="hero-title" class="hero__title">{title}</h1>
+    <p class="hero__statement">{subtitle}</p>
+    <p class="hero__sub">{substatement}</p>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    max-width: var(--max-content);
+    margin: 0 auto;
+    padding: var(--space-2xl) var(--space-md);
+    min-height: calc(100svh - 6rem); /* leave room for footer */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: var(--space-md);
+  }
+
+  .hero__title {
+    font-size: var(--fs-2xl);
+    font-weight: 600;
+    letter-spacing: var(--tracking-heading);
+    line-height: 1.05;
+    margin: 0;
+    animation: hero-fade 720ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .hero__statement {
+    font-size: var(--fs-xl);
+    font-weight: 500;
+    line-height: 1.2;
+    margin: 0;
+    color: var(--fg);
+    animation: hero-fade 720ms cubic-bezier(0.2, 0.7, 0.2, 1) 120ms both;
+  }
+
+  .hero__sub {
+    font-size: var(--fs-lg);
+    font-weight: 400;
+    line-height: 1.5;
+    margin: 0;
+    color: var(--muted);
+    max-width: 42rem;
+    animation: hero-fade 720ms cubic-bezier(0.2, 0.7, 0.2, 1) 240ms both;
+  }
+
+  @media (min-width: 640px) {
+    .hero {
+      padding: var(--space-3xl) var(--space-xl);
+      gap: var(--space-lg);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .hero {
+      padding: var(--space-3xl) var(--space-2xl);
+    }
+  }
+
+  @keyframes hero-fade {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero__title,
+    .hero__statement,
+    .hero__sub {
+      animation: none;
+    }
+  }
+</style>

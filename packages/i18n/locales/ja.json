@@ -1,9 +1,11 @@
 {
   "common_nav_back_to_studio": "TODO: by copywriter",
-  "common_footer_contact": "TODO: by copywriter",
-  "common_footer_github": "TODO: by copywriter",
-  "hub_hero_title": "TODO: by copywriter",
-  "hub_hero_subtitle": "TODO: by copywriter",
+  "common_footer_contact": "Contact",
+  "common_footer_github": "GitHub",
+  "common_locale_switch": "English",
+  "hub_hero_title": "Tipsy Tap Studio",
+  "hub_hero_subtitle": "Music you can play with.",
+  "hub_hero_substatement": "An experimental room for music as interactive experience.",
   "spv_hero_title": "TODO: by copywriter",
   "spv_hero_subtitle": "TODO: by copywriter"
 }
