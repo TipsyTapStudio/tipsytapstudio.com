@@ -8,18 +8,21 @@ Tipsy Tap Studio のウェブ・プレゼンス全体を構築・運用するモ
 
 このリポは **発信用ウェブサイトのみ** を扱う。スタジオ運営文書（ROADMAP / retrospectives / 経理 / アイデア帳）はメタリポ `~/Desktop/tipsy-tap-studio/`（Private 管理）が担当する。本リポへの同梱は禁止。
 
-## スタジオ全体の core thesis（メタリポ ROADMAP 継承）
+## スタジオ全体の core thesis
 
-- **音楽が本体**。ゲーム / ガジェット / ビジュアライザー / Chrome 拡張は音楽を体験させる「器」
-- TouchDesigner / Max for Live / Strudel / TidalCycles では届かない領域に、**プログラミング × ウェブ × Claude Code** でリーチする
+- **インタラクティブな実験スタジオ**。音・ビジュアル・時計 / タイマー・スタンプ・拡張機能・ガジェット・ゲーム等、カテゴリは限定しない。共通項は「いじれる / 触れる / 遊べる / 体験できる」インタラクティブ性
+- 音楽はカテゴリの一つ（重要だが「本体」ではない）
+- **プログラミング × ウェブ × Claude Code** を手段に、TouchDesigner / Max for Live / Strudel / TidalCycles では届かない領域へリーチする
 - 数を優先する／READMEを丁寧に書く／楽しさを最優先する
+
+> 2026-05-23 更新: 旧 thesis「音楽が本体、器の多様性」を破棄。実態（時計・タイマー・LINE スタンプ等が音楽に紐づかない）と乖離していたため。メタリポ `~/Desktop/tipsy-tap-studio/ROADMAP.md` の core thesis は別途ユーザー手動で同期予定
 
 ## ブランド適用原則（重要）
 
 | 原則 | 適用範囲 |
 |---|---|
-| 音楽 × インタラクティブ thesis | **スタジオ全体** |
-| Zero Injection / Local by default / One panel, one job | **SP シリーズ LP のみ**。ゲーム・ガジェット・ビジュアライザー LP には適用しない |
+| インタラクティブ実験 thesis | **スタジオ全体**（カテゴリ無限定） |
+| Zero Injection / Local by default / One panel, one job | **SP シリーズ LP のみ**。他カテゴリ LP には適用しない |
 | ハブ＝モノトーン、プロダクト LP＝アクセント色解放 | 親子関係を「色の有無」で表現（VRSM 流） |
 | 1 タイポグラフィファミリー全サブドメイン統一 | フォント揺れがシリーズ感を最も損なうため固定 |
 

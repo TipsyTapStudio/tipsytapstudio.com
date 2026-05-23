@@ -10,10 +10,12 @@
 Tipsy Tap Studio のウェブ・プレゼンス全体を構築・運用するためのリポジトリ。
 スタジオハブ（`tipsytapstudio.com`）と、各プロダクトの LP（`<product>.tipsytapstudio.com`）を 1 つのモノリポで管理する。
 
-**スタジオの位置付け（メタリポ `~/Desktop/tipsy-tap-studio/` の README/ROADMAP より）**:
-- core thesis: 「自分の音楽を、インタラクティブな体験として届けるための実験場」
-- **音楽が本体**、ゲーム / ビジュアライザー / サウンドガジェット / Chrome 拡張は音楽を体験させる「器」
+**スタジオの位置付け** (2026-05-23 更新):
+- core thesis: 「**インタラクティブな実験スタジオ**」。カテゴリ無限定、共通項は「いじれる / 触れる / 遊べる / 体験できる」インタラクティブ性
+- 音・ビジュアル・時計 / タイマー・LINE スタンプ・Chrome 拡張機能・ガジェット・ゲーム等を横断
+- 音楽はカテゴリの一つ（重要だが「本体」ではない）
 - 対象作品群はスタジオ全カテゴリ横断（SP シリーズに限定されない）
+- メタリポ `~/Desktop/tipsy-tap-studio/ROADMAP.md` の core thesis は別途同期更新予定
 
 **最初に立ち上げるもの**:
 1. スタジオハブ: `tipsytapstudio.com`
@@ -77,8 +79,9 @@ Tipsy Tap Studio のウェブ・プレゼンス全体を構築・運用するた
 
 ## 4. ブランド・設計原則
 
-### スタジオ全体の core thesis（メタリポ ROADMAP より）
-- **音楽が主役**、ゲーム/ガジェット/拡張は音楽を遊ぶ「器」
+### スタジオ全体の core thesis (2026-05-23 更新)
+- **インタラクティブな実験スタジオ**。カテゴリ無限定（音・ビジュアル・時計 / タイマー・スタンプ・拡張機能・ガジェット・ゲーム等）
+- 共通項は「いじれる / 触れる / 遊べる / 体験できる」インタラクティブ性。音楽はカテゴリの一つで本体ではない
 - TouchDesigner / Max for Live / Strudel / TidalCycles では届かない領域に、**プログラミング × ウェブ × Claude Code** という手段でリーチする
 - 数を優先する／READMEを丁寧に書く／楽しさを最優先する（メタリポの基本方針を継承）
 
@@ -92,7 +95,7 @@ Tipsy Tap Studio のウェブ・プレゼンス全体を構築・運用するた
 ### トーン
 - マーケ的誇張を避け、**乾いた職人口調**
 - 「The problem was never X. It was Y.」型の断定短文 + 術語化された名詞
-- VRSM が「Creative Systems Studio」を名乗るのに対し、Tipsy Tap は **「自分の音楽をインタラクティブ体験で届ける実験場」**。器の多様性（ゲーム・ガジェット・拡張）が個性、ジャンル横断が VRSM との差別化軸
+- VRSM が「Creative Systems Studio」を名乗るのに対し、Tipsy Tap は **「インタラクティブな実験スタジオ」**。カテゴリ無限定（音 / ビジュアル / 時計 / スタンプ / 拡張等）の横断性と「触れて遊べる」共通項が個性、ジャンル横断が VRSM との差別化軸
 
 ### 色階層（重要原則）
 - **ハブ**: モノトーン（黒 + オフホワイト、低彩度）
@@ -115,21 +118,22 @@ Tipsy Tap Studio のウェブ・プレゼンス全体を構築・運用するた
 ### スタジオハブ（`tipsytapstudio.com`)
 縦 1 カラム / 5 セクション構成:
 
-1. **Hero** — スタジオ名 + 1 行ステートメント（音楽×インタラクティブの thesis）+ 軽いモーション
+1. **Hero** — スタジオ名 + 動詞 3 連 subtitle（拍 / 波 / 振動の thesis）+ カテゴリ列挙 substatement + 軽いモーション
 2. **Works** — 全プロダクトをカテゴリ別に並べる:
    - **Games** — Honey Derby / PLANKTONIGHT / noctiluka
    - **Visualizers** — Fractal Drive / Fractal Beat
    - **Gadgets** — Galton Timer / Wall Clock / Galton Tempo / Vogel Timer
    - **Chrome Extensions (SP Series)** — SPV-2 / SPCC / SPS / SPEQ
    - 各カードに `Live` / `Beta` / `Paused` / `Concept` のステータスバッジ
-3. **Manifesto** — メタリポ ROADMAP の thesis を web 用に編集（音楽が本体 / 器の多様性 / なぜ Claude Code か）
+3. **Manifesto** — スタジオ thesis を web 用に編集（インタラクティブ実験 / カテゴリ無限定 / なぜ Claude Code か）
 4. **About / Studio** — ソロ開発である旨を率直に、retrospectives/devlog リンク
 5. **Footer** — Contact / GitHub Org / X / RSS / LICENSE
 
-**ヒーローコピー方向性**（最終決定はマーケ担当が判断）:
-- 音楽 × インタラクティブの thesis を中心に置く
-- 例: "Music you can play with." / "An experimental room for music as interactive experience."
-- 旧案（"Side panels..." 系）は SP シリーズ LP へ移管
+**ヒーローコピー** (2026-05-23 マーケ担当確定):
+- ja subtitle: 「鳴らす、光らす、刻む。」 / substatement: 「音もビジュアルも、時計の針もタイマーの拍も、スタンプも拡張機能も。リズムを持つものを叩いて作る、インタラクティブな実験スタジオ。」
+- en subtitle: "Tap it, light it, let it tick." / substatement: "Sounds, visuals, clocks, timers, stickers, extensions — an interactive studio that builds things with a beat you can tap."
+- ブランド名 `Tap` を蛇口ではなく「拍を tap する」打音動作として再解釈。カテゴリ無限定の thesis と整合
+- 旧案（"Music you can play with." 等の音楽中心コピー、"Side panels..." 系）は破棄、SP シリーズ LP の固有コピーは別途 LP 側で扱う
 
 ### SPV-2 LP（`spv.tipsytapstudio.com`）
 縦 4 ブロックのプロダクトページ:
