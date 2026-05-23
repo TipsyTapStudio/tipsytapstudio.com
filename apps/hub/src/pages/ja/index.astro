@@ -11,14 +11,18 @@ import { t } from '@ttsui/i18n';
 const locale = 'ja';
 
 const title = t('hub_hero_title', locale);
-const subtitle = t('hub_hero_subtitle', locale);
+// hub_hero_subtitle (= "鳴らす、光らす、刻む。") is rendered as span-split
+// markup below for visual rhythm (designer spec). The i18n key value stays
+// canonical in ja.json; this page hard-codes the split form intentionally.
 const substatement = t('hub_hero_substatement', locale);
 ---
 
 <Base locale={locale} title={title} description={substatement}>
   <section class="hero" aria-labelledby="hero-title">
     <h1 id="hero-title" class="hero__title">{title}</h1>
-    <p class="hero__statement">{subtitle}</p>
+    <p class="hero__statement" aria-label="鳴らす、光らす、刻む。">
+      <span class="beat">鳴らす</span><span class="sep">、</span><span class="beat">光らす</span><span class="sep">、</span><span class="beat">刻む</span>。
+    </p>
     <p class="hero__sub">{substatement}</p>
   </section>
 </Base>
@@ -33,6 +37,10 @@ const substatement = t('hub_hero_substatement', locale);
     flex-direction: column;
     justify-content: center;
     gap: var(--space-md);
+  }
+
+  .hero__statement .sep {
+    margin-inline-end: 0.25em; /* TODO by designer: 0.2-0.35em で実機確認後確定 */
   }
 
   .hero__title {
@@ -55,12 +63,14 @@ const substatement = t('hub_hero_substatement', locale);
   }
 
   .hero__sub {
-    font-size: var(--fs-lg);
+    font-size: var(--fs-base);
     font-weight: 400;
     line-height: 1.5;
-    margin: 0;
+    margin-block-start: var(--space-lg); /* statement → sub の余白を確保 */
+    margin-block-end: 0;
+    margin-inline: 0;
     color: var(--muted);
-    max-width: 42rem;
+    max-width: 32rem;
     animation: hero-fade 720ms cubic-bezier(0.2, 0.7, 0.2, 1) 240ms both;
   }
 
