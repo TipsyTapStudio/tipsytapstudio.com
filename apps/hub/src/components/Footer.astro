@@ -25,6 +25,8 @@ const githubHref = 'https://github.com/TipsyTapStudio';
 
 const contactLabel = t('hub_footer_contact_label', locale);
 const githubLabel = t('common_footer_github', locale);
+const labLabel = t('hub_footer_lab_label', locale);
+const labHref = `/${locale}/lab/`;
 const license = t('hub_footer_license', locale);
 const copyright = t('hub_footer_copyright', locale);
 ---
@@ -39,6 +41,7 @@ const copyright = t('hub_footer_copyright', locale);
 
     <FooterColumn heading={contactLabel}>
       <a class="footer__link" href={contactHref}>{contactLabel}</a>
+      <a class="footer__link" href={labHref}>{labLabel}</a>
       <a class="footer__link" href={githubHref} rel="noopener">{githubLabel}</a>
     </FooterColumn>
 

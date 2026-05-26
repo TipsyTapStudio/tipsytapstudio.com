@@ -1,0 +1,57 @@
+---
+// BackToHub — sticky chip link that returns the visitor to the hub root.
+//
+// Lives in the Lab page only. Visually mirrors the footer link palette
+// (muted → fg on hover) but adopts a chip silhouette so it floats cleanly
+// over the busy experiment canvases.
+
+import type { Locale } from '@ttsui/i18n';
+
+interface Props {
+  locale: Locale;
+  label: string;
+}
+
+const { locale, label } = Astro.props;
+const href = `/${locale}/`;
+---
+
+<a class="back-to-hub" href={href}>{label}</a>
+
+<style>
+  .back-to-hub {
+    position: sticky;
+    /* sticky positioning works with the implicit grid placement of <main>;
+       offsets keep the chip clear of the viewport edge. */
+    top: var(--space-sm);
+    left: var(--space-sm);
+    z-index: 10;
+    align-self: flex-start;
+    margin: var(--space-sm);
+    display: inline-flex;
+    align-items: center;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: var(--fs-sm);
+    padding: var(--space-2xs) var(--space-sm);
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-chip);
+    background: var(--lab-overlay-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: color 120ms ease;
+    width: max-content;
+  }
+
+  .back-to-hub:hover,
+  .back-to-hub:focus-visible {
+    color: var(--fg);
+    text-decoration: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .back-to-hub {
+      transition: none;
+    }
+  }
+</style>

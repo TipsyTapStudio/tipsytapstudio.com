@@ -1,0 +1,352 @@
+---
+// ExperimentFrame — one full-viewport Lab experiment slide.
+//
+// Holds the canvas layer (slot: "canvas") underneath the UI layer (default
+// slot). Used by /lab/ to stack the three #001 variants with scroll-snap.
+//
+// The frame owns:
+// - 100svh viewport sizing + scroll-snap-align: start
+// - z-index stacking (canvas under, UI over)
+// - Number chip (01 / 03 etc) — passed in as plain props, no i18n needed
+// - Bottom overlay gradient so text stays legible over busy canvases
+// - Dynamic scroll-snap release when any <details> inside opens (so the
+//   meta panel can grow past the viewport without fighting the snap).
+//
+// Child <ParamSlider> components emit `paramchange` events that bubble to
+// this section's `.experiment-frame` root; the canvas child listens there.
+
+import ParamSlider from './ParamSlider.astro';
+
+interface Props {
+  /** Stable identifier — used as section id and for meta panel ids. */
+  id: string;
+  /** Localised heading (e.g. "Drift / CSS"). */
+  name: string;
+  /** "01" / "02" / "03" — sequence chip, prefixed to total. */
+  index: string;
+  /** Total experiments in this set ("03"). */
+  total: string;
+  /** Short caption shown under the heading. */
+  caption: string;
+  /** Localised meta panel labels. */
+  metaLabels: {
+    tech: string;
+    size: string;
+    motion: string;
+    license: string;
+    summaryOpen: string; // visible <summary> label (e.g. "Tech")
+  };
+  /** Meta values (engineer-authored, language-agnostic identifiers). */
+  meta: {
+    tech: string;
+    size: string;
+    motion: string;
+    license: string;
+  };
+  /** Slider definitions — emitted as ParamSlider rows in the bottom panel. */
+  sliders: ReadonlyArray<{
+    name: string;
+    label: string;
+    value: number;
+  }>;
+}
+
+const { id, name, index, total, caption, metaLabels, meta, sliders } =
+  Astro.props;
+
+const detailsId = `${id}-meta`;
+---
+
+<section
+  id={id}
+  class="experiment-frame"
+  data-experiment={id}
+  aria-labelledby={`${id}-heading`}
+>
+  {/* Canvas layer (absolute, behind UI). Slot lets each experiment plug in
+      its own implementation (Drift / Grain / Flux). */}
+  <div class="experiment-frame__canvas" aria-hidden="true">
+    <slot name="canvas" />
+  </div>
+
+  <div class="experiment-frame__ui">
+    <header class="experiment-frame__top">
+      <h2 id={`${id}-heading`} class="experiment-frame__name">{name}</h2>
+      <span class="experiment-frame__chip" aria-hidden="true">{index} / {total}</span>
+    </header>
+
+    <div class="experiment-frame__caption-wrap">
+      <p class="experiment-frame__caption">{caption}</p>
+    </div>
+
+    <footer class="experiment-frame__bottom">
+      <details class="experiment-frame__meta" id={detailsId}>
+        <summary class="experiment-frame__meta-summary">
+          <span class="experiment-frame__meta-marker" aria-hidden="true"></span>
+          {metaLabels.summaryOpen}
+        </summary>
+        <dl class="experiment-frame__meta-list">
+          <div>
+            <dt>{metaLabels.tech}</dt>
+            <dd>{meta.tech}</dd>
+          </div>
+          <div>
+            <dt>{metaLabels.size}</dt>
+            <dd>{meta.size}</dd>
+          </div>
+          <div>
+            <dt>{metaLabels.motion}</dt>
+            <dd>{meta.motion}</dd>
+          </div>
+          <div>
+            <dt>{metaLabels.license}</dt>
+            <dd>{meta.license}</dd>
+          </div>
+        </dl>
+      </details>
+
+      <div class="experiment-frame__sliders">
+        {sliders.map((s) => (
+          <ParamSlider
+            id={`${id}-${s.name}`}
+            name={s.name}
+            label={s.label}
+            value={s.value}
+          />
+        ))}
+      </div>
+    </footer>
+  </div>
+</section>
+
+<style>
+  .experiment-frame {
+    position: relative;
+    min-height: var(--lab-canvas-min-h);
+    scroll-snap-align: start;
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--bg); /* fallback before canvas paints */
+  }
+
+  /* When a child <details> is open, release snap so the panel can grow past
+     the fold without snapping the user back. Toggled by the page script. */
+  .experiment-frame[data-snap-released='true'] {
+    scroll-snap-align: none;
+  }
+
+  .experiment-frame__canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .experiment-frame__ui {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    min-height: var(--lab-canvas-min-h);
+    max-width: var(--max-content);
+    margin: 0 auto;
+    padding: var(--space-xl) var(--space-md);
+    gap: var(--space-md);
+  }
+
+  @media (min-width: 640px) {
+    .experiment-frame__ui {
+      padding: var(--space-2xl) var(--space-xl);
+    }
+  }
+
+  /* Top — heading + sequence chip */
+  .experiment-frame__top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-md);
+  }
+
+  .experiment-frame__name {
+    font-size: var(--fs-lg);
+    font-weight: 500;
+    line-height: var(--lh-tight);
+    letter-spacing: var(--track-display);
+    margin: 0;
+    color: var(--fg);
+  }
+
+  .experiment-frame__name:lang(ja) {
+    letter-spacing: 0.04em;
+  }
+
+  .experiment-frame__chip {
+    font-size: var(--fs-xs);
+    letter-spacing: var(--track-badge);
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    padding: var(--space-3xs) var(--space-xs);
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-chip);
+    background: var(--lab-overlay-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* Caption sits centred-ish in the empty middle row. */
+  .experiment-frame__caption-wrap {
+    display: flex;
+    align-items: flex-start;
+    padding-top: var(--space-md);
+  }
+  .experiment-frame__caption {
+    margin: 0;
+    color: var(--fg);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    max-width: 32rem;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-card);
+    background: var(--lab-overlay-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* Bottom — meta + sliders, with a fade-down so text stays readable. */
+  .experiment-frame__bottom {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding-top: var(--space-lg);
+    /* Bottom fade so the UI doesn't fight a busy canvas. */
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      var(--lab-overlay-bg) 70%,
+      var(--bg) 100%
+    );
+    margin-inline: calc(-1 * var(--space-md));
+    padding-inline: var(--space-md);
+    padding-bottom: var(--space-md);
+  }
+
+  @media (min-width: 640px) {
+    .experiment-frame__bottom {
+      margin-inline: calc(-1 * var(--space-xl));
+      padding-inline: var(--space-xl);
+    }
+  }
+
+  /* Meta details (collapsible). */
+  .experiment-frame__meta {
+    align-self: flex-start;
+  }
+
+  .experiment-frame__meta-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    list-style: none;
+    cursor: pointer;
+    font-size: var(--fs-xs);
+    letter-spacing: var(--track-badge);
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: var(--space-2xs) var(--space-sm);
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-chip);
+    transition: color 120ms ease;
+  }
+
+  .experiment-frame__meta-summary:lang(ja) {
+    text-transform: none;
+  }
+
+  .experiment-frame__meta-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .experiment-frame__meta-summary:hover,
+  .experiment-frame__meta-summary:focus-visible {
+    color: var(--fg);
+  }
+
+  /* CSS-drawn open/close marker (no emoji, no SVG). */
+  .experiment-frame__meta-marker {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 5px solid currentColor;
+    transition: transform 150ms var(--ease-flux);
+  }
+
+  .experiment-frame__meta[open] .experiment-frame__meta-marker {
+    transform: rotate(90deg);
+  }
+
+  .experiment-frame__meta-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-sm) var(--space-lg);
+    margin: var(--space-sm) 0 0;
+    padding: var(--space-md);
+    background: rgba(11, 11, 11, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--border-hairline);
+    font-size: var(--fs-xs);
+    color: var(--fg);
+    transition: max-height 200ms var(--ease-flux);
+  }
+
+  @media (min-width: 640px) {
+    .experiment-frame__meta-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .experiment-frame__meta-list div {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3xs);
+  }
+  .experiment-frame__meta-list dt {
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    letter-spacing: var(--track-badge);
+    text-transform: uppercase;
+  }
+  .experiment-frame__meta-list dt:lang(ja) {
+    text-transform: none;
+  }
+  .experiment-frame__meta-list dd {
+    margin: 0;
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Slider grid — 1 col mobile, 2 col 640+. */
+  .experiment-frame__sliders {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  @media (min-width: 640px) {
+    .experiment-frame__sliders {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-lg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .experiment-frame__meta-marker,
+    .experiment-frame__meta-list {
+      transition: none;
+    }
+  }
+</style>

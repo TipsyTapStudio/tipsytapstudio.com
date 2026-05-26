@@ -1,0 +1,229 @@
+---
+// FluxCanvas — Lab #001 C. Raw WebGL2 fragment shader, no Three.js.
+//
+// Renders a continuous noise field that lerps from #0B0B0B to #EDEDED with a
+// 2.2 darkness curve. Uniforms: u_time, u_resolution, u_speed, u_intensity.
+//
+// Performance discipline:
+// - devicePixelRatio clamped to <= 1.5 (avoid retina cost on idle visuals).
+// - IntersectionObserver gates the rAF loop — off-screen = no frames.
+// - context-lost handler simply stops the loop; the CSS gradient underlay
+//   is always painted so the section never goes black.
+// - prefers-reduced-motion: render exactly one frame at u_time = 0 and stop.
+
+const fallbackId = 'flux-fallback';
+---
+
+<div class="flux-canvas" role="presentation" aria-hidden="true" data-canvas="flux">
+  {/* Always-visible fallback. Sits under the canvas; remains the only visible
+      layer if WebGL fails to init or the context is lost. */}
+  <div class={`flux-canvas__fallback ${fallbackId}`}></div>
+  <canvas class="flux-canvas__gl" aria-hidden="true"></canvas>
+</div>
+
+<style>
+  .flux-canvas {
+    position: absolute;
+    inset: 0;
+  }
+  .flux-canvas__fallback {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #0b0b0b 0%, #1f1f1f 100%);
+  }
+  .flux-canvas__gl {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+</style>
+
+<script>
+  // Wire each FluxCanvas instance separately so multiple Lab pages would
+  // continue to work without coupling.
+  const nodes = document.querySelectorAll<HTMLElement>('.flux-canvas');
+
+  const VERT = `#version 300 es
+in vec2 a_pos;
+void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }`;
+
+  // Simplex-ish noise via classic 2D hash + smooth lerp — light enough to
+  // ship without a noise lib while reading as a continuous field.
+  const FRAG = `#version 300 es
+precision highp float;
+out vec4 outColor;
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform float u_intensity;
+
+float hash(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  float a = hash(i);
+  float b = hash(i + vec2(1.0, 0.0));
+  float c = hash(i + vec2(0.0, 1.0));
+  float d = hash(i + vec2(1.0, 1.0));
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+float fbm(vec2 p) {
+  float v = 0.0;
+  float amp = 0.5;
+  for (int i = 0; i < 4; i++) {
+    v += amp * noise(p);
+    p *= 2.0;
+    amp *= 0.5;
+  }
+  return v;
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+  vec2 p = uv * 2.5;
+  // Two slowly-warping noise queries layered for a sense of depth.
+  float n1 = fbm(p + vec2(u_time, u_time * 0.7));
+  float n2 = fbm(p * 1.6 - vec2(u_time * 0.4, u_time));
+  float n = mix(n1, n2, 0.5);
+
+  // Intensity rescales contrast around the midpoint.
+  n = 0.5 + (n - 0.5) * (0.5 + u_intensity * 1.2);
+
+  // Dark tonal curve (pow 2.2) keeps shade close to #0B0B0B.
+  float k = pow(clamp(n, 0.0, 1.0), 2.2);
+  vec3 col = mix(vec3(0.043), vec3(0.929), k); // #0B → #ED in linear-ish space
+  outColor = vec4(col, 1.0);
+}`;
+
+  function initOne(host: HTMLElement) {
+    const canvas = host.querySelector<HTMLCanvasElement>('.flux-canvas__gl');
+    if (!canvas) return;
+    const gl = canvas.getContext('webgl2', { antialias: false, powerPreference: 'low-power' });
+    if (!gl) {
+      canvas.remove(); // fallback gradient stays visible
+      return;
+    }
+
+    const compile = (type: number, src: string): WebGLShader | null => {
+      const sh = gl.createShader(type);
+      if (!sh) return null;
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+        // eslint-disable-next-line no-console
+        console.warn('[FluxCanvas] shader compile failed', gl.getShaderInfoLog(sh));
+        return null;
+      }
+      return sh;
+    };
+
+    const vs = compile(gl.VERTEX_SHADER, VERT);
+    const fs = compile(gl.FRAGMENT_SHADER, FRAG);
+    if (!vs || !fs) { canvas.remove(); return; }
+
+    const prog = gl.createProgram()!;
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { canvas.remove(); return; }
+    gl.useProgram(prog);
+
+    // Full-screen triangle.
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'a_pos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    const uTime = gl.getUniformLocation(prog, 'u_time');
+    const uRes = gl.getUniformLocation(prog, 'u_resolution');
+    const uIntensity = gl.getUniformLocation(prog, 'u_intensity');
+
+    const state = { speed: 0.3, intensity: 0.4, time: 0, visible: false, raf: 0, reduced: false };
+
+    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    state.reduced = mql.matches;
+    mql.addEventListener?.('change', (e) => { state.reduced = e.matches; if (state.reduced) drawOnce(); });
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const w = Math.floor(canvas!.clientWidth * dpr);
+      const h = Math.floor(canvas!.clientHeight * dpr);
+      if (canvas!.width !== w || canvas!.height !== h) {
+        canvas!.width = w;
+        canvas!.height = h;
+        gl!.viewport(0, 0, w, h);
+      }
+    }
+
+    function draw() {
+      resize();
+      gl!.uniform1f(uTime, state.time);
+      gl!.uniform2f(uRes, canvas!.width, canvas!.height);
+      gl!.uniform1f(uIntensity, state.intensity);
+      gl!.drawArrays(gl!.TRIANGLES, 0, 3);
+    }
+
+    function drawOnce() {
+      state.time = 0;
+      draw();
+    }
+
+    function tick() {
+      // Match spec: uTime += 0.0008 + speed * 0.012 per frame.
+      state.time += 0.0008 + state.speed * 0.012;
+      draw();
+      state.raf = requestAnimationFrame(tick);
+    }
+
+    function start() {
+      if (state.raf || state.reduced) { drawOnce(); return; }
+      state.raf = requestAnimationFrame(tick);
+    }
+    function stop() {
+      if (state.raf) { cancelAnimationFrame(state.raf); state.raf = 0; }
+    }
+
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            state.visible = e.isIntersecting;
+            if (state.visible) start(); else stop();
+          }
+        },
+        { threshold: 0.05 },
+      );
+      io.observe(host);
+    } else {
+      start();
+    }
+
+    window.addEventListener('resize', () => { if (state.visible) draw(); });
+
+    // Context loss: stop rAF; the CSS fallback under the <canvas> stays visible.
+    canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); stop(); });
+
+    const frame = host.closest('.experiment-frame');
+    frame?.addEventListener('paramchange', (event) => {
+      const { name, value } = (event as CustomEvent<{ name: string; value: number }>).detail;
+      if (name === 'speed') state.speed = value;
+      else if (name === 'intensity') state.intensity = value;
+      if (state.reduced) drawOnce();
+    });
+
+    // First paint.
+    drawOnce();
+  }
+
+  nodes.forEach(initOne);
+</script>

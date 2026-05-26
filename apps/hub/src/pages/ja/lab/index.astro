@@ -1,0 +1,221 @@
+---
+// Lab — /ja/lab/. The studio workbench: three takes on a slow gradient,
+// each implemented with a different technique, stacked vertically with
+// scroll-snap so visitors "encounter" them one at a time.
+//
+// Page shell only. Visual contracts live in the lab components.
+
+import Base from '../../../layouts/Base.astro';
+import { t } from '@ttsui/i18n';
+import BackToHub from '../../../components/lab/BackToHub.astro';
+import ExperimentFrame from '../../../components/lab/ExperimentFrame.astro';
+import DriftCanvas from '../../../components/lab/DriftCanvas.astro';
+import GrainCanvas from '../../../components/lab/GrainCanvas.astro';
+import FluxCanvas from '../../../components/lab/FluxCanvas.astro';
+
+const locale = 'ja';
+
+const metaTitle = t('lab_meta_title', locale);
+const metaDescription = t('lab_meta_description', locale);
+const backLabel = t('lab_back_to_studio', locale);
+const ledeHeading = t('lab_lede_heading', locale);
+const ledeBody = t('lab_lede_body', locale);
+const introHeading = t('lab_001_title', locale);
+const introBody = t('lab_001_intro', locale);
+const footerNote = t('lab_footer_note', locale);
+
+const metaLabels = {
+  tech: t('lab_meta_tech', locale),
+  size: t('lab_meta_size', locale),
+  motion: t('lab_meta_motion', locale),
+  license: t('lab_meta_license', locale),
+  summaryOpen: t('lab_meta_tech', locale),
+};
+
+const speedLabel = t('lab_param_speed', locale);
+const intensityLabel = t('lab_param_intensity', locale);
+---
+
+<Base locale={locale} title={metaTitle} description={metaDescription}>
+  <div class="lab">
+    <BackToHub locale={locale} label={backLabel} />
+
+    <section class="lab__lede" aria-labelledby="lab-lede-heading">
+      <h1 id="lab-lede-heading" class="lab__lede-heading">{ledeHeading}</h1>
+      <p class="lab__lede-body">{ledeBody}</p>
+    </section>
+
+    <section class="lab__intro" aria-labelledby="lab-001-heading">
+      <h2 id="lab-001-heading" class="lab__intro-heading">{introHeading}</h2>
+      <p class="lab__intro-body">{introBody}</p>
+    </section>
+
+    <div class="lab__experiments">
+      <ExperimentFrame
+        id="lab-001-a"
+        name={t('lab_001_a_name', locale)}
+        index="01"
+        total="03"
+        caption={t('lab_001_a_caption', locale)}
+        metaLabels={metaLabels}
+        meta={{ tech: 'CSS', size: '~1 KB', motion: 'low', license: 'MIT' }}
+        sliders={[
+          { name: 'speed', label: speedLabel, value: 0.35 },
+          { name: 'intensity', label: intensityLabel, value: 0.5 },
+        ]}
+      >
+        <DriftCanvas slot="canvas" />
+      </ExperimentFrame>
+
+      <ExperimentFrame
+        id="lab-001-b"
+        name={t('lab_001_b_name', locale)}
+        index="02"
+        total="03"
+        caption={t('lab_001_b_caption', locale)}
+        metaLabels={metaLabels}
+        meta={{ tech: 'SVG + SMIL', size: '~2 KB', motion: 'mid', license: 'MIT' }}
+        sliders={[
+          { name: 'speed', label: speedLabel, value: 0.4 },
+          { name: 'intensity', label: intensityLabel, value: 0.45 },
+        ]}
+      >
+        <GrainCanvas slot="canvas" />
+      </ExperimentFrame>
+
+      <ExperimentFrame
+        id="lab-001-c"
+        name={t('lab_001_c_name', locale)}
+        index="03"
+        total="03"
+        caption={t('lab_001_c_caption', locale)}
+        metaLabels={metaLabels}
+        meta={{ tech: 'WebGL2', size: '~6 KB', motion: 'high', license: 'MIT' }}
+        sliders={[
+          { name: 'speed', label: speedLabel, value: 0.3 },
+          { name: 'intensity', label: intensityLabel, value: 0.4 },
+        ]}
+      >
+        <FluxCanvas slot="canvas" />
+      </ExperimentFrame>
+    </div>
+
+    <section class="lab__outro">
+      <p class="lab__outro-body">{footerNote}</p>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .lab {
+    /* scroll-snap container — snap is per-frame, lede + intro stay free. */
+    scroll-snap-type: y proximity;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .lab__lede {
+    min-height: 40svh;
+    max-width: var(--max-content);
+    margin: 0 auto;
+    padding: var(--space-2xl) var(--space-md) var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: var(--space-sm);
+  }
+
+  @media (min-width: 640px) {
+    .lab__lede {
+      padding: var(--space-3xl) var(--space-xl) var(--space-xl);
+    }
+  }
+
+  .lab__lede-heading {
+    font-size: var(--fs-xl);
+    font-weight: 500;
+    line-height: var(--lh-tight);
+    margin: 0;
+    color: var(--fg);
+  }
+
+  .lab__lede-body {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-base);
+    line-height: var(--lh-normal);
+    max-width: 36rem;
+  }
+
+  .lab__intro {
+    max-width: var(--max-content);
+    margin: 0 auto;
+    padding: var(--space-lg) var(--space-md) var(--space-xl);
+  }
+
+  @media (min-width: 640px) {
+    .lab__intro {
+      padding: var(--space-xl) var(--space-xl) var(--space-2xl);
+    }
+  }
+
+  .lab__intro-heading {
+    font-size: var(--fs-lg);
+    font-weight: 500;
+    margin: 0 0 var(--space-sm);
+    color: var(--fg);
+    letter-spacing: var(--track-display);
+  }
+
+  .lab__intro-heading:lang(ja) {
+    letter-spacing: 0.04em;
+  }
+
+  .lab__intro-body {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    max-width: 38rem;
+  }
+
+  .lab__experiments {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .lab__outro {
+    max-width: var(--max-content);
+    margin: 0 auto;
+    padding: var(--space-2xl) var(--space-md);
+  }
+  @media (min-width: 640px) {
+    .lab__outro {
+      padding: var(--space-3xl) var(--space-xl);
+    }
+  }
+  .lab__outro-body {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    max-width: 38rem;
+  }
+</style>
+
+<script>
+  // Designer concern #3: when an experiment's <details> opens, release that
+  // section's scroll-snap so the meta panel can extend past the fold without
+  // snapping the viewport back. Re-engage snap on close.
+  document.querySelectorAll<HTMLDetailsElement>('.experiment-frame__meta').forEach((details) => {
+    const frame = details.closest<HTMLElement>('.experiment-frame');
+    if (!frame) return;
+    details.addEventListener('toggle', () => {
+      if (details.open) {
+        frame.dataset.snapReleased = 'true';
+      } else {
+        delete frame.dataset.snapReleased;
+      }
+    });
+  });
+</script>

@@ -1,0 +1,176 @@
+---
+// ParamSlider — labelled <input type="range"> for Lab experiment params.
+//
+// Emits a `paramchange` CustomEvent on `input`, bubbling to the closest
+// `.experiment-frame` ancestor so the matching canvas can read the new value
+// without coupling sibling DOM. Payload: { name, value }.
+//
+// The visible value is rendered to 2 decimals (tabular-nums) so the digit
+// width never shifts during scrubbing.
+
+interface Props {
+  /** Stable identifier passed in the CustomEvent payload (e.g. "speed"). */
+  name: string;
+  /** Localised label shown to the left of the track. */
+  label: string;
+  /** Default value, 0–1. */
+  value: number;
+  /** Unique DOM id — needed for <label for> association. */
+  id: string;
+}
+
+const { name, label, value, id } = Astro.props;
+const initial = Math.min(1, Math.max(0, value));
+---
+
+<div class="param-slider" data-param={name}>
+  <label class="param-slider__label" for={id}>{label}</label>
+  <input
+    id={id}
+    class="param-slider__input"
+    type="range"
+    min="0"
+    max="1"
+    step="0.01"
+    value={initial.toString()}
+    aria-valuemin="0"
+    aria-valuemax="1"
+    aria-valuenow={initial.toString()}
+    data-param-name={name}
+  />
+  <output class="param-slider__value" for={id}>{initial.toFixed(2)}</output>
+</div>
+
+<style>
+  .param-slider {
+    display: grid;
+    grid-template-columns: [label] 5.5rem [track] 1fr [value] 2.5rem;
+    align-items: center;
+    gap: var(--space-sm);
+    min-height: 2.25rem; /* tap target */
+  }
+
+  .param-slider__label {
+    font-size: var(--fs-xs);
+    letter-spacing: var(--track-badge);
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+  }
+
+  /* JP: drop uppercase (no-op on kana, but stay consistent w/ footer headings). */
+  .param-slider__label:lang(ja) {
+    text-transform: none;
+  }
+
+  .param-slider__value {
+    font-size: var(--fs-xs);
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  /* --- Range track + thumb (cross-browser) --- */
+  .param-slider__input {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 2.25rem; /* tap target */
+    background: transparent;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .param-slider__input::-webkit-slider-runnable-track {
+    height: 2px;
+    background: var(--rule);
+    border-radius: var(--radius-chip);
+  }
+
+  .param-slider__input::-moz-range-track {
+    height: 2px;
+    background: var(--rule);
+    border-radius: var(--radius-chip);
+  }
+
+  .param-slider__input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--muted);
+    margin-top: -6px; /* (14 - 2) / 2, centre on track */
+    transition:
+      background-color 120ms ease,
+      transform 120ms ease;
+  }
+
+  .param-slider__input::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--muted);
+    border: none;
+    transition:
+      background-color 120ms ease,
+      transform 120ms ease;
+  }
+
+  .param-slider__input:hover::-webkit-slider-thumb,
+  .param-slider__input:active::-webkit-slider-thumb {
+    background: var(--fg);
+    transform: scale(1.15);
+  }
+  .param-slider__input:hover::-moz-range-thumb,
+  .param-slider__input:active::-moz-range-thumb {
+    background: var(--fg);
+    transform: scale(1.15);
+  }
+
+  .param-slider__input:focus {
+    outline: none;
+  }
+  .param-slider__input:focus-visible::-webkit-slider-thumb {
+    outline: 2px solid var(--fg);
+    outline-offset: 3px;
+  }
+  .param-slider__input:focus-visible::-moz-range-thumb {
+    outline: 2px solid var(--fg);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .param-slider__input::-webkit-slider-thumb,
+    .param-slider__input::-moz-range-thumb {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  // Wire each slider on the page: emit a `paramchange` CustomEvent bubbling
+  // up to .experiment-frame so the sibling canvas can react. Mirror the
+  // current value into the <output>, and keep aria-valuenow in sync for AT.
+  const sliders = document.querySelectorAll<HTMLInputElement>('.param-slider__input');
+  sliders.forEach((input) => {
+    const wrapper = input.closest('.param-slider');
+    const output = wrapper?.querySelector('output');
+    const name = input.dataset.paramName ?? '';
+
+    const onInput = () => {
+      const value = parseFloat(input.value);
+      input.setAttribute('aria-valuenow', value.toString());
+      if (output) output.textContent = value.toFixed(2);
+      const frame = input.closest('.experiment-frame');
+      frame?.dispatchEvent(
+        new CustomEvent('paramchange', {
+          detail: { name, value },
+          bubbles: false,
+        }),
+      );
+    };
+
+    input.addEventListener('input', onInput);
+  });
+</script>

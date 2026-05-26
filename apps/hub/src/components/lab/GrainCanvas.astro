@@ -1,0 +1,146 @@
+---
+// GrainCanvas — Lab #001 B. SVG feTurbulence noise field over a flat base.
+//
+// Two layers:
+//   1. `--bg` flat fill (#0B0B0B)
+//   2. SVG <feTurbulence> driving an animated noise pattern, composited via
+//      mix-blend-mode: screen so it brightens, never darkens, the base.
+//
+// Speed     (0→1) : 16s → 3s animate cycle. Default 0.4 (~9s).
+// Intensity (0→1) : overlay opacity 0 → 0.18. Default 0.45.
+// SMIL pause      : IntersectionObserver toggles svgEl.unpauseAnimations() /
+//                   pauseAnimations() so off-screen frames cost nothing.
+// Reduce-motion   : SMIL <animate> removed; static baseFrequency 0.775.
+
+const baseId = 'lab-grain';
+---
+
+<div class="grain-canvas" role="presentation" aria-hidden="true" data-canvas="grain">
+  <div class="grain-canvas__base"></div>
+  <svg
+    class="grain-canvas__svg"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 200 200"
+    preserveAspectRatio="xMidYMid slice"
+    aria-hidden="true"
+  >
+    <defs>
+      <filter id={`${baseId}-filter`} x="0%" y="0%" width="100%" height="100%">
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.775"
+          numOctaves="2"
+          seed="3"
+          stitchTiles="stitch"
+        >
+          <animate
+            attributeName="baseFrequency"
+            values="0.6;0.95;0.6"
+            dur="9s"
+            repeatCount="indefinite"
+            class="grain-animate"
+          />
+        </feTurbulence>
+        {/* Force the noise to pure greyscale so the overlay reads as grain
+            and the screen-blend stays neutral. */}
+        <feColorMatrix
+          type="matrix"
+          values="0 0 0 0 1
+                  0 0 0 0 1
+                  0 0 0 0 1
+                  0 0 0 0.6 0"
+        />
+      </filter>
+    </defs>
+    <rect width="100%" height="100%" filter={`url(#${baseId}-filter)`} />
+  </svg>
+</div>
+
+<style>
+  .grain-canvas {
+    position: absolute;
+    inset: 0;
+    /* Hardcode defaults; the script rewrites these via setProperty. */
+    --grain-speed: 0.4;
+    --grain-intensity: 0.45;
+  }
+
+  .grain-canvas__base {
+    position: absolute;
+    inset: 0;
+    background: var(--bg);
+  }
+
+  .grain-canvas__svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    mix-blend-mode: screen;
+    /* Map slider intensity 0..1 to 0..0.18 alpha. */
+    opacity: calc(var(--grain-intensity) * 0.18);
+    transition: opacity 120ms ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grain-canvas__svg {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  // Wire each GrainCanvas instance: react to paramchange events from its
+  // .experiment-frame ancestor, and pause SMIL when scrolled out of view.
+  const nodes = document.querySelectorAll<HTMLElement>('.grain-canvas');
+
+  // Map slider speed (0..1) → SMIL dur in seconds: 16s → 3s.
+  const speedToDur = (v: number): string => `${(16 - 13 * v).toFixed(2)}s`;
+
+  nodes.forEach((node) => {
+    const frame = node.closest('.experiment-frame');
+    const svg = node.querySelector<SVGSVGElement>('.grain-canvas__svg');
+    const animateEl = node.querySelector<SVGAnimateElement>('.grain-animate');
+
+    // Apply initial dur from the inline default.
+    const initialSpeed = parseFloat(getComputedStyle(node).getPropertyValue('--grain-speed') || '0.4');
+    animateEl?.setAttribute('dur', speedToDur(initialSpeed));
+
+    frame?.addEventListener('paramchange', (event) => {
+      const { name, value } = (event as CustomEvent<{ name: string; value: number }>).detail;
+      if (name === 'speed') {
+        animateEl?.setAttribute('dur', speedToDur(value));
+      } else if (name === 'intensity') {
+        node.style.setProperty('--grain-intensity', value.toString());
+      }
+    });
+
+    // Pause/resume SMIL when off-screen. Designer concern #1.
+    if (svg && 'IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              svg.unpauseAnimations?.();
+            } else {
+              svg.pauseAnimations?.();
+            }
+          }
+        },
+        { threshold: 0.05 },
+      );
+      io.observe(node);
+    }
+
+    // Honour reduce-motion by stripping the <animate> element entirely so the
+    // turbulence settles on its static baseFrequency (0.775).
+    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const applyReduce = () => {
+      if (mql.matches) {
+        animateEl?.remove();
+      }
+    };
+    applyReduce();
+    mql.addEventListener?.('change', applyReduce);
+  });
+</script>

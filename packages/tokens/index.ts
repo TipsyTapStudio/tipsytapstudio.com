@@ -95,10 +95,22 @@ export const radius = {
   chip: '999px',
 } as const;
 
+// Lab-scope tokens — used only under /lab/. Do not reuse `labShade1/2` outside
+// of Lab experiments (the Hub hero must stay flat-monochrome per PRD §4).
+// Mirrored as CSS vars (--lab-*) in apps/hub/src/layouts/Base.astro :root.
+export const lab = {
+  canvasMinH: '100svh',
+  shade1: '#1A1A1A', // Lab Drift only
+  shade2: '#262626', // Lab Drift only
+  overlayBg: 'rgba(11, 11, 11, 0.6)',
+  easeFlux: 'cubic-bezier(0.4, 0, 0.2, 1)',
+} as const;
+
 export type Tokens = {
   colors: typeof colors;
   typography: typeof typography;
   spacing: typeof spacing;
   fontSize: typeof fontSize;
   radius: typeof radius;
+  lab: typeof lab;
 };

@@ -121,6 +121,16 @@ const switchLabel = t('common_locale_switch', locale);
     --radius-chip: 999px;
 
     --max-content: 56rem; /* ~896px — comfortable single-column reading width */
+
+    /* --- Lab-scope tokens (used only under /lab/) ---
+       Mirrored from @ttsui/tokens `lab`. Hub Hero / Works / Manifesto must NOT
+       consume --lab-shade-1 / --lab-shade-2 — those are reserved for Drift's
+       grayscale conic-gradient. See CLAUDE.md §"ブランド適用原則". */
+    --lab-canvas-min-h: 100svh;
+    --lab-shade-1: #1A1A1A;
+    --lab-shade-2: #262626;
+    --lab-overlay-bg: rgba(11, 11, 11, 0.6);
+    --ease-flux: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* --- Minimal reset --- */
