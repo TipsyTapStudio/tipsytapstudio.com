@@ -5,16 +5,20 @@
 // - Mobile-first, single-column, generous whitespace.
 // - JS-zero by default. Motion = CSS only, respects prefers-reduced-motion.
 // - Monochrome (PRD §4 "色階層"). Hub stays desaturated; product LPs colorize.
-// - One typographic family (Inter, self-hosted via @fontsource) shared across subdomains.
+// - One typographic family (IBM Plex Sans + IBM Plex Sans JP, self-hosted via
+//   @fontsource) shared across subdomains. JP is loaded only at 400/600 for weight budget.
 
 import { t, type Locale } from '@ttsui/i18n';
 import Footer from '../components/Footer.astro';
 
-// Self-hosted Inter via @fontsource (same-origin, no third-party requests).
+// Self-hosted IBM Plex Sans via @fontsource (same-origin, no third-party requests).
 // Keep weight list in sync with typography.weights in @ttsui/tokens.
-import '@fontsource/inter/400.css';
-import '@fontsource/inter/500.css';
-import '@fontsource/inter/600.css';
+import '@fontsource/ibm-plex-sans/400.css';
+import '@fontsource/ibm-plex-sans/500.css';
+import '@fontsource/ibm-plex-sans/600.css';
+// JP companion — japanese subset only, 400/600 weights (designer-set budget).
+import '@fontsource/ibm-plex-sans-jp/japanese-400.css';
+import '@fontsource/ibm-plex-sans-jp/japanese-600.css';
 
 interface Props {
   locale: Locale;
@@ -46,8 +50,10 @@ const switchLabel = t('common_locale_switch', locale);
     <title>{siteTitle}</title>
     <meta name="description" content={siteDescription} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    {/* Inter is bundled via @fontsource/inter (imported in frontmatter).
-        No external font requests — privacy-friendly and zero third-party DNS. */}
+    {/* IBM Plex Sans (+ JP) is bundled via @fontsource (imported in frontmatter).
+        No external font requests — privacy-friendly and zero third-party DNS.
+        TODO(engineer): consider <link rel="preload"> for the latin 400 woff2 once
+        the @fontsource asset path is stable post-build, to shave LCP. */}
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -80,7 +86,7 @@ const switchLabel = t('common_locale_switch', locale);
     --badge-beta-bg: #2a2a2a;
 
     --font-sans:
-      'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+      'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
       'Hiragino Sans', 'Noto Sans JP', sans-serif;
 
     --tracking-heading: 0.04em;
@@ -146,6 +152,14 @@ const switchLabel = t('common_locale_switch', locale);
     flex-direction: column;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Japanese family override — JP glyph family fronted, latin Plex Sans as the
+     fallback so mixed-script lines keep a unified Plex feel. System stack stays
+     as the last-resort fallback for font load failures. */
+  :lang(ja) {
+    font-family: 'IBM Plex Sans JP', 'IBM Plex Sans', ui-sans-serif, system-ui,
+      -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
   }
 
   /* Heading tracking — euro-Latin gets the 0.04em document feel.

@@ -38,9 +38,9 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
 ---
 
 <article class="card" aria-labelledby={`card-${slug}-title`}>
-  <div class="card__media" aria-hidden={thumb ? undefined : 'true'}>
+  <div class={`card__media${thumb ? ' card__media--has-image' : ''}`} aria-hidden={thumb ? undefined : 'true'}>
     {thumb ? (
-      <img src={thumb} alt="" loading="lazy" decoding="async" />
+      <img src={thumb} alt={title} loading="lazy" decoding="async" />
     ) : (
       <span class="card__placeholder">T</span>
     )}
@@ -49,7 +49,11 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
   <header class="card__header">
     <h3 id={`card-${slug}-title`} class="card__title">
       {titleHref ? (
-        <a href={titleHref} rel={titleHref.startsWith('http') ? 'noopener' : undefined}>{title}</a>
+        titleHref.startsWith('http') ? (
+          <a href={titleHref} target="_blank" rel="noopener noreferrer">{title}</a>
+        ) : (
+          <a href={titleHref}>{title}</a>
+        )
       ) : (
         title
       )}
@@ -70,10 +74,10 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
   {(demoUrl || repoUrl) && (
     <nav class="card__ctas" aria-label={`${title} links`}>
       {demoUrl && (
-        <a class="card__cta" href={demoUrl} rel="noopener">{demoLabel}</a>
+        <a class="card__cta" href={demoUrl} target="_blank" rel="noopener noreferrer">{demoLabel}</a>
       )}
       {repoUrl && (
-        <a class="card__cta" href={repoUrl} rel="noopener">{repoLabel}</a>
+        <a class="card__cta" href={repoUrl} target="_blank" rel="noopener noreferrer">{repoLabel}</a>
       )}
     </nav>
   )}
@@ -114,10 +118,14 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
     justify-content: center;
   }
 
+  .card__media--has-image {
+    padding: var(--space-md);
+  }
+
   .card__media img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     display: block;
   }
 

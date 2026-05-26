@@ -28,11 +28,14 @@ export const colors = {
 
 export const typography = {
   // 1 family across every subdomain (PRD §4 "タイポグラフィ").
-  // Inter is bundled via @fontsource/inter (self-hosted, same-origin) in
-  // Base layouts; system stack is the graceful fallback when the font fails.
-  // 暫定値、デザイナー確定待ち。
+  // IBM Plex Sans (+ IBM Plex Sans JP for :lang(ja)) is bundled via
+  // @fontsource (self-hosted, same-origin) in Base layouts; system stack is
+  // the graceful fallback when the font fails.
   fontFamily:
-    '"Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif',
+    '"IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif',
+  // JP family — applied via :lang(ja) selector in Base layouts.
+  fontFamilyJa:
+    '"IBM Plex Sans JP", "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif',
   // Heading tracking — wide enough to feel "document-y" without becoming a
   // visual quirk (PRD §4: "ドキュメント・論文ぽさ").
   headingTracking: '0.04em',
@@ -45,7 +48,8 @@ export const typography = {
   lhTight: '1.15',
   lhNormal: '1.6',
   // Weights actually bundled. Keep this list in sync with the
-  // @fontsource/inter imports in apps/hub/src/layouts/Base.astro.
+  // @fontsource/ibm-plex-sans imports in apps/hub/src/layouts/Base.astro.
+  // Note: JP companion bundles only 400/600 (no 500) for weight budget.
   weights: {
     regular: 400,
     medium: 500,
