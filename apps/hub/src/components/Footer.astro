@@ -1,0 +1,111 @@
+---
+// Site Footer — 3-column grid on >=640px, single-column stacked on mobile.
+//
+// Column 1: brand (wordmark + copyright + license)
+// Column 2: links (Contact / GitHub)
+// Column 3: language switcher
+//
+// The locale switcher is rendered as a link with `hreflang` so SR users know
+// what they're getting. JS-zero — language preference relies on URL prefix.
+
+import { t, type Locale } from '@ttsui/i18n';
+import FooterColumn from './FooterColumn.astro';
+
+interface Props {
+  locale: Locale;
+  switchHref: string;
+  switchLabel: string;
+  otherLocale: Locale;
+}
+
+const { locale, switchHref, switchLabel, otherLocale } = Astro.props;
+
+const contactHref = 'mailto:tipsytapstudio@gmail.com';
+const githubHref = 'https://github.com/TipsyTapStudio';
+
+const contactLabel = t('hub_footer_contact_label', locale);
+const githubLabel = t('common_footer_github', locale);
+const license = t('hub_footer_license', locale);
+const copyright = t('hub_footer_copyright', locale);
+---
+
+<footer class="site-footer" data-locale={locale}>
+  <div class="footer__grid">
+    <FooterColumn>
+      <p class="footer__brand">Tipsy Tap Studio</p>
+      <p class="footer__meta">{copyright}</p>
+      <p class="footer__meta">{license}</p>
+    </FooterColumn>
+
+    <FooterColumn heading={contactLabel}>
+      <a class="footer__link" href={contactHref}>{contactLabel}</a>
+      <a class="footer__link" href={githubHref} rel="noopener">{githubLabel}</a>
+    </FooterColumn>
+
+    <FooterColumn heading="Language">
+      <a class="footer__link" href={switchHref} hreflang={otherLocale}>{switchLabel}</a>
+    </FooterColumn>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border-hairline);
+    padding: var(--space-xl) var(--space-md);
+    color: var(--muted);
+    font-size: var(--fs-sm);
+  }
+
+  .footer__grid {
+    max-width: var(--max-content);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+
+  @media (min-width: 640px) {
+    .site-footer {
+      padding: var(--space-xl) var(--space-xl);
+    }
+
+    .footer__grid {
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: var(--space-xl);
+    }
+  }
+
+  .footer__brand {
+    margin: 0;
+    color: var(--fg);
+    font-weight: 500;
+    letter-spacing: var(--tracking-heading);
+  }
+
+  .footer__meta {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    line-height: var(--lh-normal);
+  }
+
+  .footer__link {
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+
+  .footer__link:hover,
+  .footer__link:focus-visible {
+    color: var(--fg);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .footer__link {
+      transition: none;
+    }
+  }
+</style>

@@ -1,0 +1,204 @@
+---
+// ProductCard — one entry in the Works grid.
+//
+// Inputs:
+//   - slug: stable identifier → looked up against i18n keys
+//     (`hub_works_item_${slug}_title` / `_desc`)
+//   - status / tags / urls: read straight from apps/hub/src/data/works.json
+//
+// The card is purely structural — visual lift on hover is the only motion,
+// and it self-disables under prefers-reduced-motion. JS-zero by design.
+
+import { t, type Locale } from '@ttsui/i18n';
+import StatusBadge from './StatusBadge.astro';
+import TagChip from './TagChip.astro';
+
+type Status = 'live' | 'beta' | 'tinkering' | 'sketch';
+
+interface Props {
+  slug: string;
+  status: Status;
+  tags: string[];
+  thumb: string | null;
+  demoUrl: string | null;
+  repoUrl: string | null;
+  lpUrl: string | null;
+  locale: Locale;
+}
+
+const { slug, status, tags, thumb, demoUrl, repoUrl, lpUrl, locale } = Astro.props;
+
+const title = t(`hub_works_item_${slug}_title`, locale);
+const desc = t(`hub_works_item_${slug}_desc`, locale);
+const demoLabel = t('hub_works_cta_demo', locale);
+const repoLabel = t('hub_works_cta_repo', locale);
+
+// If an LP is set, the title links there; otherwise the card stays inert.
+const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
+---
+
+<article class="card" aria-labelledby={`card-${slug}-title`}>
+  <div class="card__media" aria-hidden={thumb ? undefined : 'true'}>
+    {thumb ? (
+      <img src={thumb} alt="" loading="lazy" decoding="async" />
+    ) : (
+      <span class="card__placeholder">T</span>
+    )}
+  </div>
+
+  <header class="card__header">
+    <h3 id={`card-${slug}-title`} class="card__title">
+      {titleHref ? (
+        <a href={titleHref} rel={titleHref.startsWith('http') ? 'noopener' : undefined}>{title}</a>
+      ) : (
+        title
+      )}
+    </h3>
+    <StatusBadge status={status} locale={locale} />
+  </header>
+
+  <p class="card__desc">{desc}</p>
+
+  {tags.length > 0 && (
+    <ul class="card__tags" role="list" aria-label="Tags">
+      {tags.map((tag) => (
+        <li><TagChip label={tag} /></li>
+      ))}
+    </ul>
+  )}
+
+  {(demoUrl || repoUrl) && (
+    <nav class="card__ctas" aria-label={`${title} links`}>
+      {demoUrl && (
+        <a class="card__cta" href={demoUrl} rel="noopener">{demoLabel}</a>
+      )}
+      {repoUrl && (
+        <a class="card__cta" href={repoUrl} rel="noopener">{repoLabel}</a>
+      )}
+    </nav>
+  )}
+</article>
+
+<style>
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-card);
+    background: transparent;
+    transition: border-color 180ms ease, transform 180ms ease;
+    height: 100%;
+  }
+
+  .card:hover {
+    border-color: var(--muted);
+    transform: translateY(-2px);
+  }
+
+  .card:focus-within {
+    border-color: var(--muted);
+    transform: translateY(-2px);
+    outline: 2px solid var(--fg);
+    outline-offset: 4px;
+  }
+
+  .card__media {
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: #141414;
+    border-radius: calc(var(--radius-card) - 2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .card__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .card__placeholder {
+    font-family: var(--font-sans);
+    font-size: clamp(2rem, 1.5rem + 3vw, 3.5rem);
+    font-weight: 500;
+    color: var(--muted);
+    opacity: 0.4;
+    letter-spacing: 0;
+    user-select: none;
+  }
+
+  .card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+  }
+
+  .card__title {
+    margin: 0;
+    font-size: var(--fs-lg);
+    font-weight: 500;
+    line-height: var(--lh-tight);
+    color: var(--fg);
+  }
+
+  .card__title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .card__title a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .card__desc {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+  }
+
+  .card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3xs);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .card__ctas {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: auto;
+    padding-top: var(--space-xs);
+  }
+
+  .card__cta {
+    color: var(--fg);
+    font-size: var(--fs-sm);
+    text-decoration: none;
+    border-bottom: 1px solid var(--border-hairline);
+    padding-bottom: 2px;
+    transition: border-color 120ms ease, color 120ms ease;
+  }
+
+  .card__cta:hover,
+  .card__cta:focus-visible {
+    border-color: var(--fg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card,
+    .card:hover,
+    .card:focus-within {
+      transform: none;
+      transition: none;
+    }
+  }
+</style>

@@ -1,0 +1,39 @@
+---
+// FooterColumn — one labeled column of the site footer.
+//
+// Purely presentational wrapper; consumers pass either a heading + children
+// (links column) or a single brand block via the default slot.
+
+interface Props {
+  heading?: string;
+}
+
+const { heading } = Astro.props;
+---
+
+<div class="footer__col">
+  {heading && <h3 class="footer__col-heading">{heading}</h3>}
+  <slot />
+</div>
+
+<style>
+  .footer__col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+  }
+
+  .footer__col-heading {
+    margin: 0 0 var(--space-2xs);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: var(--track-badge);
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* JP heading: drop uppercase transform (no-op on kana but still cosmetic). */
+  .footer__col-heading:lang(ja) {
+    text-transform: none;
+  }
+</style>

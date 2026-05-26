@@ -13,6 +13,9 @@ export const colors = {
     foreground: '#EDEDED', // off-white, primary text
     muted: '#9A9A9A',      // secondary text / dividers — WCAG AA on #0B0B0B (6.79:1)
     rule: '#1F1F1F',       // hairline borders if ever needed
+    borderHairline: '#1F1F1F', // alias of `rule`, exposed as --border-hairline for component-level borders
+    badgeFgMono: '#3A3A3A',    // outline/inactive badge stroke color
+    badgeBetaBg: '#2A2A2A',    // beta badge fill
   },
   spv: {
     // SPV-2 may unlock chromagram-derived accents on its LP.
@@ -34,6 +37,13 @@ export const typography = {
   // visual quirk (PRD §4: "ドキュメント・論文ぽさ").
   headingTracking: '0.04em',
   bodyTracking: '0.01em',
+  // Display tracking — section headings, manifesto keywords.
+  displayTracking: '0.12em',
+  // Badge tracking — small uppercase chips.
+  badgeTracking: '0.08em',
+  // Line-height tokens
+  lhTight: '1.15',
+  lhNormal: '1.6',
   // Weights actually bundled. Keep this list in sync with the
   // @fontsource/inter imports in apps/hub/src/layouts/Base.astro.
   weights: {
@@ -56,18 +66,29 @@ export const spacing = {
   xl:   '3rem',     // 48px
   '2xl': '4.5rem',  // 72px
   '3xl': '6rem',    // 96px
+  // Section rhythm — clamp-driven vertical padding for top-level sections.
+  section:    'clamp(4.5rem, 3rem + 6vw, 8rem)',
+  sectionSm:  'clamp(3rem, 2rem + 3vw, 4.5rem)',
 } as const;
 
 // Typographic scale — built around clamp() so layouts stay fluid between
 // mobile and desktop without media-query gymnastics.
 export const fontSize = {
   // Body
+  xs:   'clamp(0.75rem, 0.72rem + 0.15vw, 0.8125rem)',
   sm:   'clamp(0.875rem, 0.84rem + 0.18vw, 0.95rem)',
   base: 'clamp(1rem, 0.96rem + 0.2vw, 1.125rem)',
   lg:   'clamp(1.125rem, 1.05rem + 0.4vw, 1.375rem)',
   // Display — hero title sits here.
   xl:   'clamp(2rem, 1.4rem + 3vw, 3.75rem)',
   '2xl':'clamp(2.5rem, 1.6rem + 4.5vw, 5rem)',
+  '3xl':'clamp(3rem, 2rem + 5vw, 6rem)',
+} as const;
+
+// Border-radius scale — keep semantic (cards vs pill chips).
+export const radius = {
+  card: '0.5rem',
+  chip: '999px',
 } as const;
 
 export type Tokens = {
@@ -75,4 +96,5 @@ export type Tokens = {
   typography: typeof typography;
   spacing: typeof spacing;
   fontSize: typeof fontSize;
+  radius: typeof radius;
 };

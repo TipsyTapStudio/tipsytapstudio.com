@@ -1,0 +1,18 @@
+---
+// SectionHeading — h2 wrapper for top-level page sections.
+//
+// Picks up the global `.section-heading` rules in Base.astro so spacing,
+// tracking, and JP overrides stay in one place. The wrapper exists mainly
+// to give the page a consistent semantic landmark + id hook for aria-labelledby.
+
+interface Props {
+  id: string;
+  class?: string;
+}
+
+const { id, class: className } = Astro.props;
+---
+
+<h2 id={id} class:list={['section-heading', className]}>
+  <slot />
+</h2>

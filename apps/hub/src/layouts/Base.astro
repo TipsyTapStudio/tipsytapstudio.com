@@ -8,6 +8,7 @@
 // - One typographic family (Inter, self-hosted via @fontsource) shared across subdomains.
 
 import { t, type Locale } from '@ttsui/i18n';
+import Footer from '../components/Footer.astro';
 
 // Self-hosted Inter via @fontsource (same-origin, no third-party requests).
 // Keep weight list in sync with typography.weights in @ttsui/tokens.
@@ -34,10 +35,6 @@ const otherLocale: Locale = locale === 'ja' ? 'en' : 'ja';
 const switchHref = `/${otherLocale}/`;
 const switchLabel = t('common_locale_switch', locale);
 
-const contactHref = 'mailto:tipsytapstudio@gmail.com';
-const githubHref = 'https://github.com/TipsyTapStudio';
-const contactLabel = t('common_footer_contact', locale);
-const githubLabel = t('common_footer_github', locale);
 ---
 
 <!doctype html>
@@ -59,15 +56,12 @@ const githubLabel = t('common_footer_github', locale);
       <slot />
     </main>
 
-    <footer class="site-footer">
-      <nav aria-label="Site links">
-        <a href={contactHref}>{contactLabel}</a>
-        <span class="dot" aria-hidden="true">·</span>
-        <a href={githubHref} rel="noopener">{githubLabel}</a>
-        <span class="dot" aria-hidden="true">·</span>
-        <a href={switchHref} hreflang={otherLocale}>{switchLabel}</a>
-      </nav>
-    </footer>
+    <Footer
+      locale={locale}
+      switchHref={switchHref}
+      switchLabel={switchLabel}
+      otherLocale={otherLocale}
+    />
   </body>
 </html>
 
@@ -78,6 +72,12 @@ const githubLabel = t('common_footer_github', locale);
     --fg: #ededed;
     --muted: #9a9a9a;
     --rule: #1f1f1f;
+    /* Border-hairline is intentionally a distinct token from --rule even though
+       the value matches today. Components use --border-hairline so the designer
+       can lift card borders without touching divider rules. */
+    --border-hairline: #1f1f1f;
+    --badge-fg-mono: #3a3a3a;
+    --badge-beta-bg: #2a2a2a;
 
     --font-sans:
       'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
@@ -85,7 +85,13 @@ const githubLabel = t('common_footer_github', locale);
 
     --tracking-heading: 0.04em;
     --tracking-body: 0.01em;
+    --track-display: 0.12em;
+    --track-badge: 0.08em;
 
+    --lh-tight: 1.15;
+    --lh-normal: 1.6;
+
+    --space-3xs: 0.25rem;
     --space-2xs: 0.5rem;
     --space-xs: 0.75rem;
     --space-sm: 1rem;
@@ -94,12 +100,19 @@ const githubLabel = t('common_footer_github', locale);
     --space-xl: 3rem;
     --space-2xl: 4.5rem;
     --space-3xl: 6rem;
+    --space-section: clamp(4.5rem, 3rem + 6vw, 8rem);
+    --space-section-sm: clamp(3rem, 2rem + 3vw, 4.5rem);
 
+    --fs-xs: clamp(0.75rem, 0.72rem + 0.15vw, 0.8125rem);
     --fs-sm: clamp(0.875rem, 0.84rem + 0.18vw, 0.95rem);
     --fs-base: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
     --fs-lg: clamp(1.125rem, 1.05rem + 0.4vw, 1.375rem);
     --fs-xl: clamp(2rem, 1.4rem + 3vw, 3.75rem);
     --fs-2xl: clamp(2.5rem, 1.6rem + 4.5vw, 5rem);
+    --fs-3xl: clamp(3rem, 2rem + 5vw, 6rem);
+
+    --radius-card: 0.5rem;
+    --radius-chip: 999px;
 
     --max-content: 56rem; /* ~896px — comfortable single-column reading width */
   }
@@ -179,35 +192,60 @@ const githubLabel = t('common_footer_github', locale);
     top: var(--space-sm);
   }
 
-  /* --- Footer (minimal stub) --- */
-  .site-footer {
-    flex-shrink: 0;
-    padding: var(--space-lg) var(--space-md);
-    color: var(--muted);
-    font-size: var(--fs-sm);
-    text-align: center;
-  }
-
-  .site-footer nav {
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: var(--space-2xs) var(--space-xs);
-    align-items: center;
-    justify-content: center;
-  }
-
-  .site-footer a {
-    color: var(--muted);
-    text-decoration: none;
-  }
-
-  .site-footer a:hover,
-  .site-footer a:focus-visible {
+  /* --- Section heading utility (used by all top-level sections) --- */
+  .section-heading {
+    font-size: var(--fs-xl);
+    font-weight: 500;
+    line-height: var(--lh-tight);
+    letter-spacing: var(--track-display);
+    margin: 0 0 var(--space-md);
     color: var(--fg);
-    text-decoration: underline;
   }
 
-  .site-footer .dot {
-    color: var(--rule);
+  @media (min-width: 640px) {
+    .section-heading {
+      margin-bottom: var(--space-lg);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .section-heading {
+      margin-bottom: var(--space-xl);
+    }
+  }
+
+  /* Japanese tightens display tracking; the wide 0.12em looks broken in kana. */
+  .section-heading:lang(ja) {
+    letter-spacing: 0.04em;
+  }
+
+  /* Shared section layout utility — single-column, fluid vertical rhythm. */
+  .section {
+    max-width: var(--max-content);
+    margin: 0 auto;
+    padding-inline: var(--space-md);
+    padding-block: var(--space-xl);
+  }
+
+  @media (min-width: 640px) {
+    .section {
+      padding-inline: var(--space-xl);
+      padding-block: var(--space-2xl);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .section {
+      padding-inline: var(--space-2xl);
+      padding-block: var(--space-section);
+    }
+  }
+
+  .section-lede {
+    color: var(--muted);
+    font-size: var(--fs-base);
+    line-height: var(--lh-normal);
+    max-width: 38rem;
+    margin: 0 0 var(--space-lg);
   }
 </style>

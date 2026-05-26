@@ -1,0 +1,77 @@
+---
+// StatusBadge — small uppercase status chip for ProductCard.
+//
+// Four states (live | beta | tinkering | sketch) maped to the designer's
+// monochrome palette. Each variant uses a distinct fill/stroke combo so the
+// badge reads at-a-glance without color hue.
+//
+// a11y: role="status" + aria-label so SR users get "Status: Live" etc.
+
+import { t, type Locale } from '@ttsui/i18n';
+
+type Status = 'live' | 'beta' | 'tinkering' | 'sketch';
+
+interface Props {
+  status: Status;
+  locale: Locale;
+}
+
+const { status, locale } = Astro.props;
+
+const labelKey = `hub_works_status_${status}` as const;
+const label = t(labelKey, locale);
+---
+
+<span
+  class:list={['badge', `badge--${status}`]}
+  role="status"
+  aria-label={`Status: ${label}`}
+>
+  {label}
+</span>
+
+<style>
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-chip);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: var(--track-badge);
+    text-transform: uppercase;
+    line-height: 1;
+    /* Default border slot — overridden per-variant where needed. */
+    border: 1px solid transparent;
+  }
+
+  .badge--live {
+    background: var(--fg);
+    color: var(--bg);
+  }
+
+  .badge--beta {
+    background: var(--badge-beta-bg);
+    color: var(--fg);
+    border-color: var(--badge-fg-mono);
+  }
+
+  .badge--tinkering {
+    background: transparent;
+    color: var(--fg);
+    border-color: var(--badge-fg-mono);
+  }
+
+  .badge--sketch {
+    background: transparent;
+    color: var(--muted);
+    border: 1px dashed var(--rule);
+  }
+
+  /* JP: ALL CAPS treatment breaks for non-latin glyphs.
+     If a future locale ever swaps the label to kana/kanji, drop the
+     uppercase transform so it doesn't double-up. */
+  .badge:lang(ja) {
+    text-transform: none;
+  }
+</style>

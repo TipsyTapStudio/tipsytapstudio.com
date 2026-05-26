@@ -1,18 +1,22 @@
 ---
-// Hub — English landing page (Hero only, Phase 1).
-//
-// Copy is held in @ttsui/i18n (provisional values, marketing-owned).
-// Layout/typography is intentionally minimal — refinement is the designer's
-// job, not the engineer's.
+// Hub — English landing page (Phase 1 full: Hero / Works / Manifesto / About).
 
 import Base from '../../layouts/Base.astro';
 import { t } from '@ttsui/i18n';
+import SectionHeading from '../../components/SectionHeading.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import ManifestoArrow from '../../components/ManifestoArrow.astro';
+import { sortWorks, type Work } from '../../lib/sortWorks.ts';
+import worksRaw from '../../data/works.json' with { type: 'json' };
 
 const locale = 'en';
 
 const title = t('hub_hero_title', locale);
 const subtitle = t('hub_hero_subtitle', locale);
 const substatement = t('hub_hero_substatement', locale);
+
+const works = sortWorks(worksRaw as Work[]);
+const skipLabel = t('hub_nav_skip_to_works', locale);
 ---
 
 <Base locale={locale} title={title} description={substatement}>
@@ -20,6 +24,46 @@ const substatement = t('hub_hero_substatement', locale);
     <h1 id="hero-title" class="hero__title">{title}</h1>
     <p class="hero__statement">{subtitle}</p>
     <p class="hero__sub">{substatement}</p>
+
+    <a class="hero__cue" href="#works" aria-label={skipLabel}>
+      <span aria-hidden="true">↓</span>
+    </a>
+  </section>
+
+  <section id="works" class="section" aria-labelledby="works-heading">
+    <SectionHeading id="works-heading">{t('hub_works_heading', locale)}</SectionHeading>
+    <p class="section-lede">{t('hub_works_lede', locale)}</p>
+    <ul class="works-grid" role="list">
+      {works.map((work) => (
+        <li>
+          <ProductCard
+            slug={work.slug}
+            status={work.status}
+            tags={work.tags}
+            thumb={work.thumb}
+            demoUrl={work.demoUrl}
+            repoUrl={work.repoUrl}
+            lpUrl={work.lpUrl}
+            locale={locale}
+          />
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section id="manifesto" class="section" aria-labelledby="manifesto-heading">
+    <SectionHeading id="manifesto-heading">{t('hub_manifesto_heading', locale)}</SectionHeading>
+    <div class="manifesto">
+      <ManifestoArrow keyword={t('hub_manifesto_kw1', locale)} body={t('hub_manifesto_p1', locale)} />
+      <ManifestoArrow keyword={t('hub_manifesto_kw2', locale)} body={t('hub_manifesto_p2', locale)} />
+      <ManifestoArrow keyword={t('hub_manifesto_kw3', locale)} body={t('hub_manifesto_p3', locale)} />
+    </div>
+  </section>
+
+  <section id="about" class="section" aria-labelledby="about-heading">
+    <SectionHeading id="about-heading">{t('hub_about_heading', locale)}</SectionHeading>
+    <p class="about__body">{t('hub_about_body', locale)}</p>
+    <span class="about__placeholder">{t('hub_about_devlog_link', locale)}</span>
   </section>
 </Base>
 
@@ -28,17 +72,17 @@ const substatement = t('hub_hero_substatement', locale);
     max-width: var(--max-content);
     margin: 0 auto;
     padding: var(--space-2xl) var(--space-md);
-    min-height: calc(100svh - 6rem); /* leave room for footer */
+    min-height: calc(100svh - 6rem);
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: var(--space-md);
+    position: relative;
   }
 
   .hero__title {
     font-size: var(--fs-2xl);
     font-weight: 600;
-    /* letter-spacing handled globally in Base.astro (h1 + :lang(ja) override) */
     line-height: 1.05;
     margin: 0;
     animation: hero-fade 720ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
@@ -57,12 +101,75 @@ const substatement = t('hub_hero_substatement', locale);
     font-size: var(--fs-base);
     font-weight: 400;
     line-height: 1.5;
-    margin-block-start: var(--space-lg); /* statement → sub の余白を ja と統一 */
+    margin-block-start: var(--space-lg);
     margin-block-end: 0;
     margin-inline: 0;
     color: var(--muted);
     max-width: 42rem; /* en は欧文密度低、ja の 32rem とは別値 */
     animation: hero-fade 720ms cubic-bezier(0.2, 0.7, 0.2, 1) 240ms both;
+  }
+
+  .hero__cue {
+    position: absolute;
+    left: 50%;
+    bottom: var(--space-lg);
+    transform: translateX(-50%);
+    color: var(--muted);
+    font-size: var(--fs-lg);
+    line-height: 1;
+    text-decoration: none;
+    padding: var(--space-2xs) var(--space-sm);
+    border-radius: var(--radius-chip);
+    transition: color 120ms ease;
+    animation: cue-bob 2400ms ease-in-out infinite;
+  }
+
+  .hero__cue:hover,
+  .hero__cue:focus-visible {
+    color: var(--fg);
+  }
+
+  .manifesto {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+  }
+
+  .works-grid {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+
+  @media (min-width: 640px) {
+    .works-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .works-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  .about__body {
+    color: var(--fg);
+    font-size: var(--fs-base);
+    line-height: var(--lh-normal);
+    max-width: 42rem;
+    margin: 0 0 var(--space-md);
+  }
+
+  .about__placeholder {
+    display: inline-block;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    border-bottom: 1px dashed var(--rule);
+    padding-bottom: 2px;
   }
 
   @media (min-width: 640px) {
@@ -89,10 +196,16 @@ const substatement = t('hub_hero_substatement', locale);
     }
   }
 
+  @keyframes cue-bob {
+    0%, 100% { transform: translate(-50%, 0); }
+    50%      { transform: translate(-50%, 0.3rem); }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .hero__title,
     .hero__statement,
-    .hero__sub {
+    .hero__sub,
+    .hero__cue {
       animation: none;
     }
   }
