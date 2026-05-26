@@ -126,7 +126,7 @@ Tipsy Tap Studio のウェブ・プレゼンス全体を構築・運用するた
    - **Chrome Extensions (SP Series)** — SPV-2 / SPCC / SPS / SPEQ
    - 各カードに `Live` / `Beta` / `Paused` / `Concept` のステータスバッジ
 3. **Manifesto** — スタジオ thesis を web 用に編集（インタラクティブ実験 / カテゴリ無限定 / なぜ Claude Code か）
-4. **About / Studio** — ソロ開発である旨を率直に、retrospectives/devlog リンク
+4. **About / Studio** — スタジオの活動領域と多ジャンル展開を語る、devlog リンク（**人数感は出さない**、"Studio" 呼称は複数人感の演出と整合させる、2026-05-23 更新）
 5. **Footer** — Contact / GitHub Org / X / RSS / LICENSE
 
 **ヒーローコピー** (2026-05-23 マーケ担当確定):
