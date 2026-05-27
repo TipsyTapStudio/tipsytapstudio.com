@@ -1,16 +1,23 @@
 ---
-// GrainCanvas — Lab #001 B. SVG feTurbulence noise field over a flat base.
+// GrainCanvas — Lab #001 B (v2). SVG feTurbulence noise field over a flat base.
 //
 // Two layers:
 //   1. `--bg` flat fill (#0B0B0B)
 //   2. SVG <feTurbulence> driving an animated noise pattern, composited via
 //      mix-blend-mode: screen so it brightens, never darkens, the base.
 //
-// Speed     (0→1) : 16s → 3s animate cycle. Default 0.4 (~9s).
-// Intensity (0→1) : overlay opacity 0 → 0.18. Default 0.45.
-// SMIL pause      : IntersectionObserver toggles svgEl.unpauseAnimations() /
-//                   pauseAnimations() so off-screen frames cost nothing.
-// Reduce-motion   : SMIL <animate> removed; static baseFrequency 0.775.
+// v2 (designer-confirmed):
+// - Speed     (0→1) : 24s → 1.5s (`24 - 22.5 * s`). Default 0.4.
+// - Intensity (0→1) : overlay opacity 0 → var(--lab-grain-alpha-max) (0.55).
+//                     `feColorMatrix` alpha row driven dynamically:
+//                     0.4 + intensity * 0.6.
+//                     `numOctaves` jumps 2↔3 with hysteresis (up @ 0.75,
+//                     down @ 0.65) to avoid flicker.
+//                     Default 0.65.
+// - baseFrequency animate values widened: 0.35 ; 1.2 ; 0.35.
+// - SMIL pause      : IntersectionObserver toggles svgEl.unpauseAnimations() /
+//                     pauseAnimations() so off-screen frames cost nothing.
+// - Reduce-motion   : SMIL <animate> removed; static baseFrequency 0.775.
 
 const baseId = 'lab-grain';
 ---
@@ -32,18 +39,21 @@ const baseId = 'lab-grain';
           numOctaves="2"
           seed="3"
           stitchTiles="stitch"
+          class="grain-turbulence"
         >
           <animate
             attributeName="baseFrequency"
-            values="0.6;0.95;0.6"
+            values="0.35;1.2;0.35"
             dur="9s"
             repeatCount="indefinite"
             class="grain-animate"
           />
         </feTurbulence>
-        {/* Force the noise to pure greyscale so the overlay reads as grain
-            and the screen-blend stays neutral. */}
+        {/* Force the noise to pure greyscale; alpha row is rewritten by JS
+            (0.4 + intensity * 0.6) so the grain density tracks intensity
+            without re-flowing the SVG. */}
         <feColorMatrix
+          class="grain-colormatrix"
           type="matrix"
           values="0 0 0 0 1
                   0 0 0 0 1
@@ -62,7 +72,7 @@ const baseId = 'lab-grain';
     inset: 0;
     /* Hardcode defaults; the script rewrites these via setProperty. */
     --grain-speed: 0.4;
-    --grain-intensity: 0.45;
+    --grain-intensity: 0.65;
   }
 
   .grain-canvas__base {
@@ -77,8 +87,8 @@ const baseId = 'lab-grain';
     width: 100%;
     height: 100%;
     mix-blend-mode: screen;
-    /* Map slider intensity 0..1 to 0..0.18 alpha. */
-    opacity: calc(var(--grain-intensity) * 0.18);
+    /* v2: Map slider intensity 0..1 to 0..--lab-grain-alpha-max (0.55). */
+    opacity: calc(var(--grain-intensity) * var(--lab-grain-alpha-max));
     transition: opacity 120ms ease;
   }
 
@@ -94,17 +104,46 @@ const baseId = 'lab-grain';
   // .experiment-frame ancestor, and pause SMIL when scrolled out of view.
   const nodes = document.querySelectorAll<HTMLElement>('.grain-canvas');
 
-  // Map slider speed (0..1) → SMIL dur in seconds: 16s → 3s.
-  const speedToDur = (v: number): string => `${(16 - 13 * v).toFixed(2)}s`;
+  // v2: Map slider speed (0..1) → SMIL dur seconds: 24s → 1.5s.
+  const speedToDur = (v: number): string => `${(24 - 22.5 * v).toFixed(2)}s`;
+
+  // v2: feColorMatrix alpha row = 0.4 + intensity * 0.6.
+  const colorMatrixFor = (intensity: number): string => {
+    const a = (0.4 + intensity * 0.6).toFixed(3);
+    return `0 0 0 0 1\n                  0 0 0 0 1\n                  0 0 0 0 1\n                  0 0 0 ${a} 0`;
+  };
 
   nodes.forEach((node) => {
     const frame = node.closest('.experiment-frame');
     const svg = node.querySelector<SVGSVGElement>('.grain-canvas__svg');
     const animateEl = node.querySelector<SVGAnimateElement>('.grain-animate');
+    const turbulenceEl = node.querySelector<SVGElement>('.grain-turbulence');
+    const colorMatrixEl = node.querySelector<SVGElement>('.grain-colormatrix');
 
-    // Apply initial dur from the inline default.
-    const initialSpeed = parseFloat(getComputedStyle(node).getPropertyValue('--grain-speed') || '0.4');
+    // numOctaves hysteresis state: true once we crossed up to 3, drops back at 0.65.
+    let octavesHigh = false;
+    const applyOctaves = (intensity: number) => {
+      if (!turbulenceEl) return;
+      if (!octavesHigh && intensity >= 0.75) {
+        octavesHigh = true;
+        turbulenceEl.setAttribute('numOctaves', '3');
+      } else if (octavesHigh && intensity <= 0.65) {
+        octavesHigh = false;
+        turbulenceEl.setAttribute('numOctaves', '2');
+      }
+    };
+
+    // Apply initial values from inline defaults so first paint matches JS state.
+    const cs = getComputedStyle(node);
+    const initialSpeed = parseFloat(cs.getPropertyValue('--grain-speed') || '0.4');
+    const initialIntensity = parseFloat(cs.getPropertyValue('--grain-intensity') || '0.65');
     animateEl?.setAttribute('dur', speedToDur(initialSpeed));
+    colorMatrixEl?.setAttribute('values', colorMatrixFor(initialIntensity));
+    // Seed octaves state from initial intensity.
+    if (initialIntensity >= 0.75) {
+      octavesHigh = true;
+      turbulenceEl?.setAttribute('numOctaves', '3');
+    }
 
     frame?.addEventListener('paramchange', (event) => {
       const { name, value } = (event as CustomEvent<{ name: string; value: number }>).detail;
@@ -112,6 +151,8 @@ const baseId = 'lab-grain';
         animateEl?.setAttribute('dur', speedToDur(value));
       } else if (name === 'intensity') {
         node.style.setProperty('--grain-intensity', value.toString());
+        colorMatrixEl?.setAttribute('values', colorMatrixFor(value));
+        applyOctaves(value);
       }
     });
 

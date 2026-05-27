@@ -1,14 +1,18 @@
 ---
-// DriftCanvas — Lab #001 A. Pure-CSS conic-gradient backdrop.
+// DriftCanvas — Lab #001 A (v2). Pure-CSS conic-gradient backdrop.
 //
 // Honest baseline: zero JS rendering, no <canvas>, no SVG noise. Speed and
 // Intensity are CSS custom properties (--drift-speed, --drift-intensity) that
 // the page-level slider listener rewrites on the .drift-canvas element.
 //
-// Speed mapping  (slider 0→1) : 30s → 4s per cycle. Default 0.35 (~10s).
-// Intensity mapping (0→1)    : interpolate from flat #1A1A1A to the full
-//                              4-stop ramp. Default 0.5.
-// Reduce-motion              : animation paused; static snapshot at intensity 0.5.
+// v2 (designer-confirmed):
+// - Speed mapping  (0→1) : 60 * pow(0.02, s) → 60s..1.2s (exponential).
+// - Intensity     (0→1) : pow(intensity, 0.7), expanded 5-stop ramp
+//                          (#080808 → #161616 → #222222 → #363636 → #4A4A4A).
+//                          Default 0.35.
+// - filter: blur(var(--lab-drift-blur)) to soften the conic seams.
+// - conic center drifts slowly (40-60% / 30-50%) on a ~120s cycle.
+// - Reduce-motion : animation paused; static snapshot at intensity 0.35.
 ---
 
 <div
@@ -16,7 +20,7 @@
   role="presentation"
   aria-hidden="true"
   data-canvas="drift"
-  style="--drift-speed: 0.35; --drift-intensity: 0.5;"
+  style="--drift-speed: 0.35; --drift-intensity: 0.35;"
 ></div>
 
 <style>
@@ -24,60 +28,100 @@
     position: absolute;
     inset: 0;
 
-    /* Map slider 0..1 to animation duration via a piecewise calc.
-       30s at 0 → 4s at 1 → duration = (30 - 26 * speed)s. */
-    --drift-cycle: calc((30 - 26 * var(--drift-speed)) * 1s);
+    /* v2 Speed mapping — JS rewrites --drift-cycle directly (exponential
+       60 * pow(0.02, s)). Fallback for the first paint before JS runs
+       resolves to a calm ~8.5s at default 0.35. */
+    --drift-cycle: 8.5s;
 
-    /* Intensity interpolation:
-       at 0 → all stops collapse toward --lab-shade-1 (#1A1A1A) — nearly flat.
-       at 1 → full ramp #0B → #1A → #26 → #3A.
-       We blend with color-mix() per stop. */
-    --c0: color-mix(in oklab, var(--lab-shade-1) calc((1 - var(--drift-intensity)) * 100%), var(--bg));
-    --c1: var(--lab-shade-1);
-    --c2: color-mix(in oklab, var(--lab-shade-1) calc((1 - var(--drift-intensity)) * 100%), var(--lab-shade-2));
-    --c3: color-mix(in oklab, var(--lab-shade-1) calc((1 - var(--drift-intensity)) * 100%), #3A3A3A);
+    /* v2 Intensity — JS writes --drift-intensity-curve = pow(intensity, 0.7).
+       Fallback equals raw intensity until JS lands. */
+    --drift-intensity-curve: var(--drift-intensity);
+
+    /* Conic center positions — animated via @keyframes drift-center. */
+    --drift-cx: 50%;
+    --drift-cy: 40%;
+
+    /* 5-stop ramp. At intensity 0 each stop collapses toward --lab-shade-1
+       (#1A1A1A) — nearly flat. At intensity 1 the full ramp shows. */
+    --c0: color-mix(in oklab, var(--lab-shade-1) calc((1 - var(--drift-intensity-curve)) * 100%), #080808);
+    --c1: color-mix(in oklab, var(--lab-shade-1) calc((1 - var(--drift-intensity-curve)) * 100%), #161616);
+    --c2: color-mix(in oklab, var(--lab-shade-1) calc((1 - var(--drift-intensity-curve)) * 100%), #222222);
+    --c3: color-mix(in oklab, var(--lab-shade-1) calc((1 - var(--drift-intensity-curve)) * 100%), #363636);
+    --c4: color-mix(in oklab, var(--lab-shade-1) calc((1 - var(--drift-intensity-curve)) * 100%), var(--lab-shade-2-hi));
 
     background:
       conic-gradient(
-        from 0deg at 60% 40%,
+        from 0deg at var(--drift-cx) var(--drift-cy),
         var(--c0) 0deg,
-        var(--c1) 90deg,
-        var(--c2) 180deg,
-        var(--c3) 270deg,
+        var(--c1) 72deg,
+        var(--c2) 144deg,
+        var(--c3) 216deg,
+        var(--c4) 288deg,
         var(--c0) 360deg
       );
-    will-change: transform;
-    animation: drift-rotate var(--drift-cycle) var(--ease-flux) infinite;
-    transform-origin: 60% 40%;
+    will-change: transform, filter;
+    filter: blur(var(--lab-drift-blur));
+    animation:
+      drift-rotate var(--drift-cycle) var(--ease-flux) infinite,
+      drift-center 120s ease-in-out infinite;
+    transform-origin: 50% 40%;
   }
 
   @keyframes drift-rotate {
-    from { transform: rotate(0deg) scale(1.5); }
-    to   { transform: rotate(360deg) scale(1.5); }
+    from { transform: rotate(0deg) scale(1.6); }
+    to   { transform: rotate(360deg) scale(1.6); }
+  }
+
+  /* Super-slow conic center drift to break the repetitive look. */
+  @keyframes drift-center {
+    0%   { --drift-cx: 50%; --drift-cy: 40%; }
+    25%  { --drift-cx: 60%; --drift-cy: 50%; }
+    50%  { --drift-cx: 55%; --drift-cy: 30%; }
+    75%  { --drift-cx: 40%; --drift-cy: 45%; }
+    100% { --drift-cx: 50%; --drift-cy: 40%; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .drift-canvas {
       animation: none;
-      /* Force a calm midpoint snapshot. */
-      --drift-intensity: 0.5;
+      /* Force a calm snapshot. */
+      --drift-intensity: 0.35;
     }
   }
 </style>
 
 <script>
   // Translate `paramchange` events on the parent .experiment-frame into
-  // CSS variable writes on this DriftCanvas instance. Tiny: < 0.5KB.
+  // CSS variable writes on this DriftCanvas instance.
+  // v2: Speed mapping is exponential (60 * pow(0.02, s)), Intensity curve is
+  // pow(i, 0.7). Both are computed in JS and written as resolved values.
   const nodes = document.querySelectorAll<HTMLElement>('.drift-canvas');
+
+  const speedToCycle = (s: number): string => {
+    // 60s @ s=0, ~8.5s @ s=0.5, 1.2s @ s=1.
+    const sec = 60 * Math.pow(0.02, s);
+    return `${sec.toFixed(2)}s`;
+  };
+  const intensityCurve = (i: number): string => Math.pow(i, 0.7).toFixed(4);
+
   nodes.forEach((node) => {
+    // Apply initial mapping from inline defaults so first paint matches JS-driven state.
+    const cs = getComputedStyle(node);
+    const initSpeed = parseFloat(cs.getPropertyValue('--drift-speed') || '0.35');
+    const initIntensity = parseFloat(cs.getPropertyValue('--drift-intensity') || '0.35');
+    node.style.setProperty('--drift-cycle', speedToCycle(initSpeed));
+    node.style.setProperty('--drift-intensity-curve', intensityCurve(initIntensity));
+
     const frame = node.closest('.experiment-frame');
     if (!frame) return;
     frame.addEventListener('paramchange', (event) => {
       const { name, value } = (event as CustomEvent<{ name: string; value: number }>).detail;
       if (name === 'speed') {
         node.style.setProperty('--drift-speed', value.toString());
+        node.style.setProperty('--drift-cycle', speedToCycle(value));
       } else if (name === 'intensity') {
         node.style.setProperty('--drift-intensity', value.toString());
+        node.style.setProperty('--drift-intensity-curve', intensityCurve(value));
       }
     });
   });

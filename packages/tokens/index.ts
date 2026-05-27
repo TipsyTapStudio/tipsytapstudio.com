@@ -102,8 +102,18 @@ export const lab = {
   canvasMinH: '100svh',
   shade1: '#1A1A1A', // Lab Drift only
   shade2: '#262626', // Lab Drift only
+  shade2Hi: '#4A4A4A', // Lab Drift Intensity max stop (v2)
+  driftBlur: '40px',   // Lab Drift cheap-look mitigation (v2)
+  grainAlphaMax: 0.55, // Lab Grain max overlay alpha (v2)
   overlayBg: 'rgba(11, 11, 11, 0.6)',
   easeFlux: 'cubic-bezier(0.4, 0, 0.2, 1)',
+  flux: {
+    // Lab Flux v2 "深海の漂流" — designer-confirmed.
+    colA: '#0C1014', // oklch(0.12 0.02 240) — deep dark
+    colB: '#3A4654', // oklch(0.32 0.04 220) — cool muted highlight
+    hueShiftDeg: 15,
+    hueShiftPeriodSec: 90,
+  },
 } as const;
 
 export type Tokens = {
