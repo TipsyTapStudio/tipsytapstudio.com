@@ -90,13 +90,16 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
     min-height: calc(100svh - 6rem); /* leave room for footer */
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    /* 2026-05-28 hotfix: center → flex-start。padding-top + min-height + center
+       の三重制御で大画面 H1 が沈んでいたため、上余白は padding-top のみが決める */
+    justify-content: flex-start;
     gap: var(--space-md);
     position: relative;
     isolation: isolate; /* radial dim ::before を hero スコープに閉じ込める */
   }
 
-  /* Radial dim — Hero 左 30% を暗く落として H1 のコントラストを稼ぐ。 */
+  /* Radial dim — Hero 左 30% を暗く落として H1 のコントラストを稼ぐ。
+     2026-05-28 hotfix: 縦位置 center → 60% (やや下) で Header 帯と重ねない */
   .hero::before {
     content: '';
     position: absolute;
@@ -104,7 +107,7 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
     pointer-events: none;
     z-index: -1;
     background: radial-gradient(
-      ellipse at 30% center,
+      ellipse at 30% 60%,
       rgba(0, 0, 0, 0.4) 0%,
       transparent 70%
     );

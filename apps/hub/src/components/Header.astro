@@ -60,6 +60,9 @@ const navLabel = locale === 'ja' ? 'ページ内移動' : 'In-page navigation';
     align-items: center;
     justify-content: space-between;
     gap: var(--space-md);
+    /* 2026-05-28 hotfix: 狭幅で 3 要素が詰まったときの折返しセーフティ */
+    flex-wrap: wrap;
+    row-gap: var(--space-2xs);
     padding: var(--space-sm) var(--space-md);
     max-width: var(--max-content);
     margin: 0 auto;
@@ -90,12 +93,13 @@ const navLabel = locale === 'ja' ? 'ページ内移動' : 'In-page navigation';
 
   .site-nav__sections a {
     font-size: var(--fs-sm);
-    color: var(--muted);
+    /* 2026-05-28 hotfix: Brew 背景上で AA 確保 (was var(--muted)) */
+    color: var(--muted-onbrew);
     text-decoration: none;
     letter-spacing: var(--track-badge);
     text-transform: uppercase;
-    padding: var(--space-3xs) 0;
-    border-bottom: 1px solid transparent;
+    padding: var(--space-3xs) 0 var(--space-2xs);
+    border-bottom: 2px solid transparent;
     text-shadow: var(--text-shadow-onbrew);
     transition:
       color 120ms ease,
@@ -114,7 +118,8 @@ const navLabel = locale === 'ja' ? 'ページ内移動' : 'In-page navigation';
 
   .site-nav__locale {
     font-size: var(--fs-sm);
-    color: var(--muted);
+    /* 2026-05-28 hotfix: Brew 背景上で AA 確保 (was var(--muted)) */
+    color: var(--muted-onbrew);
     text-decoration: none;
     letter-spacing: var(--track-badge);
     text-transform: uppercase;

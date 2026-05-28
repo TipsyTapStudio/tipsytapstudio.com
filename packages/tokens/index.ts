@@ -12,6 +12,7 @@ export const colors = {
     background: '#0B0B0B', // near-black, slightly off true #000 to ease eyes
     foreground: '#EFE7D6', // 暖オフホワイト、Brew 琥珀と調和 (was '#EDEDED')
     muted: '#A39C8A',      // 同系で muted (was '#9A9A9A')
+    mutedOnBrew: '#D8CDB4', // anchor list / locale on Brew background
     rule: '#1F1F1F',       // hairline borders if ever needed
     borderHairline: '#1F1F1F', // alias of `rule`, exposed as --border-hairline for component-level borders
     badgeFgMono: '#3A3A3A',    // outline/inactive badge stroke color
