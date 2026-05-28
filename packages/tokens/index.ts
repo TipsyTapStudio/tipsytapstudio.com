@@ -27,33 +27,37 @@ export const colors = {
 } as const;
 
 export const typography = {
-  // 1 family across every subdomain (PRD §4 "タイポグラフィ").
-  // IBM Plex Sans (+ IBM Plex Sans JP for :lang(ja)) is bundled via
-  // @fontsource (self-hosted, same-origin) in Base layouts; system stack is
-  // the graceful fallback when the font fails.
+  // Set B "Modern Brewery" — two-family split (display vs body) per subdomain.
+  // Bundled via @fontsource (self-hosted, same-origin) in Base layouts.
+  //
+  // - fontFamily (display, en): DM Serif Display 400 — Hero/H1-H3/section headings
+  // - fontFamilyBody (en): Source Serif 4 Variable — paragraph copy
+  // - fontFamilyJa: Shippori Mincho 400/500/700 — covers both display and body
   fontFamily:
-    '"IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif',
-  // JP family — applied via :lang(ja) selector in Base layouts.
+    '"DM Serif Display", ui-serif, Georgia, "Times New Roman", serif',
+  fontFamilyBody:
+    '"Source Serif 4 Variable", "DM Serif Display", ui-serif, Georgia, "Times New Roman", serif',
   fontFamilyJa:
-    '"IBM Plex Sans JP", "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif',
-  // Heading tracking — wide enough to feel "document-y" without becoming a
-  // visual quirk (PRD §4: "ドキュメント・論文ぽさ").
-  headingTracking: '0.04em',
-  bodyTracking: '0.01em',
-  // Display tracking — section headings, manifesto keywords.
-  displayTracking: '0.12em',
-  // Badge tracking — small uppercase chips.
+    '"Shippori Mincho", "DM Serif Display", ui-serif, "Hiragino Mincho ProN", "Yu Mincho", serif',
+  // Set B tracking — serif display reads best slightly tighter (-0.01em);
+  // body sits at 0. JP overrides everything to 0 in :lang(ja) selectors.
+  headingTracking: '-0.01em',
+  bodyTracking: '0',
+  displayTracking: '-0.01em',
+  // Badge tracking — small uppercase chips (still wide for stencil feel).
   badgeTracking: '0.08em',
   // Line-height tokens
   lhTight: '1.15',
   lhNormal: '1.6',
-  // Weights actually bundled. Keep this list in sync with the
-  // @fontsource/ibm-plex-sans imports in apps/hub/src/layouts/Base.astro.
-  // Note: JP companion bundles only 400/600 (no 500) for weight budget.
+  // Weights actually bundled. Keep in sync with @fontsource imports in
+  // apps/hub/src/layouts/Base.astro.
+  // - DM Serif Display: 400 only (no other weights shipped)
+  // - Source Serif 4: variable (all weights)
+  // - Shippori Mincho: 400 / 500 / 700
   weights: {
     regular: 400,
     medium: 500,
-    semibold: 600,
+    bold: 700,
   },
 } as const;
 

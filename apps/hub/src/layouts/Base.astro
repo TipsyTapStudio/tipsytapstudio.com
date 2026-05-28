@@ -5,22 +5,23 @@
 // - Mobile-first, single-column, generous whitespace.
 // - JS-zero by default. Motion = CSS only, respects prefers-reduced-motion.
 // - Monochrome (PRD §4 "色階層"). Hub stays desaturated; product LPs colorize.
-// - One typographic family (IBM Plex Sans + IBM Plex Sans JP, self-hosted via
-//   @fontsource) shared across subdomains. JP is loaded only at 400/600 for weight budget.
+// - Two typographic families (Set B "Modern Brewery"):
+//   - Display (en): DM Serif Display (400) — Hero/headings
+//   - Body (en): Source Serif 4 Variable — paragraph copy
+//   - JP: Shippori Mincho (400/500/700) — both display and body under :lang(ja)
 
 import { t, type Locale } from '@ttsui/i18n';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import HubBrewBackground from '../components/HubBrewBackground.astro';
 
-// Self-hosted IBM Plex Sans via @fontsource (same-origin, no third-party requests).
+// Self-hosted via @fontsource (same-origin, no third-party requests).
 // Keep weight list in sync with typography.weights in @ttsui/tokens.
-import '@fontsource/ibm-plex-sans/400.css';
-import '@fontsource/ibm-plex-sans/500.css';
-import '@fontsource/ibm-plex-sans/600.css';
-// JP companion — japanese subset only, 400/600 weights (designer-set budget).
-import '@fontsource/ibm-plex-sans-jp/japanese-400.css';
-import '@fontsource/ibm-plex-sans-jp/japanese-600.css';
+import '@fontsource/dm-serif-display/400.css';
+import '@fontsource-variable/source-serif-4';
+import '@fontsource/shippori-mincho/400.css';
+import '@fontsource/shippori-mincho/500.css';
+import '@fontsource/shippori-mincho/700.css';
 
 interface Props {
   locale: Locale;
@@ -106,9 +107,16 @@ const enableHeader = enableBrewBg;
     --badge-fg-mono: #3a3a3a;
     --badge-beta-bg: #2a2a2a;
 
-    --font-sans:
-      'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
-      'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    /* Set B "Modern Brewery": display vs body split.
+       - --font-display: Hero / h1-h3 / section headings / brand wordmark
+       - --font-body: paragraph copy (body, p, lede)
+       - --font-sans: legacy alias of --font-body for backward compatibility */
+    --font-display:
+      'DM Serif Display', ui-serif, Georgia, 'Times New Roman', serif;
+    --font-body:
+      'Source Serif 4 Variable', 'DM Serif Display', ui-serif, Georgia,
+      'Times New Roman', serif;
+    --font-sans: var(--font-body);
 
     --tracking-heading: 0.04em;
     --tracking-body: 0.01em;
@@ -152,7 +160,11 @@ const enableHeader = enableBrewBg;
     --overlay-strong: rgba(11, 11, 11, 0.6);
     --card-bg-onbrew: rgba(11, 11, 11, 0.55);
     --card-border-onbrew: rgba(255, 255, 255, 0.08);
-    --text-shadow-onbrew: 0 1px 2px rgba(0, 0, 0, 0.45);
+    /* Set B: doubled shadow — base 1px drop + soft 10px halo. Serif weights
+       are visually lighter than Plex Sans 500, so we need extra rescue for
+       legibility on the hotter beer palette peaks. */
+    --text-shadow-onbrew:
+      0 1px 2px rgba(0, 0, 0, 0.55), 0 0 10px rgba(0, 0, 0, 0.3);
 
     /* --- Lab-scope tokens (used only under /lab/) ---
        Mirrored from @ttsui/tokens `lab`. Hub Hero / Works / Manifesto must NOT
@@ -188,10 +200,10 @@ const enableHeader = enableBrewBg;
   body {
     background: var(--bg);
     color: var(--fg);
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     font-size: var(--fs-base);
     line-height: 1.6;
-    letter-spacing: var(--tracking-body);
+    letter-spacing: 0;
     min-height: 100svh;
     display: flex;
     flex-direction: column;
@@ -199,20 +211,27 @@ const enableHeader = enableBrewBg;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Japanese family override — JP glyph family fronted, latin Plex Sans as the
-     fallback so mixed-script lines keep a unified Plex feel. System stack stays
-     as the last-resort fallback for font load failures. */
+  /* Japanese family override (Set B) — Shippori Mincho fronted for both
+     display and body. Latin serifs trail as fallback so mixed-script lines
+     keep a unified mincho/serif feel; system stack is last-resort. */
   :lang(ja) {
-    font-family: 'IBM Plex Sans JP', 'IBM Plex Sans', ui-sans-serif, system-ui,
-      -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    --font-display:
+      'Shippori Mincho', 'DM Serif Display', ui-serif, 'Hiragino Mincho ProN',
+      'Yu Mincho', serif;
+    --font-body:
+      'Shippori Mincho', 'Source Serif 4 Variable', ui-serif,
+      'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    --font-sans: var(--font-body);
+    font-family: var(--font-body);
   }
 
-  /* Heading tracking — euro-Latin gets the 0.04em document feel.
-     Japanese (kana/kanji) looks airy and broken at that value, so reset to 0. */
+  /* Set B: display family on headings, tracking tightened (-0.01em) to suit
+     DM Serif Display's wide proportions. JP gets a 0 override below. */
   h1,
   h2,
   h3 {
-    letter-spacing: var(--tracking-heading);
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
   }
 
   :lang(ja) h1,
@@ -254,10 +273,11 @@ const enableHeader = enableBrewBg;
 
   /* --- Section heading utility (used by all top-level sections) --- */
   .section-heading {
+    font-family: var(--font-display);
     font-size: var(--fs-xl);
-    font-weight: 500;
+    font-weight: 400; /* DM Serif Display only ships 400 */
     line-height: var(--lh-tight);
-    letter-spacing: var(--track-display);
+    letter-spacing: -0.01em;
     margin: 0 0 var(--space-md);
     color: var(--fg);
   }
@@ -274,9 +294,9 @@ const enableHeader = enableBrewBg;
     }
   }
 
-  /* Japanese tightens display tracking; the wide 0.12em looks broken in kana. */
+  /* JP: kana/kanji read best at 0 tracking under Shippori Mincho. */
   .section-heading:lang(ja) {
-    letter-spacing: 0.04em;
+    letter-spacing: 0;
   }
 
   /* Shared section layout utility — single-column, fluid vertical rhythm. */

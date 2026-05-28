@@ -10,8 +10,9 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@fontsource/ibm-plex-sans": "^5.1.0",
-    "@fontsource/ibm-plex-sans-jp": "^5.1.0",
+    "@fontsource/dm-serif-display": "^5.1.0",
+    "@fontsource-variable/source-serif-4": "^5.1.0",
+    "@fontsource/shippori-mincho": "^5.1.0",
     "@ttsui/i18n": "*",
     "@ttsui/tokens": "*",
     "@ttsui/ui": "*",
