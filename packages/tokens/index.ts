@@ -27,33 +27,34 @@ export const colors = {
 } as const;
 
 export const typography = {
-  // 1 family across every subdomain (PRD §4 "タイポグラフィ").
-  // IBM Plex Sans (+ IBM Plex Sans JP for :lang(ja)) is bundled via
-  // @fontsource (self-hosted, same-origin) in Base layouts; system stack is
-  // the graceful fallback when the font fails.
+  // Phase 2 Set A "古典酒場": EB Garamond (latin) + Shippori Mincho B1 (jp).
+  // Both bundled via @fontsource in apps/hub/src/layouts/Base.astro.
+  // System serif stack as the graceful fallback.
   fontFamily:
-    '"IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif',
+    '"EB Garamond", ui-serif, Georgia, "Times New Roman", Times, "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif',
   // JP family — applied via :lang(ja) selector in Base layouts.
   fontFamilyJa:
-    '"IBM Plex Sans JP", "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif',
-  // Heading tracking — wide enough to feel "document-y" without becoming a
-  // visual quirk (PRD §4: "ドキュメント・論文ぽさ").
-  headingTracking: '0.04em',
+    '"Shippori Mincho B1", "EB Garamond", ui-serif, Georgia, "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif',
+  // Heading tracking — serif/明朝 は letter-spacing 0 が品格、sans 用の +0.04em は捨てた.
+  headingTracking: '0em',
   bodyTracking: '0.01em',
-  // Display tracking — section headings, manifesto keywords.
-  displayTracking: '0.12em',
-  // Badge tracking — small uppercase chips.
+  // Display tracking — serif で wide tracking は崩れるので 0.
+  displayTracking: '0em',
+  // Badge tracking — uppercase chip 用、sans-tracking 維持.
   badgeTracking: '0.08em',
   // Line-height tokens
   lhTight: '1.15',
   lhNormal: '1.6',
   // Weights actually bundled. Keep this list in sync with the
-  // @fontsource/ibm-plex-sans imports in apps/hub/src/layouts/Base.astro.
-  // Note: JP companion bundles only 400/600 (no 500) for weight budget.
+  // @fontsource/eb-garamond + @fontsource/shippori-mincho-b1 imports in
+  // apps/hub/src/layouts/Base.astro.
+  // EB Garamond: 400 / 500 / 600 + 400-italic.
+  // Shippori Mincho B1: 400 / 500 / 700 (no 600 in this family).
   weights: {
     regular: 400,
     medium: 500,
     semibold: 600,
+    boldJa: 700, // Shippori-only bold step
   },
 } as const;
 

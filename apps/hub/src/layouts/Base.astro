@@ -5,22 +5,28 @@
 // - Mobile-first, single-column, generous whitespace.
 // - JS-zero by default. Motion = CSS only, respects prefers-reduced-motion.
 // - Monochrome (PRD §4 "色階層"). Hub stays desaturated; product LPs colorize.
-// - One typographic family (IBM Plex Sans + IBM Plex Sans JP, self-hosted via
-//   @fontsource) shared across subdomains. JP is loaded only at 400/600 for weight budget.
+// - One typographic family pairing (EB Garamond + Shippori Mincho B1, self-hosted
+//   via @fontsource) shared across subdomains. Phase 2 "Set A 古典酒場" — classic
+//   serif x mincho for品格 + 酒場 + 実験. JP subset = japanese only.
 
 import { t, type Locale } from '@ttsui/i18n';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import HubBrewBackground from '../components/HubBrewBackground.astro';
 
-// Self-hosted IBM Plex Sans via @fontsource (same-origin, no third-party requests).
+// Self-hosted EB Garamond via @fontsource (same-origin, no third-party requests).
 // Keep weight list in sync with typography.weights in @ttsui/tokens.
-import '@fontsource/ibm-plex-sans/400.css';
-import '@fontsource/ibm-plex-sans/500.css';
-import '@fontsource/ibm-plex-sans/600.css';
-// JP companion — japanese subset only, 400/600 weights (designer-set budget).
-import '@fontsource/ibm-plex-sans-jp/japanese-400.css';
-import '@fontsource/ibm-plex-sans-jp/japanese-600.css';
+// 400 = regular body, 500 = medium display, 600 = semibold hero accent,
+// 400-italic = 酒場メニュー風 statement の動詞 italic 用.
+import '@fontsource/eb-garamond/400.css';
+import '@fontsource/eb-garamond/500.css';
+import '@fontsource/eb-garamond/600.css';
+import '@fontsource/eb-garamond/400-italic.css';
+// JP companion — Shippori Mincho B1, japanese subset only.
+// 400 = body, 500 = medium, 700 = bold heading (Shippori doesn't ship 600).
+import '@fontsource/shippori-mincho-b1/japanese-400.css';
+import '@fontsource/shippori-mincho-b1/japanese-500.css';
+import '@fontsource/shippori-mincho-b1/japanese-700.css';
 
 interface Props {
   locale: Locale;
@@ -106,13 +112,19 @@ const enableHeader = enableBrewBg;
     --badge-fg-mono: #3a3a3a;
     --badge-beta-bg: #2a2a2a;
 
+    /* Phase 2 Set A: EB Garamond (latin serif) as the document family.
+       Variable name kept as --font-sans to avoid churn across components;
+       the value is now a serif stack. System serif fallback for graceful
+       degradation when @fontsource asset fails. */
     --font-sans:
-      'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
-      'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      'EB Garamond', ui-serif, Georgia, 'Times New Roman', Times,
+      'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', serif;
 
-    --tracking-heading: 0.04em;
+    --tracking-heading: 0em;
     --tracking-body: 0.01em;
-    --track-display: 0.12em;
+    /* Display tracking — serif 系は wide tracking を嫌う、0 で品格を保つ */
+    --track-display: 0em;
+    /* Badge tracking — uppercase chip 用、sans-tracking 維持 */
     --track-badge: 0.08em;
 
     --lh-tight: 1.15;
@@ -152,7 +164,11 @@ const enableHeader = enableBrewBg;
     --overlay-strong: rgba(11, 11, 11, 0.6);
     --card-bg-onbrew: rgba(11, 11, 11, 0.55);
     --card-border-onbrew: rgba(255, 255, 255, 0.08);
-    --text-shadow-onbrew: 0 1px 2px rgba(0, 0, 0, 0.45);
+    /* Set A 強化: EB Garamond / Shippori はストロークが細く Brew 上で痩せるため
+       drop + halo の二重シャドウで支える。 */
+    --text-shadow-onbrew:
+      0 1px 2px rgba(0, 0, 0, 0.55),
+      0 0 8px rgba(0, 0, 0, 0.25);
 
     /* --- Lab-scope tokens (used only under /lab/) ---
        Mirrored from @ttsui/tokens `lab`. Hub Hero / Works / Manifesto must NOT
@@ -203,8 +219,8 @@ const enableHeader = enableBrewBg;
      fallback so mixed-script lines keep a unified Plex feel. System stack stays
      as the last-resort fallback for font load failures. */
   :lang(ja) {
-    font-family: 'IBM Plex Sans JP', 'IBM Plex Sans', ui-sans-serif, system-ui,
-      -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    font-family: 'Shippori Mincho B1', 'EB Garamond', ui-serif, Georgia,
+      'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', serif;
   }
 
   /* Heading tracking — euro-Latin gets the 0.04em document feel.
@@ -274,9 +290,9 @@ const enableHeader = enableBrewBg;
     }
   }
 
-  /* Japanese tightens display tracking; the wide 0.12em looks broken in kana. */
+  /* Set A: serif/明朝 共通で tracking 0 が品格。:lang(ja) もそのまま 0. */
   .section-heading:lang(ja) {
-    letter-spacing: 0.04em;
+    letter-spacing: 0;
   }
 
   /* Shared section layout utility — single-column, fluid vertical rhythm. */
