@@ -33,8 +33,10 @@ export const typography = {
   fontFamily:
     '"EB Garamond", ui-serif, Georgia, "Times New Roman", Times, "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif',
   // JP family — applied via :lang(ja) selector in Base layouts.
+  // 2026-05-28 fix: Latin family FIRST so mixed-script lines ("Tipsy Tap Studio"
+  // on ja pages) render with EB Garamond Latin glyphs, not Shippori's Latin.
   fontFamilyJa:
-    '"Shippori Mincho B1", "EB Garamond", ui-serif, Georgia, "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif',
+    '"EB Garamond", "Shippori Mincho B1", ui-serif, Georgia, "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif',
   // Heading tracking — serif/明朝 は letter-spacing 0 が品格、sans 用の +0.04em は捨てた.
   headingTracking: '0em',
   bodyTracking: '0.01em',
