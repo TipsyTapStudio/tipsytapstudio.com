@@ -204,12 +204,13 @@ const enableHeader = enableBrewBg;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Japanese family override — Noto Serif JP (源ノ明朝) を前置、Fraunces を
-     latin フォールバックに残して混植時の Serif 統一感を維持。--font-* も
-     差し替えて display/body の両方を ja で切替える。 */
+  /* Japanese family override — 2026-05-28 fix: Latin family FIRST so
+     mixed-script lines ("Tipsy Tap Studio") render with Fraunces Latin
+     glyphs on ja pages. Noto Serif JP fronts CJK glyphs only via per-glyph
+     fallback. */
   :lang(ja) {
-    --font-display: 'Noto Serif JP', 'Fraunces Variable', 'Fraunces', ui-serif, Georgia, serif;
-    --font-body: 'Noto Serif JP', 'Fraunces Variable', 'Fraunces', ui-serif, Georgia, serif;
+    --font-display: 'Fraunces Variable', 'Fraunces', 'Noto Serif JP', ui-serif, Georgia, serif;
+    --font-body: 'Fraunces Variable', 'Fraunces', 'Noto Serif JP', ui-serif, Georgia, serif;
     --font-sans: var(--font-body);
     font-family: var(--font-body);
   }
