@@ -1,25 +1,32 @@
 ---
-// BrewCanvas — Lab #002 ("F2 発酵中"). Raw WebGL2 fragment shader.
+// BrewCanvas — Lab #002 ("Brewing"). Raw WebGL2 fragment shader.
 //
-// Derived from FluxCanvas (Lab #001 C "深海の漂流") so the two share the same
-// noise field + tonal curve, but the palette is warm and a sparse "bubble"
-// layer is composited on top to read as slow fermentation rising from below.
+// v2 (3-beer cycle):
+//   - Bubble layer removed (was: sparse vertical streaks; u_bubble uniform).
+//   - Static ±8°/120s hue drift removed.
+//   - colA / colB now cycle through 3 designer-confirmed beer palettes in
+//     OKLCH space, CPU-side, with a 720s wall-clock period and a 75/25
+//     dwell/transition split per beer (smoothstep-eased transition).
 //
-//   u_colA = #0E0905 — HSL(25, 50%, 3%)  darkest substrate
-//   u_colB = #6E4A1E — HSL(30, 58%, 27%) warm amber highlight
-//   bubble = #E8DCC4 — off-white warm cream, additively mixed via `bubble`
-//
-// Hue drift: ±8° on a 120s sin cycle (half the angle / slower than Flux).
+//   Beer palettes (designer-confirmed):
+//     pilsner — colA #0F0C05  colB #92711B
+//     wit     — colA #0F0E0A  colB #7C6F49
+//     ipa     — colA #0E0905  colB #6E4A1E   (the v1 palette, kept as the 3rd slot)
 //
 // Sliders bound (via `paramchange` events bubbled from the parent
-// ExperimentFrame): speed, intensity, bubble.
+// ExperimentFrame): speed, intensity. (Bubble slider removed in v2.)
+//
+// Captions: when currentIndex flips, dispatches a `brewbeerchange` event up to
+// `.experiment-frame` carrying `{ name: 'pilsner' | 'wit' | 'ipa' }` so the
+// caption strip (rendered by the parent page) can update without coupling
+// DOM. Updated only on index change, not every frame.
 //
 // Performance discipline matches FluxCanvas:
 // - devicePixelRatio clamped to <= 1.5
 // - IntersectionObserver pauses the rAF when off-screen
-// - context-lost stops the loop; the CSS gradient under the canvas stays
-//   visible (#0E0905 → #6E4A1E) so the section never goes black
-// - prefers-reduced-motion: one frame at u_time = 0, no rAF
+// - context-lost stops the loop; the CSS fallback under the canvas stays visible
+// - prefers-reduced-motion: one frame at u_time = 0 using the current
+//   wall-clock beer mix, no rAF
 
 const fallbackId = 'brew-fallback';
 ---
@@ -39,7 +46,8 @@ const fallbackId = 'brew-fallback';
   .brew-canvas__fallback {
     position: absolute;
     inset: 0;
-    /* Matches u_colA → u_colB (#0E0905 → #6E4A1E). */
+    /* Matches the IPA palette colA → colB (the v1 default), so a WebGL-less
+       client sees the same warmth as a mid-cycle visitor. */
     background: linear-gradient(180deg, #0e0905 0%, #6e4a1e 100%);
   }
   .brew-canvas__gl {
@@ -60,15 +68,14 @@ const fallbackId = 'brew-fallback';
 in vec2 a_pos;
 void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }`;
 
-  // Brew = Flux base field + sparse bubble layer attenuated toward the center
-  // so the heading area stays legible. Bubble density is driven by u_bubble.
+  // Brew v2 = same Flux base field; colour identity comes from the cycling
+  // colA / colB uniforms (CPU-driven OKLCH lerp). No bubble layer.
   const FRAG = `#version 300 es
 precision highp float;
 out vec4 outColor;
 uniform vec2 u_resolution;
 uniform float u_time;
 uniform float u_intensity;
-uniform float u_bubble;
 uniform vec3 u_colA;
 uniform vec3 u_colB;
 
@@ -112,24 +119,14 @@ void main() {
   float k = pow(clamp(n, 0.0, 1.0), 2.2);
   vec3 color = mix(u_colA, u_colB, k);
 
-  // --- bubble layer ---------------------------------------------------------
-  // Sparse vertical streaks rising over time. The sin() peak is squeezed near
-  // its crest (subtract 0.95, scale x20) so most of the screen stays dark.
-  float bubble = max(0.0, sin(uv.y * 40.0 - u_time * 2.0 + noise(uv * 8.0) * 6.28) - 0.95) * 20.0;
-  // Mask the center so bubbles don't compete with the heading copy.
-  float distFromCenter = length(uv - vec2(0.5)) * 2.0;
-  float bubbleMask = smoothstep(0.3, 0.8, distFromCenter);
-  bubble *= bubbleMask;
-  // Composite bubble color (#E8DCC4 ≈ vec3(0.91, 0.86, 0.77)).
-  vec3 bubbleColor = vec3(0.91, 0.86, 0.77);
-  color = mix(color, bubbleColor, bubble * u_bubble);
-
   outColor = vec4(color, 1.0);
 }`;
 
-  // --- Color helpers (sRGB ↔ HSL) for CPU-side hue shift. ---
-  type RGB = [number, number, number];
-  type HSL = [number, number, number]; // h in degrees, s/l in 0..1
+  // --- Color helpers (sRGB ↔ linear ↔ OKLab/OKLCH) for CPU-side palette
+  // interpolation. OKLCH keeps perceptual lightness during mid-transition so
+  // the in-between pilsner→wit slot doesn't briefly mud out the way naive
+  // sRGB lerps do.
+  type RGB = [number, number, number]; // sRGB 0..1
 
   const hexToRgb = (hex: string): RGB => {
     const h = hex.replace('#', '');
@@ -140,43 +137,95 @@ void main() {
     ];
   };
 
-  const rgbToHsl = ([r, g, b]: RGB): HSL => {
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    const l = (max + min) / 2;
-    let h = 0, s = 0;
-    if (max !== min) {
-      const d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case r: h = ((g - b) / d + (g < b ? 6 : 0)); break;
-        case g: h = ((b - r) / d + 2); break;
-        case b: h = ((r - g) / d + 4); break;
-      }
-      h *= 60;
-    }
-    return [h, s, l];
+  // sRGB nonlinear → linear (per channel).
+  const srgbToLinear = (c: number): number =>
+    c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+
+  // linear → sRGB nonlinear (per channel).
+  const linearToSrgb = (c: number): number =>
+    c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+
+  // Linear sRGB → OKLab (Björn Ottosson).
+  const linToOklab = ([r, g, b]: RGB): [number, number, number] => {
+    const l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b;
+    const m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b;
+    const s = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b;
+    const l_ = Math.cbrt(l);
+    const m_ = Math.cbrt(m);
+    const s_ = Math.cbrt(s);
+    return [
+      0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_,
+      1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_,
+      0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_,
+    ];
   };
 
-  const hslToRgb = ([h, s, l]: HSL): RGB => {
-    h = ((h % 360) + 360) % 360;
-    const c = (1 - Math.abs(2 * l - 1)) * s;
-    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-    const m = l - c / 2;
-    let r1 = 0, g1 = 0, b1 = 0;
-    if (h < 60)       { r1 = c; g1 = x; }
-    else if (h < 120) { r1 = x; g1 = c; }
-    else if (h < 180) { g1 = c; b1 = x; }
-    else if (h < 240) { g1 = x; b1 = c; }
-    else if (h < 300) { r1 = x; b1 = c; }
-    else              { r1 = c; b1 = x; }
-    return [r1 + m, g1 + m, b1 + m];
+  // OKLab → linear sRGB.
+  const oklabToLin = ([L, a, b]: [number, number, number]): RGB => {
+    const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+    const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+    const s_ = L - 0.0894841775 * a - 1.291485548 * b;
+    const l = l_ * l_ * l_;
+    const m = m_ * m_ * m_;
+    const s = s_ * s_ * s_;
+    return [
+      4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+      -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+      -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+    ];
   };
 
-  // Designer-confirmed base colors and hue-shift params (Brew, F2 発酵中).
-  const BASE_A_HSL = rgbToHsl(hexToRgb('#0E0905'));
-  const BASE_B_HSL = rgbToHsl(hexToRgb('#6E4A1E'));
-  const HUE_SHIFT_DEG = 8;       // half of Flux's ±15°
-  const HUE_PERIOD_MS = 120_000; // 120s, slower than Flux's 90s
+  // sRGB hex → OKLab.
+  const hexToOklab = (hex: string): [number, number, number] => {
+    const [r, g, b] = hexToRgb(hex);
+    return linToOklab([srgbToLinear(r), srgbToLinear(g), srgbToLinear(b)]);
+  };
+
+  // OKLab lerp (component-wise; OK in OKLab since hue/chroma are encoded as
+  // a,b coords and a straight lerp matches the OKLCH=='oklch' interp the
+  // tokens declare for the typical case where adjacent palettes share hue
+  // family).
+  const lerpOklab = (
+    A: [number, number, number],
+    B: [number, number, number],
+    t: number,
+  ): [number, number, number] => [
+    A[0] + (B[0] - A[0]) * t,
+    A[1] + (B[1] - A[1]) * t,
+    A[2] + (B[2] - A[2]) * t,
+  ];
+
+  // OKLab → sRGB float triplet, clamped to gamut.
+  const oklabToRgb = (lab: [number, number, number]): RGB => {
+    const [lr, lg, lb] = oklabToLin(lab);
+    const r = linearToSrgb(Math.max(0, Math.min(1, lr)));
+    const g = linearToSrgb(Math.max(0, Math.min(1, lg)));
+    const b = linearToSrgb(Math.max(0, Math.min(1, lb)));
+    return [r, g, b];
+  };
+
+  // Designer-confirmed 3-beer cycle, in the order tokens.lab.brew.cycle.
+  const BEERS = [
+    { name: 'pilsner', colA: '#0F0C05', colB: '#92711B' },
+    { name: 'wit',     colA: '#0F0E0A', colB: '#7C6F49' },
+    { name: 'ipa',     colA: '#0E0905', colB: '#6E4A1E' },
+  ] as const;
+  const N_BEERS = BEERS.length;
+  const CYCLE_PERIOD_MS = 720_000; // 12 minutes
+  const DWELL_RATIO = 0.75;
+
+  // Pre-compute each palette in OKLab once.
+  const BEER_LAB = BEERS.map((b) => ({
+    name: b.name,
+    A: hexToOklab(b.colA),
+    B: hexToOklab(b.colB),
+  }));
+
+  // smoothstep(0, 1, x) for x already normalised to 0..1.
+  const smooth = (x: number): number => {
+    const t = Math.max(0, Math.min(1, x));
+    return t * t * (3 - 2 * t);
+  };
 
   function initOne(host: HTMLElement) {
     const canvas = host.querySelector<HTMLCanvasElement>('.brew-canvas__gl');
@@ -222,18 +271,19 @@ void main() {
     const uTime = gl.getUniformLocation(prog, 'u_time');
     const uRes = gl.getUniformLocation(prog, 'u_resolution');
     const uIntensity = gl.getUniformLocation(prog, 'u_intensity');
-    const uBubble = gl.getUniformLocation(prog, 'u_bubble');
     const uColA = gl.getUniformLocation(prog, 'u_colA');
     const uColB = gl.getUniformLocation(prog, 'u_colB');
+
+    const frame = host.closest('.experiment-frame');
 
     const state = {
       speed: 0.3,
       intensity: 0.4,
-      bubble: 0.4, // designer default
       time: 0,
       visible: false,
       raf: 0,
       reduced: false,
+      lastBeerIndex: -1,
     };
 
     const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -251,15 +301,37 @@ void main() {
       }
     }
 
+    // Compute current cycle state from wall-clock; upload uColA/uColB; fire
+    // brewbeerchange when currentIndex flips.
     function uploadColors() {
-      // ±8° hue shift on a 120s sin cycle, wall-clock driven so drift stays
-      // consistent regardless of pause/resume.
-      const phase = Math.sin((2 * Math.PI * Date.now()) / HUE_PERIOD_MS);
-      const shift = phase * HUE_SHIFT_DEG;
-      const a = hslToRgb([BASE_A_HSL[0] + shift, BASE_A_HSL[1], BASE_A_HSL[2]]);
-      const b = hslToRgb([BASE_B_HSL[0] + shift, BASE_B_HSL[1], BASE_B_HSL[2]]);
-      gl!.uniform3f(uColA, a[0], a[1], a[2]);
-      gl!.uniform3f(uColB, b[0], b[1], b[2]);
+      const nowMs = Date.now();
+      // phase in 0..N_BEERS, advances 3 slots per CYCLE_PERIOD_MS.
+      const phase = ((nowMs / CYCLE_PERIOD_MS) * N_BEERS) % N_BEERS;
+      const currentIndex = Math.floor(phase);
+      const nextIndex = (currentIndex + 1) % N_BEERS;
+      const t = phase - currentIndex; // 0..1 within current slot
+
+      // 0..DWELL_RATIO: hold current; DWELL_RATIO..1: smoothstep into next.
+      const w = t < DWELL_RATIO
+        ? 0
+        : smooth((t - DWELL_RATIO) / (1 - DWELL_RATIO));
+
+      const cur = BEER_LAB[currentIndex];
+      const nxt = BEER_LAB[nextIndex];
+      const A = oklabToRgb(lerpOklab(cur.A, nxt.A, w));
+      const B = oklabToRgb(lerpOklab(cur.B, nxt.B, w));
+      gl!.uniform3f(uColA, A[0], A[1], A[2]);
+      gl!.uniform3f(uColB, B[0], B[1], B[2]);
+
+      if (currentIndex !== state.lastBeerIndex) {
+        state.lastBeerIndex = currentIndex;
+        frame?.dispatchEvent(
+          new CustomEvent('brewbeerchange', {
+            detail: { name: BEERS[currentIndex].name, index: currentIndex },
+            bubbles: false,
+          }),
+        );
+      }
     }
 
     function draw() {
@@ -267,12 +339,13 @@ void main() {
       gl!.uniform1f(uTime, state.time);
       gl!.uniform2f(uRes, canvas!.width, canvas!.height);
       gl!.uniform1f(uIntensity, state.intensity);
-      gl!.uniform1f(uBubble, state.bubble);
       uploadColors();
       gl!.drawArrays(gl!.TRIANGLES, 0, 3);
     }
 
     function drawOnce() {
+      // reduced-motion: render the current wall-clock beer mix at u_time = 0
+      // so the still frame reflects whatever beer is "now brewing".
       state.time = 0;
       draw();
     }
@@ -311,12 +384,10 @@ void main() {
     // Context loss: stop rAF; the CSS fallback under the <canvas> stays visible.
     canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); stop(); });
 
-    const frame = host.closest('.experiment-frame');
     frame?.addEventListener('paramchange', (event) => {
       const { name, value } = (event as CustomEvent<{ name: string; value: number }>).detail;
       if (name === 'speed') state.speed = value;
       else if (name === 'intensity') state.intensity = value;
-      else if (name === 'bubble') state.bubble = value;
       if (state.reduced) drawOnce();
     });
 
@@ -326,3 +397,5 @@ void main() {
 
   nodes.forEach(initOne);
 </script>
+</content>
+</invoke>

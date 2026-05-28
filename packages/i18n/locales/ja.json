@@ -78,12 +78,15 @@
   "lab_001_c_caption": "フラグメントシェーダーで連続体を描く。一番重く、一番遠くまで伸びる。",
   "lab_param_speed": "速さ",
   "lab_param_intensity": "振幅",
-  "lab_param_bubble": "泡",
 
   "lab_002_title": "#002 — 発酵中",
-  "lab_002_intro": "タンクの底で麦が回り、泡が上へ抜けていく。Tipsy Tap の名のとおり、一杯注がれる前の景色を覗き込む実験。",
+  "lab_002_intro": "タンクの中で麦の色が入れ替わっていく。淡い黄、濁った白、深い琥珀 — 12 分でひと巡り。Tipsy Tap の名のとおり、一杯注がれる前の景色を覗き込む実験。",
   "lab_002_a_name": "Brew / WebGL",
-  "lab_002_a_caption": "暗琥珀の対流に泡のレイヤーを重ねる。フラグメントシェーダー 1 枚で、ぬるい温度と上昇する気泡を同時に描く。",
+  "lab_002_a_caption": "3 種のビールを 12 分周期で循環させる。フラグメントシェーダー 1 枚で、注ぎ口の手前にある色と温度の移ろいだけを描く。",
+  "lab_002_brewing_label": "いま注いでいる",
+  "lab_002_beer_pilsner": "ピルスナー",
+  "lab_002_beer_wit": "ウィット",
+  "lab_002_beer_ipa": "IPA",
 
   "lab_meta_tech": "技術",
   "lab_meta_size": "重さ",

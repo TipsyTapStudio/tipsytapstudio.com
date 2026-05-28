@@ -49,9 +49,20 @@ interface Props {
     label: string;
     value: number;
   }>;
+  /** Optional "Now brewing: <beer>" style caption strip rendered above the
+   *  slider grid. Used by Brew (#002) to surface the current beer in the
+   *  3-beer cycle. The `name` value is updated by the canvas via a
+   *  `brewbeerchange` CustomEvent bubbled to `.experiment-frame`; the page
+   *  passes a key→label map so the canvas-side identifier
+   *  (pilsner / wit / ipa) resolves to localised copy. */
+  liveCaption?: {
+    label: string;
+    initialName: string;
+    items: Record<string, string>;
+  };
 }
 
-const { id, name, index, total, caption, metaLabels, meta, sliders } =
+const { id, name, index, total, caption, metaLabels, meta, sliders, liveCaption } =
   Astro.props;
 
 const detailsId = `${id}-meta`;
@@ -104,6 +115,22 @@ const detailsId = `${id}-meta`;
           </div>
         </dl>
       </details>
+
+      {liveCaption && (
+        <p
+          class="experiment-frame__live-caption"
+          aria-live="polite"
+          data-live-caption
+          data-items={JSON.stringify(liveCaption.items)}
+        >
+          <span class="experiment-frame__live-caption-label">
+            {liveCaption.label}
+          </span>
+          <span class="experiment-frame__live-caption-value" data-live-caption-value>
+            {liveCaption.items[liveCaption.initialName] ?? liveCaption.initialName}
+          </span>
+        </p>
+      )}
 
       <div class="experiment-frame__sliders">
         {sliders.map((s) => (
@@ -329,6 +356,41 @@ const detailsId = `${id}-meta`;
     font-variant-numeric: tabular-nums;
   }
 
+  /* Live caption strip (Brew "now brewing: <beer>"). Sits above the slider
+     grid; deliberately quiet — uppercase muted label + tabular-style value,
+     same trim as the meta summary chip. */
+  .experiment-frame__live-caption {
+    margin: 0;
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-2xs);
+    font-size: var(--fs-xs);
+    line-height: var(--lh-tight);
+    color: var(--muted);
+    letter-spacing: var(--track-badge);
+    align-self: flex-start;
+  }
+  .experiment-frame__live-caption-label {
+    text-transform: uppercase;
+  }
+  .experiment-frame__live-caption-label:lang(ja) {
+    text-transform: none;
+  }
+  .experiment-frame__live-caption-value {
+    color: var(--fg);
+    text-transform: none;
+    letter-spacing: var(--track-display);
+    transition: opacity 240ms var(--ease-flux);
+  }
+  .experiment-frame__live-caption-value[data-fading='true'] {
+    opacity: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .experiment-frame__live-caption-value {
+      transition: none;
+    }
+  }
+
   /* Slider grid — 1 col mobile, 2 col 640+. */
   .experiment-frame__sliders {
     display: grid;
@@ -350,3 +412,34 @@ const detailsId = `${id}-meta`;
     }
   }
 </style>
+
+<script>
+  // Wire any live-caption strips (currently only Brew #002): listen for the
+  // `brewbeerchange` CustomEvent bubbled from the canvas, look up the
+  // localised label from the `data-items` JSON, and swap text only when the
+  // value actually changes (cheap, fires <=1×/minute under default cycle).
+  // A short fade smooths the transition without animating per frame.
+  document.querySelectorAll<HTMLElement>('.experiment-frame').forEach((frame) => {
+    const captionEl = frame.querySelector<HTMLElement>('[data-live-caption]');
+    const valueEl = frame.querySelector<HTMLElement>('[data-live-caption-value]');
+    if (!captionEl || !valueEl) return;
+
+    let items: Record<string, string> = {};
+    try {
+      items = JSON.parse(captionEl.dataset.items ?? '{}');
+    } catch {
+      items = {};
+    }
+
+    frame.addEventListener('brewbeerchange', (event) => {
+      const { name } = (event as CustomEvent<{ name: string }>).detail;
+      const next = items[name] ?? name;
+      if (valueEl.textContent === next) return;
+      valueEl.dataset.fading = 'true';
+      window.setTimeout(() => {
+        valueEl.textContent = next;
+        delete valueEl.dataset.fading;
+      }, 240);
+    });
+  });
+</script>

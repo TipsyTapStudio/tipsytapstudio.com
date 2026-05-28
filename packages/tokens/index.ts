@@ -115,15 +115,19 @@ export const lab = {
     hueShiftPeriodSec: 90,
   },
   brew: {
-    // Lab Brew "F2 発酵中" — designer-confirmed (warm, slow, sparse bubbles).
-    // Values are consumed directly inside BrewCanvas (uniforms/JS constants),
-    // not mirrored as CSS vars — same convention as `flux`.
-    colA: '#0E0905',       // HSL(25, 50%, 3%)  darkest substrate
-    colB: '#6E4A1E',       // HSL(30, 58%, 27%) warm amber highlight
-    bubbleColor: '#E8DCC4', // off-white warm cream
-    hueShiftDeg: 8,         // half of Flux's ±15°
-    hueShiftPeriodSec: 120, // slower than Flux (90s)
-    bubbleDensity: 0.4,     // default Bubble slider value
+    // Lab Brew #002 — designer-confirmed 3-beer cycle.
+    // No bubble layer, no hue drift — colour movement comes from cycling
+    // colA/colB through three beer palettes in OKLCH space (CPU-side lerp).
+    // Consumed directly inside BrewCanvas (JS constants), not mirrored as
+    // CSS vars — same convention as `flux`.
+    cycle: [
+      { name: 'pilsner', colA: '#0F0C05', colB: '#92711B' }, // H42-46, S35→78, L4→32
+      { name: 'wit',     colA: '#0F0E0A', colB: '#7C6F49' }, // H48-50, S18→28, L5→38
+      { name: 'ipa',     colA: '#0E0905', colB: '#6E4A1E' }, // H25-30, S50-58, L3→27 (legacy)
+    ],
+    cyclePeriodSec: 720,    // 12 min = 240s × 3 beers
+    dwellRatio: 0.75,       // 75% dwell, 25% transition per beer slot
+    interpSpace: 'oklch',   // colour interpolation space (sRGB lerp would muddy mids)
   },
 } as const;
 

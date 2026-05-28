@@ -37,7 +37,19 @@ const metaLabels = {
 
 const speedLabel = t('lab_param_speed', locale);
 const intensityLabel = t('lab_param_intensity', locale);
-const bubbleLabel = t('lab_param_bubble', locale);
+
+// Brew #002 live caption — "now brewing: <beer>". Canvas dispatches a
+// `brewbeerchange` CustomEvent with the canvas-side identifier (pilsner /
+// wit / ipa); ExperimentFrame swaps the localised label from this map.
+const brewLiveCaption = {
+  label: t('lab_002_brewing_label', locale),
+  initialName: 'pilsner',
+  items: {
+    pilsner: t('lab_002_beer_pilsner', locale),
+    wit: t('lab_002_beer_wit', locale),
+    ipa: t('lab_002_beer_ipa', locale),
+  },
+};
 ---
 
 <Base locale={locale} title={metaTitle} description={metaDescription}>
@@ -117,12 +129,12 @@ const bubbleLabel = t('lab_param_bubble', locale);
         total="04"
         caption={t('lab_002_a_caption', locale)}
         metaLabels={metaLabels}
-        meta={{ tech: 'WebGL2', size: '~7 KB', motion: 'high', license: 'MIT' }}
+        meta={{ tech: 'WebGL2', size: '~6 KB', motion: 'high', license: 'MIT' }}
         sliders={[
           { name: 'speed', label: speedLabel, value: 0.3 },
           { name: 'intensity', label: intensityLabel, value: 0.4 },
-          { name: 'bubble', label: bubbleLabel, value: 0.4 },
         ]}
+        liveCaption={brewLiveCaption}
       >
         <BrewCanvas slot="canvas" />
       </ExperimentFrame>
