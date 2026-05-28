@@ -78,6 +78,13 @@
   "lab_001_c_caption": "A fragment shader drawing one continuous field. Heaviest of the three, and the one that reaches furthest.",
   "lab_param_speed": "Speed",
   "lab_param_intensity": "Amplitude",
+  "lab_param_bubble": "Bubble",
+
+  "lab_002_title": "#002 — Brewing",
+  "lab_002_intro": "Wort turning over at the bottom of the tank, bubbles slipping up through the dark. A look inside the moment before a Tipsy Tap pour.",
+  "lab_002_a_name": "Brew / WebGL",
+  "lab_002_a_caption": "An amber convection with a bubble layer on top. One fragment shader handles both the warm currents and the climb of the foam.",
+
   "lab_meta_tech": "Tech",
   "lab_meta_size": "Size",
   "lab_meta_motion": "Motion budget",

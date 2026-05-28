@@ -114,6 +114,17 @@ export const lab = {
     hueShiftDeg: 15,
     hueShiftPeriodSec: 90,
   },
+  brew: {
+    // Lab Brew "F2 発酵中" — designer-confirmed (warm, slow, sparse bubbles).
+    // Values are consumed directly inside BrewCanvas (uniforms/JS constants),
+    // not mirrored as CSS vars — same convention as `flux`.
+    colA: '#0E0905',       // HSL(25, 50%, 3%)  darkest substrate
+    colB: '#6E4A1E',       // HSL(30, 58%, 27%) warm amber highlight
+    bubbleColor: '#E8DCC4', // off-white warm cream
+    hueShiftDeg: 8,         // half of Flux's ±15°
+    hueShiftPeriodSec: 120, // slower than Flux (90s)
+    bubbleDensity: 0.4,     // default Bubble slider value
+  },
 } as const;
 
 export type Tokens = {

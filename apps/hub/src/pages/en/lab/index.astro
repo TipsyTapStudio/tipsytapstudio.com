@@ -10,6 +10,7 @@ import ExperimentFrame from '../../../components/lab/ExperimentFrame.astro';
 import DriftCanvas from '../../../components/lab/DriftCanvas.astro';
 import GrainCanvas from '../../../components/lab/GrainCanvas.astro';
 import FluxCanvas from '../../../components/lab/FluxCanvas.astro';
+import BrewCanvas from '../../../components/lab/BrewCanvas.astro';
 
 const locale = 'en';
 
@@ -20,6 +21,8 @@ const ledeHeading = t('lab_lede_heading', locale);
 const ledeBody = t('lab_lede_body', locale);
 const introHeading = t('lab_001_title', locale);
 const introBody = t('lab_001_intro', locale);
+const intro002Heading = t('lab_002_title', locale);
+const intro002Body = t('lab_002_intro', locale);
 const footerNote = t('lab_footer_note', locale);
 
 const metaLabels = {
@@ -32,6 +35,7 @@ const metaLabels = {
 
 const speedLabel = t('lab_param_speed', locale);
 const intensityLabel = t('lab_param_intensity', locale);
+const bubbleLabel = t('lab_param_bubble', locale);
 ---
 
 <Base locale={locale} title={metaTitle} description={metaDescription}>
@@ -53,7 +57,7 @@ const intensityLabel = t('lab_param_intensity', locale);
         id="lab-001-a"
         name={t('lab_001_a_name', locale)}
         index="01"
-        total="03"
+        total="04"
         caption={t('lab_001_a_caption', locale)}
         metaLabels={metaLabels}
         meta={{ tech: 'CSS', size: '~1 KB', motion: 'low', license: 'MIT' }}
@@ -69,7 +73,7 @@ const intensityLabel = t('lab_param_intensity', locale);
         id="lab-001-b"
         name={t('lab_001_b_name', locale)}
         index="02"
-        total="03"
+        total="04"
         caption={t('lab_001_b_caption', locale)}
         metaLabels={metaLabels}
         meta={{ tech: 'SVG + SMIL', size: '~2 KB', motion: 'mid', license: 'MIT' }}
@@ -85,7 +89,7 @@ const intensityLabel = t('lab_param_intensity', locale);
         id="lab-001-c"
         name={t('lab_001_c_name', locale)}
         index="03"
-        total="03"
+        total="04"
         caption={t('lab_001_c_caption', locale)}
         metaLabels={metaLabels}
         meta={{ tech: 'WebGL2', size: '~6 KB', motion: 'high', license: 'MIT' }}
@@ -95,6 +99,30 @@ const intensityLabel = t('lab_param_intensity', locale);
         ]}
       >
         <FluxCanvas slot="canvas" />
+      </ExperimentFrame>
+
+      {/* #002 intro — same scale as the #001 intro block. Marketing copy
+          (lab_002_title / lab_002_intro) is TODO; placeholders surface visibly. */}
+      <section class="lab__intro" aria-labelledby="lab-002-heading">
+        <h2 id="lab-002-heading" class="lab__intro-heading">{intro002Heading}</h2>
+        <p class="lab__intro-body">{intro002Body}</p>
+      </section>
+
+      <ExperimentFrame
+        id="lab-002-a"
+        name={t('lab_002_a_name', locale)}
+        index="04"
+        total="04"
+        caption={t('lab_002_a_caption', locale)}
+        metaLabels={metaLabels}
+        meta={{ tech: 'WebGL2', size: '~7 KB', motion: 'high', license: 'MIT' }}
+        sliders={[
+          { name: 'speed', label: speedLabel, value: 0.3 },
+          { name: 'intensity', label: intensityLabel, value: 0.4 },
+          { name: 'bubble', label: bubbleLabel, value: 0.4 },
+        ]}
+      >
+        <BrewCanvas slot="canvas" />
       </ExperimentFrame>
     </div>
 

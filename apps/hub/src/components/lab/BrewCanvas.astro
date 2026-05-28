@@ -1,0 +1,328 @@
+---
+// BrewCanvas — Lab #002 ("F2 発酵中"). Raw WebGL2 fragment shader.
+//
+// Derived from FluxCanvas (Lab #001 C "深海の漂流") so the two share the same
+// noise field + tonal curve, but the palette is warm and a sparse "bubble"
+// layer is composited on top to read as slow fermentation rising from below.
+//
+//   u_colA = #0E0905 — HSL(25, 50%, 3%)  darkest substrate
+//   u_colB = #6E4A1E — HSL(30, 58%, 27%) warm amber highlight
+//   bubble = #E8DCC4 — off-white warm cream, additively mixed via `bubble`
+//
+// Hue drift: ±8° on a 120s sin cycle (half the angle / slower than Flux).
+//
+// Sliders bound (via `paramchange` events bubbled from the parent
+// ExperimentFrame): speed, intensity, bubble.
+//
+// Performance discipline matches FluxCanvas:
+// - devicePixelRatio clamped to <= 1.5
+// - IntersectionObserver pauses the rAF when off-screen
+// - context-lost stops the loop; the CSS gradient under the canvas stays
+//   visible (#0E0905 → #6E4A1E) so the section never goes black
+// - prefers-reduced-motion: one frame at u_time = 0, no rAF
+
+const fallbackId = 'brew-fallback';
+---
+
+<div class="brew-canvas" role="presentation" aria-hidden="true" data-canvas="brew">
+  {/* Always-visible fallback. Sits under the canvas; remains the only visible
+      layer if WebGL fails to init or the context is lost. */}
+  <div class={`brew-canvas__fallback ${fallbackId}`}></div>
+  <canvas class="brew-canvas__gl" aria-hidden="true"></canvas>
+</div>
+
+<style>
+  .brew-canvas {
+    position: absolute;
+    inset: 0;
+  }
+  .brew-canvas__fallback {
+    position: absolute;
+    inset: 0;
+    /* Matches u_colA → u_colB (#0E0905 → #6E4A1E). */
+    background: linear-gradient(180deg, #0e0905 0%, #6e4a1e 100%);
+  }
+  .brew-canvas__gl {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+</style>
+
+<script>
+  // Wire each BrewCanvas instance separately so multiple Lab pages would
+  // continue to work without coupling.
+  const nodes = document.querySelectorAll<HTMLElement>('.brew-canvas');
+
+  const VERT = `#version 300 es
+in vec2 a_pos;
+void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }`;
+
+  // Brew = Flux base field + sparse bubble layer attenuated toward the center
+  // so the heading area stays legible. Bubble density is driven by u_bubble.
+  const FRAG = `#version 300 es
+precision highp float;
+out vec4 outColor;
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform float u_intensity;
+uniform float u_bubble;
+uniform vec3 u_colA;
+uniform vec3 u_colB;
+
+float hash(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  float a = hash(i);
+  float b = hash(i + vec2(1.0, 0.0));
+  float c = hash(i + vec2(0.0, 1.0));
+  float d = hash(i + vec2(1.0, 1.0));
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+float fbm(vec2 p) {
+  float v = 0.0;
+  float amp = 0.5;
+  for (int i = 0; i < 4; i++) {
+    v += amp * noise(p);
+    p *= 2.0;
+    amp *= 0.5;
+  }
+  return v;
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+  vec2 p = uv * 2.5;
+  float n1 = fbm(p + vec2(u_time, u_time * 0.7));
+  float n2 = fbm(p * 1.6 - vec2(u_time * 0.4, u_time));
+  float n = mix(n1, n2, 0.5);
+
+  n = 0.5 + (n - 0.5) * (0.5 + u_intensity * 1.2);
+
+  float k = pow(clamp(n, 0.0, 1.0), 2.2);
+  vec3 color = mix(u_colA, u_colB, k);
+
+  // --- bubble layer ---------------------------------------------------------
+  // Sparse vertical streaks rising over time. The sin() peak is squeezed near
+  // its crest (subtract 0.95, scale x20) so most of the screen stays dark.
+  float bubble = max(0.0, sin(uv.y * 40.0 - u_time * 2.0 + noise(uv * 8.0) * 6.28) - 0.95) * 20.0;
+  // Mask the center so bubbles don't compete with the heading copy.
+  float distFromCenter = length(uv - vec2(0.5)) * 2.0;
+  float bubbleMask = smoothstep(0.3, 0.8, distFromCenter);
+  bubble *= bubbleMask;
+  // Composite bubble color (#E8DCC4 ≈ vec3(0.91, 0.86, 0.77)).
+  vec3 bubbleColor = vec3(0.91, 0.86, 0.77);
+  color = mix(color, bubbleColor, bubble * u_bubble);
+
+  outColor = vec4(color, 1.0);
+}`;
+
+  // --- Color helpers (sRGB ↔ HSL) for CPU-side hue shift. ---
+  type RGB = [number, number, number];
+  type HSL = [number, number, number]; // h in degrees, s/l in 0..1
+
+  const hexToRgb = (hex: string): RGB => {
+    const h = hex.replace('#', '');
+    return [
+      parseInt(h.slice(0, 2), 16) / 255,
+      parseInt(h.slice(2, 4), 16) / 255,
+      parseInt(h.slice(4, 6), 16) / 255,
+    ];
+  };
+
+  const rgbToHsl = ([r, g, b]: RGB): HSL => {
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const l = (max + min) / 2;
+    let h = 0, s = 0;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r: h = ((g - b) / d + (g < b ? 6 : 0)); break;
+        case g: h = ((b - r) / d + 2); break;
+        case b: h = ((r - g) / d + 4); break;
+      }
+      h *= 60;
+    }
+    return [h, s, l];
+  };
+
+  const hslToRgb = ([h, s, l]: HSL): RGB => {
+    h = ((h % 360) + 360) % 360;
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+    const m = l - c / 2;
+    let r1 = 0, g1 = 0, b1 = 0;
+    if (h < 60)       { r1 = c; g1 = x; }
+    else if (h < 120) { r1 = x; g1 = c; }
+    else if (h < 180) { g1 = c; b1 = x; }
+    else if (h < 240) { g1 = x; b1 = c; }
+    else if (h < 300) { r1 = x; b1 = c; }
+    else              { r1 = c; b1 = x; }
+    return [r1 + m, g1 + m, b1 + m];
+  };
+
+  // Designer-confirmed base colors and hue-shift params (Brew, F2 発酵中).
+  const BASE_A_HSL = rgbToHsl(hexToRgb('#0E0905'));
+  const BASE_B_HSL = rgbToHsl(hexToRgb('#6E4A1E'));
+  const HUE_SHIFT_DEG = 8;       // half of Flux's ±15°
+  const HUE_PERIOD_MS = 120_000; // 120s, slower than Flux's 90s
+
+  function initOne(host: HTMLElement) {
+    const canvas = host.querySelector<HTMLCanvasElement>('.brew-canvas__gl');
+    if (!canvas) return;
+    const gl = canvas.getContext('webgl2', { antialias: false, powerPreference: 'low-power' });
+    if (!gl) {
+      canvas.remove(); // fallback gradient stays visible
+      return;
+    }
+
+    const compile = (type: number, src: string): WebGLShader | null => {
+      const sh = gl.createShader(type);
+      if (!sh) return null;
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+        // eslint-disable-next-line no-console
+        console.warn('[BrewCanvas] shader compile failed', gl.getShaderInfoLog(sh));
+        return null;
+      }
+      return sh;
+    };
+
+    const vs = compile(gl.VERTEX_SHADER, VERT);
+    const fs = compile(gl.FRAGMENT_SHADER, FRAG);
+    if (!vs || !fs) { canvas.remove(); return; }
+
+    const prog = gl.createProgram()!;
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { canvas.remove(); return; }
+    gl.useProgram(prog);
+
+    // Full-screen triangle.
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'a_pos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    const uTime = gl.getUniformLocation(prog, 'u_time');
+    const uRes = gl.getUniformLocation(prog, 'u_resolution');
+    const uIntensity = gl.getUniformLocation(prog, 'u_intensity');
+    const uBubble = gl.getUniformLocation(prog, 'u_bubble');
+    const uColA = gl.getUniformLocation(prog, 'u_colA');
+    const uColB = gl.getUniformLocation(prog, 'u_colB');
+
+    const state = {
+      speed: 0.3,
+      intensity: 0.4,
+      bubble: 0.4, // designer default
+      time: 0,
+      visible: false,
+      raf: 0,
+      reduced: false,
+    };
+
+    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    state.reduced = mql.matches;
+    mql.addEventListener?.('change', (e) => { state.reduced = e.matches; if (state.reduced) drawOnce(); });
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const w = Math.floor(canvas!.clientWidth * dpr);
+      const h = Math.floor(canvas!.clientHeight * dpr);
+      if (canvas!.width !== w || canvas!.height !== h) {
+        canvas!.width = w;
+        canvas!.height = h;
+        gl!.viewport(0, 0, w, h);
+      }
+    }
+
+    function uploadColors() {
+      // ±8° hue shift on a 120s sin cycle, wall-clock driven so drift stays
+      // consistent regardless of pause/resume.
+      const phase = Math.sin((2 * Math.PI * Date.now()) / HUE_PERIOD_MS);
+      const shift = phase * HUE_SHIFT_DEG;
+      const a = hslToRgb([BASE_A_HSL[0] + shift, BASE_A_HSL[1], BASE_A_HSL[2]]);
+      const b = hslToRgb([BASE_B_HSL[0] + shift, BASE_B_HSL[1], BASE_B_HSL[2]]);
+      gl!.uniform3f(uColA, a[0], a[1], a[2]);
+      gl!.uniform3f(uColB, b[0], b[1], b[2]);
+    }
+
+    function draw() {
+      resize();
+      gl!.uniform1f(uTime, state.time);
+      gl!.uniform2f(uRes, canvas!.width, canvas!.height);
+      gl!.uniform1f(uIntensity, state.intensity);
+      gl!.uniform1f(uBubble, state.bubble);
+      uploadColors();
+      gl!.drawArrays(gl!.TRIANGLES, 0, 3);
+    }
+
+    function drawOnce() {
+      state.time = 0;
+      draw();
+    }
+
+    function tick() {
+      state.time += 0.0008 + state.speed * 0.012;
+      draw();
+      state.raf = requestAnimationFrame(tick);
+    }
+
+    function start() {
+      if (state.raf || state.reduced) { drawOnce(); return; }
+      state.raf = requestAnimationFrame(tick);
+    }
+    function stop() {
+      if (state.raf) { cancelAnimationFrame(state.raf); state.raf = 0; }
+    }
+
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            state.visible = e.isIntersecting;
+            if (state.visible) start(); else stop();
+          }
+        },
+        { threshold: 0.05 },
+      );
+      io.observe(host);
+    } else {
+      start();
+    }
+
+    window.addEventListener('resize', () => { if (state.visible) draw(); });
+
+    // Context loss: stop rAF; the CSS fallback under the <canvas> stays visible.
+    canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); stop(); });
+
+    const frame = host.closest('.experiment-frame');
+    frame?.addEventListener('paramchange', (event) => {
+      const { name, value } = (event as CustomEvent<{ name: string; value: number }>).detail;
+      if (name === 'speed') state.speed = value;
+      else if (name === 'intensity') state.intensity = value;
+      else if (name === 'bubble') state.bubble = value;
+      if (state.reduced) drawOnce();
+    });
+
+    // First paint.
+    drawOnce();
+  }
+
+  nodes.forEach(initOne);
+</script>
