@@ -78,6 +78,10 @@ const navLabel = locale === 'ja' ? 'ページ内移動' : 'In-page navigation';
   }
 
   .site-nav__brand {
+    /* Font Set C — wordmark は Fraunces で serif 品格を出す。
+       ja でも brand 名は英字なので Fraunces を明示的に前置。 */
+    font-family: 'Fraunces Variable', 'Fraunces', var(--font-display);
+    font-variation-settings: 'opsz' 24, 'SOFT' 50;
     font-size: var(--fs-sm);
     font-weight: 500;
     color: var(--fg);

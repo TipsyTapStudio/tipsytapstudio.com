@@ -27,33 +27,32 @@ export const colors = {
 } as const;
 
 export const typography = {
-  // 1 family across every subdomain (PRD §4 "タイポグラフィ").
-  // IBM Plex Sans (+ IBM Plex Sans JP for :lang(ja)) is bundled via
-  // @fontsource (self-hosted, same-origin) in Base layouts; system stack is
-  // the graceful fallback when the font fails.
+  // Font Set C — 可変一本勝負 (PRD §4 "タイポグラフィ").
+  // Fraunces variable (opsz/SOFT/wght 軸) が display + body 兼用。
+  // :lang(ja) では Noto Serif JP (源ノ明朝) に切替。両方 @fontsource で
+  // 自前ホスト (same-origin)、system serif がフォールバック。
   fontFamily:
-    '"IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif',
-  // JP family — applied via :lang(ja) selector in Base layouts.
+    "'Fraunces Variable', 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif", // display
+  fontFamilyBody:
+    "'Fraunces Variable', 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif", // body
   fontFamilyJa:
-    '"IBM Plex Sans JP", "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif',
-  // Heading tracking — wide enough to feel "document-y" without becoming a
-  // visual quirk (PRD §4: "ドキュメント・論文ぽさ").
-  headingTracking: '0.04em',
-  bodyTracking: '0.01em',
-  // Display tracking — section headings, manifesto keywords.
-  displayTracking: '0.12em',
-  // Badge tracking — small uppercase chips.
+    "'Noto Serif JP', 'Fraunces Variable', 'Fraunces', ui-serif, Georgia, serif",
+  // Heading tracking — serif で字面を詰めて品格を出す。
+  headingTracking: '-0.02em',
+  bodyTracking: '0',
+  // Display tracking — Hero 縦 3 段詰みで効く tight 値。
+  displayTracking: '-0.03em',
+  // Badge tracking — small uppercase chips (sans の名残で広め維持)。
   badgeTracking: '0.08em',
   // Line-height tokens
   lhTight: '1.15',
   lhNormal: '1.6',
-  // Weights actually bundled. Keep this list in sync with the
-  // @fontsource/ibm-plex-sans imports in apps/hub/src/layouts/Base.astro.
-  // Note: JP companion bundles only 400/600 (no 500) for weight budget.
+  // Noto Serif JP の実体としてバンドルしている weights。
+  // Fraunces は可変フォントのため数値より axes (opsz/SOFT/wght) で制御。
   weights: {
     regular: 400,
     medium: 500,
-    semibold: 600,
+    bold: 700,
   },
 } as const;
 
@@ -110,7 +109,7 @@ export const cardOnBrew = {
   border: 'rgba(255, 255, 255, 0.08)',
 } as const;
 
-export const textShadowOnBrew = '0 1px 2px rgba(0, 0, 0, 0.45)';
+export const textShadowOnBrew = '0 1px 2px rgba(0, 0, 0, 0.55), 0 0 12px rgba(0, 0, 0, 0.3)';
 
 // --- Hub Brew background parameters ---
 // Sticky WebGL background mounted in Base.astro for all hub pages (NOT /lab/).
