@@ -5,22 +5,23 @@
 // - Mobile-first, single-column, generous whitespace.
 // - JS-zero by default. Motion = CSS only, respects prefers-reduced-motion.
 // - Monochrome (PRD §4 "色階層"). Hub stays desaturated; product LPs colorize.
-// - One typographic family (IBM Plex Sans + IBM Plex Sans JP, self-hosted via
-//   @fontsource) shared across subdomains. JP is loaded only at 400/600 for weight budget.
+// - Font Set C: 可変一本勝負. Fraunces variable carries display + body in en;
+//   Noto Serif JP (源ノ明朝) takes over under :lang(ja). Both self-hosted via
+//   @fontsource (same-origin, no third-party requests).
 
 import { t, type Locale } from '@ttsui/i18n';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import HubBrewBackground from '../components/HubBrewBackground.astro';
 
-// Self-hosted IBM Plex Sans via @fontsource (same-origin, no third-party requests).
-// Keep weight list in sync with typography.weights in @ttsui/tokens.
-import '@fontsource/ibm-plex-sans/400.css';
-import '@fontsource/ibm-plex-sans/500.css';
-import '@fontsource/ibm-plex-sans/600.css';
-// JP companion — japanese subset only, 400/600 weights (designer-set budget).
-import '@fontsource/ibm-plex-sans-jp/japanese-400.css';
-import '@fontsource/ibm-plex-sans-jp/japanese-600.css';
+// Self-hosted Fraunces variable + Noto Serif JP via @fontsource.
+// Fraunces is a single variable font (opsz/SOFT/wght axes) — one file covers
+// the entire weight/optical-size range used by Hero / body / SectionHeading.
+import '@fontsource-variable/fraunces';
+// JP companion — Noto Serif JP, 400/500/700 weights only (weight budget).
+import '@fontsource/noto-serif-jp/400.css';
+import '@fontsource/noto-serif-jp/500.css';
+import '@fontsource/noto-serif-jp/700.css';
 
 interface Props {
   locale: Locale;
@@ -61,9 +62,9 @@ const enableHeader = enableBrewBg;
     <title>{siteTitle}</title>
     <meta name="description" content={siteDescription} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    {/* IBM Plex Sans (+ JP) is bundled via @fontsource (imported in frontmatter).
+    {/* Fraunces variable (+ Noto Serif JP) is bundled via @fontsource (imported in frontmatter).
         No external font requests — privacy-friendly and zero third-party DNS.
-        TODO(engineer): consider <link rel="preload"> for the latin 400 woff2 once
+        TODO(engineer): consider <link rel="preload"> for the Fraunces variable woff2 once
         the @fontsource asset path is stable post-build, to shave LCP. */}
   </head>
   <body>
@@ -106,13 +107,17 @@ const enableHeader = enableBrewBg;
     --badge-fg-mono: #3a3a3a;
     --badge-beta-bg: #2a2a2a;
 
-    --font-sans:
-      'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
-      'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    /* Font Set C — 可変一本勝負.
+       Fraunces variable は display/body 兼用、:lang(ja) で Noto Serif JP に切替。
+       --font-sans は --font-body のエイリアス（既存コンポーネント互換）。 */
+    --font-display: 'Fraunces Variable', 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
+    --font-body: 'Fraunces Variable', 'Fraunces', ui-serif, Georgia, 'Times New Roman', serif;
+    --font-sans: var(--font-body);
 
-    --tracking-heading: 0.04em;
-    --tracking-body: 0.01em;
-    --track-display: 0.12em;
+    /* Set C は serif で字間を詰めて品格を出す。display は -0.03em。 */
+    --tracking-heading: -0.02em;
+    --tracking-body: 0;
+    --track-display: -0.03em;
     --track-badge: 0.08em;
 
     --lh-tight: 1.15;
@@ -152,7 +157,7 @@ const enableHeader = enableBrewBg;
     --overlay-strong: rgba(11, 11, 11, 0.6);
     --card-bg-onbrew: rgba(11, 11, 11, 0.55);
     --card-border-onbrew: rgba(255, 255, 255, 0.08);
-    --text-shadow-onbrew: 0 1px 2px rgba(0, 0, 0, 0.45);
+    --text-shadow-onbrew: 0 1px 2px rgba(0, 0, 0, 0.55), 0 0 12px rgba(0, 0, 0, 0.3);
 
     /* --- Lab-scope tokens (used only under /lab/) ---
        Mirrored from @ttsui/tokens `lab`. Hub Hero / Works / Manifesto must NOT
@@ -199,12 +204,14 @@ const enableHeader = enableBrewBg;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Japanese family override — JP glyph family fronted, latin Plex Sans as the
-     fallback so mixed-script lines keep a unified Plex feel. System stack stays
-     as the last-resort fallback for font load failures. */
+  /* Japanese family override — Noto Serif JP (源ノ明朝) を前置、Fraunces を
+     latin フォールバックに残して混植時の Serif 統一感を維持。--font-* も
+     差し替えて display/body の両方を ja で切替える。 */
   :lang(ja) {
-    font-family: 'IBM Plex Sans JP', 'IBM Plex Sans', ui-sans-serif, system-ui,
-      -apple-system, 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+    --font-display: 'Noto Serif JP', 'Fraunces Variable', 'Fraunces', ui-serif, Georgia, serif;
+    --font-body: 'Noto Serif JP', 'Fraunces Variable', 'Fraunces', ui-serif, Georgia, serif;
+    --font-sans: var(--font-body);
+    font-family: var(--font-body);
   }
 
   /* Heading tracking — euro-Latin gets the 0.04em document feel.
@@ -254,6 +261,9 @@ const enableHeader = enableBrewBg;
 
   /* --- Section heading utility (used by all top-level sections) --- */
   .section-heading {
+    font-family: var(--font-display);
+    /* Fraunces variable axes — section heading 用の中程度 opsz/SOFT。 */
+    font-variation-settings: 'opsz' 96, 'SOFT' 40;
     font-size: var(--fs-xl);
     font-weight: 500;
     line-height: var(--lh-tight);
@@ -274,9 +284,9 @@ const enableHeader = enableBrewBg;
     }
   }
 
-  /* Japanese tightens display tracking; the wide 0.12em looks broken in kana. */
+  /* Japanese loosens display tracking; -0.03em は仮名/漢字で字面が衝突する。 */
   .section-heading:lang(ja) {
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
   }
 
   /* Shared section layout utility — single-column, fluid vertical rhythm. */
