@@ -1,32 +1,28 @@
 ---
 // BrewCanvas — Lab #002 ("Brewing"). Raw WebGL2 fragment shader.
 //
-// v2 (3-beer cycle):
-//   - Bubble layer removed (was: sparse vertical streaks; u_bubble uniform).
-//   - Static ±8°/120s hue drift removed.
-//   - colA / colB now cycle through 3 designer-confirmed beer palettes in
-//     OKLCH space, CPU-side, with a 720s wall-clock period and a 75/25
-//     dwell/transition split per beer (smoothstep-eased transition).
+// v3 (B1 — fully manual switch):
+//   - Auto-cycle removed (no more wall-clock CYCLE_PERIOD / DWELL_RATIO).
+//   - Beer choice is driven by BrewSwitch, which dispatches `brewbeerselect`
+//     { name } to the parent .experiment-frame. The canvas tweens colA/colB
+//     in OKLab space over `TWEEN_MS` (240ms) from the currently displayed
+//     mix to the target palette, then fires `brewbeerchange` once at end-of-
+//     tween so any consumer (e.g. a future caption strip) can confirm.
 //
-//   Beer palettes (designer-confirmed):
+//   Beer palettes (designer-confirmed, unchanged from v2):
 //     pilsner — colA #0F0C05  colB #92711B
 //     wit     — colA #0F0E0A  colB #7C6F49
-//     ipa     — colA #0E0905  colB #6E4A1E   (the v1 palette, kept as the 3rd slot)
+//     ipa     — colA #0E0905  colB #6E4A1E
 //
 // Sliders bound (via `paramchange` events bubbled from the parent
-// ExperimentFrame): speed, intensity. (Bubble slider removed in v2.)
-//
-// Captions: when currentIndex flips, dispatches a `brewbeerchange` event up to
-// `.experiment-frame` carrying `{ name: 'pilsner' | 'wit' | 'ipa' }` so the
-// caption strip (rendered by the parent page) can update without coupling
-// DOM. Updated only on index change, not every frame.
+// ExperimentFrame): speed, intensity.
 //
 // Performance discipline matches FluxCanvas:
 // - devicePixelRatio clamped to <= 1.5
 // - IntersectionObserver pauses the rAF when off-screen
 // - context-lost stops the loop; the CSS fallback under the canvas stays visible
-// - prefers-reduced-motion: one frame at u_time = 0 using the current
-//   wall-clock beer mix, no rAF
+// - prefers-reduced-motion: skip tween (apply target instantly) and render a
+//   single still frame at u_time = 0 (no rAF)
 
 const fallbackId = 'brew-fallback';
 ---
@@ -47,7 +43,7 @@ const fallbackId = 'brew-fallback';
     position: absolute;
     inset: 0;
     /* Matches the IPA palette colA → colB (the v1 default), so a WebGL-less
-       client sees the same warmth as a mid-cycle visitor. */
+       client sees the same warmth as the manual default. */
     background: linear-gradient(180deg, #0e0905 0%, #6e4a1e 100%);
   }
   .brew-canvas__gl {
@@ -68,8 +64,9 @@ const fallbackId = 'brew-fallback';
 in vec2 a_pos;
 void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }`;
 
-  // Brew v2 = same Flux base field; colour identity comes from the cycling
-  // colA / colB uniforms (CPU-driven OKLCH lerp). No bubble layer.
+  // Brew v3 = same Flux base field; colour identity comes from the manually
+  // selected colA / colB uniforms (CPU-driven OKLab tween on select). No
+  // bubble layer.
   const FRAG = `#version 300 es
 precision highp float;
 out vec4 outColor;
@@ -122,11 +119,11 @@ void main() {
   outColor = vec4(color, 1.0);
 }`;
 
-  // --- Color helpers (sRGB ↔ linear ↔ OKLab/OKLCH) for CPU-side palette
-  // interpolation. OKLCH keeps perceptual lightness during mid-transition so
-  // the in-between pilsner→wit slot doesn't briefly mud out the way naive
-  // sRGB lerps do.
+  // --- Color helpers (sRGB ↔ linear ↔ OKLab) for CPU-side palette
+  // interpolation. OKLab keeps perceptual lightness during transition so
+  // a pilsner→wit slot doesn't briefly mud out the way naive sRGB lerps do.
   type RGB = [number, number, number]; // sRGB 0..1
+  type Lab = [number, number, number];
 
   const hexToRgb = (hex: string): RGB => {
     const h = hex.replace('#', '');
@@ -146,7 +143,7 @@ void main() {
     c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
 
   // Linear sRGB → OKLab (Björn Ottosson).
-  const linToOklab = ([r, g, b]: RGB): [number, number, number] => {
+  const linToOklab = ([r, g, b]: RGB): Lab => {
     const l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b;
     const m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b;
     const s = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b;
@@ -161,7 +158,7 @@ void main() {
   };
 
   // OKLab → linear sRGB.
-  const oklabToLin = ([L, a, b]: [number, number, number]): RGB => {
+  const oklabToLin = ([L, a, b]: Lab): RGB => {
     const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
     const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
     const s_ = L - 0.0894841775 * a - 1.291485548 * b;
@@ -176,27 +173,20 @@ void main() {
   };
 
   // sRGB hex → OKLab.
-  const hexToOklab = (hex: string): [number, number, number] => {
+  const hexToOklab = (hex: string): Lab => {
     const [r, g, b] = hexToRgb(hex);
     return linToOklab([srgbToLinear(r), srgbToLinear(g), srgbToLinear(b)]);
   };
 
-  // OKLab lerp (component-wise; OK in OKLab since hue/chroma are encoded as
-  // a,b coords and a straight lerp matches the OKLCH=='oklch' interp the
-  // tokens declare for the typical case where adjacent palettes share hue
-  // family).
-  const lerpOklab = (
-    A: [number, number, number],
-    B: [number, number, number],
-    t: number,
-  ): [number, number, number] => [
+  // OKLab lerp (component-wise).
+  const lerpOklab = (A: Lab, B: Lab, t: number): Lab => [
     A[0] + (B[0] - A[0]) * t,
     A[1] + (B[1] - A[1]) * t,
     A[2] + (B[2] - A[2]) * t,
   ];
 
   // OKLab → sRGB float triplet, clamped to gamut.
-  const oklabToRgb = (lab: [number, number, number]): RGB => {
+  const oklabToRgb = (lab: Lab): RGB => {
     const [lr, lg, lb] = oklabToLin(lab);
     const r = linearToSrgb(Math.max(0, Math.min(1, lr)));
     const g = linearToSrgb(Math.max(0, Math.min(1, lg)));
@@ -204,28 +194,27 @@ void main() {
     return [r, g, b];
   };
 
-  // Designer-confirmed 3-beer cycle, in the order tokens.lab.brew.cycle.
+  // smoothstep(0, 1, x).
+  const smooth = (x: number): number => {
+    const t = Math.max(0, Math.min(1, x));
+    return t * t * (3 - 2 * t);
+  };
+
+  // Designer-confirmed 3-beer set, in the order tokens.lab.brew.cycle.
   const BEERS = [
     { name: 'pilsner', colA: '#0F0C05', colB: '#92711B' },
     { name: 'wit',     colA: '#0F0E0A', colB: '#7C6F49' },
     { name: 'ipa',     colA: '#0E0905', colB: '#6E4A1E' },
   ] as const;
-  const N_BEERS = BEERS.length;
-  const CYCLE_PERIOD_MS = 720_000; // 12 minutes
-  const DWELL_RATIO = 0.75;
+  type BeerName = (typeof BEERS)[number]['name'];
 
   // Pre-compute each palette in OKLab once.
-  const BEER_LAB = BEERS.map((b) => ({
-    name: b.name,
-    A: hexToOklab(b.colA),
-    B: hexToOklab(b.colB),
-  }));
+  const BEER_LAB = new Map<BeerName, { A: Lab; B: Lab }>(
+    BEERS.map((b) => [b.name, { A: hexToOklab(b.colA), B: hexToOklab(b.colB) }]),
+  );
 
-  // smoothstep(0, 1, x) for x already normalised to 0..1.
-  const smooth = (x: number): number => {
-    const t = Math.max(0, Math.min(1, x));
-    return t * t * (3 - 2 * t);
-  };
+  const DEFAULT_BEER: BeerName = 'ipa';
+  const TWEEN_MS = 240;
 
   function initOne(host: HTMLElement) {
     const canvas = host.querySelector<HTMLCanvasElement>('.brew-canvas__gl');
@@ -276,6 +265,7 @@ void main() {
 
     const frame = host.closest('.experiment-frame');
 
+    const defaultPal = BEER_LAB.get(DEFAULT_BEER)!;
     const state = {
       speed: 0.3,
       intensity: 0.4,
@@ -283,12 +273,28 @@ void main() {
       visible: false,
       raf: 0,
       reduced: false,
-      lastBeerIndex: -1,
+      // Beer state — currentBeer is what's displayed at t=1 of the last tween;
+      // targetBeer is what we're tweening toward. fromA/B is the colour mix at
+      // tweenStart (so re-selects mid-tween blend smoothly from current).
+      currentBeer: DEFAULT_BEER as BeerName,
+      targetBeer: DEFAULT_BEER as BeerName,
+      fromA: defaultPal.A,
+      fromB: defaultPal.B,
+      toA: defaultPal.A,
+      toB: defaultPal.B,
+      tweenStart: 0,
+      tweenDuration: TWEEN_MS,
+      tweenActive: false,
     };
 
     const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
     state.reduced = mql.matches;
-    mql.addEventListener?.('change', (e) => { state.reduced = e.matches; if (state.reduced) drawOnce(); });
+    if (state.reduced) state.tweenDuration = 0;
+    mql.addEventListener?.('change', (e) => {
+      state.reduced = e.matches;
+      state.tweenDuration = state.reduced ? 0 : TWEEN_MS;
+      if (state.reduced) drawOnce();
+    });
 
     function resize() {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -301,51 +307,55 @@ void main() {
       }
     }
 
-    // Compute current cycle state from wall-clock; upload uColA/uColB; fire
-    // brewbeerchange when currentIndex flips.
-    function uploadColors() {
-      const nowMs = Date.now();
-      // phase in 0..N_BEERS, advances 3 slots per CYCLE_PERIOD_MS.
-      const phase = ((nowMs / CYCLE_PERIOD_MS) * N_BEERS) % N_BEERS;
-      const currentIndex = Math.floor(phase);
-      const nextIndex = (currentIndex + 1) % N_BEERS;
-      const t = phase - currentIndex; // 0..1 within current slot
-
-      // 0..DWELL_RATIO: hold current; DWELL_RATIO..1: smoothstep into next.
-      const w = t < DWELL_RATIO
-        ? 0
-        : smooth((t - DWELL_RATIO) / (1 - DWELL_RATIO));
-
-      const cur = BEER_LAB[currentIndex];
-      const nxt = BEER_LAB[nextIndex];
-      const A = oklabToRgb(lerpOklab(cur.A, nxt.A, w));
-      const B = oklabToRgb(lerpOklab(cur.B, nxt.B, w));
-      gl!.uniform3f(uColA, A[0], A[1], A[2]);
-      gl!.uniform3f(uColB, B[0], B[1], B[2]);
-
-      if (currentIndex !== state.lastBeerIndex) {
-        state.lastBeerIndex = currentIndex;
-        frame?.dispatchEvent(
-          new CustomEvent('brewbeerchange', {
-            detail: { name: BEERS[currentIndex].name, index: currentIndex },
-            bubbles: false,
-          }),
-        );
+    // Compute current display mix (OKLab) given tween progress, upload it to
+    // the uniforms, and finalise (clear tween flag, emit brewbeerchange) when
+    // the tween completes.
+    function uploadColors(nowMs: number) {
+      let A: Lab;
+      let B: Lab;
+      if (!state.tweenActive) {
+        A = state.toA;
+        B = state.toB;
+      } else {
+        const raw =
+          state.tweenDuration > 0
+            ? (nowMs - state.tweenStart) / state.tweenDuration
+            : 1;
+        const t = smooth(raw);
+        A = lerpOklab(state.fromA, state.toA, t);
+        B = lerpOklab(state.fromB, state.toB, t);
+        if (raw >= 1) {
+          state.tweenActive = false;
+          state.fromA = state.toA;
+          state.fromB = state.toB;
+          state.currentBeer = state.targetBeer;
+          frame?.dispatchEvent(
+            new CustomEvent('brewbeerchange', {
+              detail: { name: state.currentBeer },
+              bubbles: false,
+            }),
+          );
+        }
       }
+      const a = oklabToRgb(A);
+      const b = oklabToRgb(B);
+      gl!.uniform3f(uColA, a[0], a[1], a[2]);
+      gl!.uniform3f(uColB, b[0], b[1], b[2]);
     }
 
     function draw() {
       resize();
+      const now = performance.now();
       gl!.uniform1f(uTime, state.time);
       gl!.uniform2f(uRes, canvas!.width, canvas!.height);
       gl!.uniform1f(uIntensity, state.intensity);
-      uploadColors();
+      uploadColors(now);
       gl!.drawArrays(gl!.TRIANGLES, 0, 3);
     }
 
     function drawOnce() {
-      // reduced-motion: render the current wall-clock beer mix at u_time = 0
-      // so the still frame reflects whatever beer is "now brewing".
+      // reduced-motion: render a still frame at u_time = 0 using the current
+      // target palette (tween already collapsed to 0ms).
       state.time = 0;
       draw();
     }
@@ -357,7 +367,8 @@ void main() {
     }
 
     function start() {
-      if (state.raf || state.reduced) { drawOnce(); return; }
+      if (state.raf) return;
+      if (state.reduced && !state.tweenActive) { drawOnce(); return; }
       state.raf = requestAnimationFrame(tick);
     }
     function stop() {
@@ -391,11 +402,47 @@ void main() {
       if (state.reduced) drawOnce();
     });
 
+    // BrewSwitch → canvas. Begin a tween from the *currently displayed* colour
+    // mix (so mid-tween re-selects don't snap) to the target palette.
+    frame?.addEventListener('brewbeerselect', (event) => {
+      const { name } = (event as CustomEvent<{ name: string }>).detail;
+      const target = BEER_LAB.get(name as BeerName);
+      if (!target) return;
+
+      // Snapshot current display mix as the new tween origin.
+      const now = performance.now();
+      if (state.tweenActive && state.tweenDuration > 0) {
+        const raw = (now - state.tweenStart) / state.tweenDuration;
+        const t = smooth(Math.max(0, Math.min(1, raw)));
+        state.fromA = lerpOklab(state.fromA, state.toA, t);
+        state.fromB = lerpOklab(state.fromB, state.toB, t);
+      } else {
+        state.fromA = state.toA;
+        state.fromB = state.toB;
+      }
+      state.toA = target.A;
+      state.toB = target.B;
+      state.targetBeer = name as BeerName;
+      state.tweenStart = now;
+      state.tweenActive = state.tweenDuration > 0;
+      if (!state.tweenActive) {
+        // Instant: collapse to target and fire confirm.
+        state.fromA = state.toA;
+        state.fromB = state.toB;
+        state.currentBeer = state.targetBeer;
+        frame?.dispatchEvent(
+          new CustomEvent('brewbeerchange', {
+            detail: { name: state.currentBeer },
+            bubbles: false,
+          }),
+        );
+      }
+      if (state.reduced) drawOnce();
+    });
+
     // First paint.
     drawOnce();
   }
 
   nodes.forEach(initOne);
 </script>
-</content>
-</invoke>

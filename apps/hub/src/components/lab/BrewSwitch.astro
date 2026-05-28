@@ -1,0 +1,327 @@
+---
+// BrewSwitch — Lab #002 ("Brewing") manual beer selector (B1, fully manual).
+//
+// Replaces the v2 wall-clock 3-beer auto-cycle with a 3-segment radiogroup
+// the visitor drives. Visual identity:
+//   - inline-flex fieldset, hairline border + blurred overlay background
+//   - each segment: small gradient dot (colA → colB) + beer name
+//   - active segment inverts (bg=--fg, color=--bg) for high contrast
+//
+// A11y pattern (designer-confirmed):
+//   <fieldset role="radiogroup" aria-labelledby="...-label">
+//     <legend class="sr-only">…</legend>
+//     <p class="sr-only" id="…-hint">…</p>
+//     <button role="radio" aria-checked aria-describedby="…-hint" …>
+//
+// Keyboard model:
+//   - Roving tabindex: only the active radio is in the tab order
+//   - ← / → moves focus + auto-selects (WAI-ARIA radiogroup pattern)
+//   - Home / End jump to first / last
+//
+// URL hash sync:
+//   - Initial active beer = #brew=<name> from location.hash, else default
+//   - Click / arrow-key change: history.replaceState (no scroll, no history)
+//
+// Talks to BrewCanvas via two CustomEvents bubbled to .experiment-frame:
+//   - brewbeerselect { name } — emitted by this switch on every change AND once
+//     at init so the canvas can adopt the hash-derived initial beer
+//   - brewbeerchange { name } — listened from the canvas (post-tween confirm)
+//     to keep aria-checked in sync if the canvas ever leads the state
+//
+// Self-loop guard: this component sets a flag before dispatching select so the
+// brewbeerchange handler ignores its own echo.
+
+interface Beer {
+  /** Stable canvas-side identifier (matches BrewCanvas BEER_LAB names). */
+  name: string;
+  /** Localised display label. */
+  label: string;
+  /** Dot gradient start (colA hex). */
+  colA: string;
+  /** Dot gradient end (colB hex). */
+  colB: string;
+}
+
+interface Props {
+  /** Stable DOM id prefix (e.g. "lab-002-a"). */
+  id: string;
+  /** Visible eyebrow + sr-only legend (e.g. "Now pouring" / "いま注いでいる"). */
+  brewingLabel: string;
+  /** sr-only hint announced via aria-describedby (e.g. "Use arrow keys to switch"). */
+  switchHint: string;
+  /** Default beer name when hash is missing / invalid. */
+  defaultBeer: string;
+  /** Beer set, in the order they appear in the switch. */
+  beers: ReadonlyArray<Beer>;
+}
+
+const { id, brewingLabel, switchHint, defaultBeer, beers } = Astro.props;
+
+const labelId = `${id}-brew-switch-label`;
+const hintId = `${id}-brew-switch-hint`;
+---
+
+<div class="brew-switch-wrap">
+  <p class="brew-switch-eyebrow" aria-hidden="true">{brewingLabel}</p>
+  <fieldset
+    class="brew-switch"
+    role="radiogroup"
+    aria-labelledby={labelId}
+    data-default-beer={defaultBeer}
+  >
+    <legend id={labelId} class="brew-switch__sr-only">{brewingLabel}</legend>
+    <p id={hintId} class="brew-switch__sr-only">{switchHint}</p>
+    {beers.map((beer) => (
+      <button
+        type="button"
+        role="radio"
+        class="brew-switch__item"
+        aria-checked="false"
+        aria-describedby={hintId}
+        data-beer={beer.name}
+        tabindex="-1"
+        style={`--dot-a: ${beer.colA}; --dot-b: ${beer.colB};`}
+      >
+        <span class="brew-switch__dot" aria-hidden="true"></span>
+        <span class="brew-switch__name">{beer.label}</span>
+      </button>
+    ))}
+  </fieldset>
+</div>
+
+<style>
+  .brew-switch-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    align-self: flex-start;
+  }
+
+  /* Visible eyebrow — same trim as the meta summary chip / former live caption
+     label. Keeps the "Now pouring" string visible above the segments while
+     <legend> stays sr-only for AT semantics. */
+  .brew-switch-eyebrow {
+    margin: 0;
+    font-size: var(--fs-xs);
+    line-height: var(--lh-tight);
+    color: var(--muted);
+    letter-spacing: var(--track-badge);
+    text-transform: uppercase;
+  }
+  .brew-switch-eyebrow:lang(ja) {
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  /* Screen-reader-only utility, scoped to this component to avoid leaking a
+     global .sr-only class into the hub. */
+  .brew-switch__sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .brew-switch {
+    display: inline-flex;
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-chip);
+    background: var(--lab-overlay-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 2px;
+    margin: 0;
+  }
+
+  .brew-switch__item {
+    padding: var(--space-2xs) var(--space-sm);
+    min-height: 36px;
+    border-radius: var(--radius-chip);
+    font-size: var(--fs-xs);
+    letter-spacing: var(--track-badge);
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition:
+      background-color var(--brew-switch-transition, 160ms) var(--ease-flux),
+      color var(--brew-switch-transition, 160ms) var(--ease-flux);
+  }
+
+  .brew-switch__item:lang(ja) {
+    letter-spacing: 0;
+  }
+
+  .brew-switch__item[aria-checked='true'] {
+    background: var(--fg);
+    color: var(--bg);
+  }
+
+  .brew-switch__item:hover:not([aria-checked='true']) {
+    color: var(--fg);
+  }
+
+  .brew-switch__item:focus-visible {
+    outline: 2px solid var(--fg);
+    outline-offset: 3px;
+  }
+
+  .brew-switch__dot {
+    width: var(--brew-switch-dot-size, 8px);
+    height: var(--brew-switch-dot-size, 8px);
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--dot-a), var(--dot-b));
+    flex-shrink: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .brew-switch__item {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  // Wire each BrewSwitch independently so multiple lab pages would continue to
+  // work without coupling. Each switch:
+  //   1. Resolves the initial beer from #brew=<name> or data-default-beer
+  //   2. Marks that radio aria-checked=true / tabindex=0; others false / -1
+  //   3. Dispatches `brewbeerselect` once so the canvas can adopt it
+  //   4. Wires click + keyboard handlers per the WAI-ARIA radiogroup pattern
+  document.querySelectorAll<HTMLElement>('.brew-switch').forEach((group) => {
+    const items = Array.from(
+      group.querySelectorAll<HTMLButtonElement>('.brew-switch__item'),
+    );
+    if (items.length === 0) return;
+
+    const validNames = new Set(items.map((el) => el.dataset.beer ?? ''));
+    const defaultBeer = group.dataset.defaultBeer ?? items[0].dataset.beer ?? '';
+    const frame = group.closest('.experiment-frame');
+
+    // Self-echo guard: when this switch dispatches `brewbeerselect`, the
+    // canvas may later confirm with `brewbeerchange` — we want to ignore that
+    // echo so we don't re-fire a hash update mid-tween.
+    let suppressChangeSync = false;
+
+    /** Read hash and return a valid beer name, else null. */
+    const readHashBeer = (): string | null => {
+      const hash = window.location.hash || '';
+      const m = hash.match(/(?:^#|&)brew=([a-z0-9_-]+)/i);
+      if (!m) return null;
+      const name = m[1].toLowerCase();
+      return validNames.has(name) ? name : null;
+    };
+
+    /** Apply aria-checked + tabindex state for the given beer name. */
+    const applyState = (name: string) => {
+      items.forEach((el) => {
+        const isActive = el.dataset.beer === name;
+        el.setAttribute('aria-checked', isActive ? 'true' : 'false');
+        el.tabIndex = isActive ? 0 : -1;
+      });
+    };
+
+    /** Update URL hash to #brew=<name> without scrolling or pushing history. */
+    const writeHash = (name: string) => {
+      try {
+        window.history.replaceState(null, '', `#brew=${name}`);
+      } catch {
+        // SecurityError on file:// or sandboxed contexts — silently skip.
+      }
+    };
+
+    /** Dispatch the canvas-facing select event. */
+    const dispatchSelect = (name: string) => {
+      suppressChangeSync = true;
+      frame?.dispatchEvent(
+        new CustomEvent('brewbeerselect', {
+          detail: { name },
+          bubbles: false,
+        }),
+      );
+      // Release the echo guard on the next tick — the canvas may fire
+      // brewbeerchange synchronously at end-of-tween, but for *this* select
+      // we only need to ignore one round-trip's worth of confirmation.
+      window.setTimeout(() => {
+        suppressChangeSync = false;
+      }, 0);
+    };
+
+    /** Full select: state + hash + dispatch + focus. */
+    const selectBeer = (name: string, opts: { focus?: boolean } = {}) => {
+      applyState(name);
+      writeHash(name);
+      dispatchSelect(name);
+      if (opts.focus) {
+        const target = items.find((el) => el.dataset.beer === name);
+        target?.focus();
+      }
+    };
+
+    // --- Init -------------------------------------------------------------
+    const initial = readHashBeer() ?? defaultBeer;
+    applyState(initial);
+    writeHash(initial); // normalise hash if it was missing/invalid
+    dispatchSelect(initial);
+
+    // --- Click ------------------------------------------------------------
+    items.forEach((el) => {
+      el.addEventListener('click', () => {
+        const name = el.dataset.beer;
+        if (!name || el.getAttribute('aria-checked') === 'true') return;
+        selectBeer(name, { focus: true });
+      });
+    });
+
+    // --- Keyboard (roving tabindex + auto-select) -------------------------
+    group.addEventListener('keydown', (event) => {
+      const ke = event as KeyboardEvent;
+      const currentIndex = items.findIndex(
+        (el) => el.getAttribute('aria-checked') === 'true',
+      );
+      if (currentIndex < 0) return;
+
+      let nextIndex = currentIndex;
+      switch (ke.key) {
+        case 'ArrowRight':
+        case 'ArrowDown':
+          nextIndex = (currentIndex + 1) % items.length;
+          break;
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          nextIndex = (currentIndex - 1 + items.length) % items.length;
+          break;
+        case 'Home':
+          nextIndex = 0;
+          break;
+        case 'End':
+          nextIndex = items.length - 1;
+          break;
+        default:
+          return;
+      }
+      ke.preventDefault();
+      const nextName = items[nextIndex].dataset.beer;
+      if (!nextName || nextIndex === currentIndex) return;
+      selectBeer(nextName, { focus: true });
+    });
+
+    // --- Canvas → switch sync (kept for future symmetry; today the canvas
+    //     only echoes selects, so this is a no-op under suppressChangeSync). -
+    frame?.addEventListener('brewbeerchange', (event) => {
+      if (suppressChangeSync) return;
+      const { name } = (event as CustomEvent<{ name: string }>).detail;
+      if (!validNames.has(name)) return;
+      applyState(name);
+    });
+  });
+</script>

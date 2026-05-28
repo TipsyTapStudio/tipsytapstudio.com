@@ -84,6 +84,7 @@
   "lab_002_a_name": "Brew / WebGL",
   "lab_002_a_caption": "Three beers cycling on a twelve-minute loop. One fragment shader, drawing only the shift of color and warmth just before the tap.",
   "lab_002_brewing_label": "Now pouring",
+  "lab_002_switch_hint": "Use arrow keys to switch beer",
   "lab_002_beer_pilsner": "Pilsner",
   "lab_002_beer_wit": "Wit",
   "lab_002_beer_ipa": "IPA",

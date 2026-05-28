@@ -11,6 +11,7 @@ import DriftCanvas from '../../../components/lab/DriftCanvas.astro';
 import GrainCanvas from '../../../components/lab/GrainCanvas.astro';
 import FluxCanvas from '../../../components/lab/FluxCanvas.astro';
 import BrewCanvas from '../../../components/lab/BrewCanvas.astro';
+import BrewSwitch from '../../../components/lab/BrewSwitch.astro';
 
 const locale = 'en';
 
@@ -36,16 +37,14 @@ const metaLabels = {
 const speedLabel = t('lab_param_speed', locale);
 const intensityLabel = t('lab_param_intensity', locale);
 
-// Brew #002 live caption — see JA file for rationale.
-const brewLiveCaption = {
-  label: t('lab_002_brewing_label', locale),
-  initialName: 'pilsner',
-  items: {
-    pilsner: t('lab_002_beer_pilsner', locale),
-    wit: t('lab_002_beer_wit', locale),
-    ipa: t('lab_002_beer_ipa', locale),
-  },
-};
+// Brew #002 manual switch — see JA file for rationale.
+const brewingLabel = t('lab_002_brewing_label', locale);
+const brewSwitchHint = t('lab_002_switch_hint', locale);
+const brewBeers = [
+  { name: 'pilsner', label: t('lab_002_beer_pilsner', locale), colA: '#0F0C05', colB: '#92711B' },
+  { name: 'wit',     label: t('lab_002_beer_wit', locale),     colA: '#0F0E0A', colB: '#7C6F49' },
+  { name: 'ipa',     label: t('lab_002_beer_ipa', locale),     colA: '#0E0905', colB: '#6E4A1E' },
+];
 ---
 
 <Base locale={locale} title={metaTitle} description={metaDescription}>
@@ -130,9 +129,16 @@ const brewLiveCaption = {
           { name: 'speed', label: speedLabel, value: 0.3 },
           { name: 'intensity', label: intensityLabel, value: 0.4 },
         ]}
-        liveCaption={brewLiveCaption}
       >
         <BrewCanvas slot="canvas" />
+        <BrewSwitch
+          slot="liveControl"
+          id="lab-002-a"
+          brewingLabel={brewingLabel}
+          switchHint={brewSwitchHint}
+          defaultBeer="ipa"
+          beers={brewBeers}
+        />
       </ExperimentFrame>
     </div>
 

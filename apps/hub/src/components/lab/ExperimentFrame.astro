@@ -116,6 +116,11 @@ const detailsId = `${id}-meta`;
         </dl>
       </details>
 
+      {/* Live control slot — sits above liveCaption (when present) and above
+          the slider grid. Used by Brew #002 to mount the manual BrewSwitch
+          radiogroup. Pages that don't need it simply omit the slot. */}
+      <slot name="liveControl" />
+
       {liveCaption && (
         <p
           class="experiment-frame__live-caption"
