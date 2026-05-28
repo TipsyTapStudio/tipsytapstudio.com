@@ -95,6 +95,38 @@ export const radius = {
   chip: '999px',
 } as const;
 
+// --- Hub Brew background overlay tokens ---
+// Used by hub sections to remain legible while the sticky Brew WebGL
+// background scrolls underneath. Mirrored as CSS vars in apps/hub/src/
+// layouts/Base.astro :root (--overlay-soft / --overlay-strong /
+// --card-bg-onbrew / --card-border-onbrew / --text-shadow-onbrew).
+export const overlay = {
+  soft: 'rgba(11, 11, 11, 0.35)',   // Works section — light veil, Brew shows through
+  strong: 'rgba(11, 11, 11, 0.6)',  // Manifesto / About — heavier veil for prose legibility
+} as const;
+
+export const cardOnBrew = {
+  bg: 'rgba(11, 11, 11, 0.55)',
+  border: 'rgba(255, 255, 255, 0.08)',
+} as const;
+
+export const textShadowOnBrew = '0 1px 2px rgba(0, 0, 0, 0.45)';
+
+// --- Hub Brew background parameters ---
+// Sticky WebGL background mounted in Base.astro for all hub pages (NOT /lab/).
+// Auto-cycles pilsner → wit → ipa on a `periodSec` loop with `dwellRatio`
+// dwell + smoothstep crossfade. Consumed directly inside HubBrewBackground.astro
+// as JS constants (same pattern as `lab.flux` / `lab.brew`).
+export const hub = {
+  brew: {
+    speed: 0.1,
+    intensity: 1.0,
+    periodSec: 180,
+    dwellRatio: 0.75,
+    initial: 'pilsner',
+  },
+} as const;
+
 // Lab-scope tokens — used only under /lab/. Do not reuse `labShade1/2` outside
 // of Lab experiments (the Hub hero must stay flat-monochrome per PRD §4).
 // Mirrored as CSS vars (--lab-*) in apps/hub/src/layouts/Base.astro :root.
@@ -140,5 +172,9 @@ export type Tokens = {
   spacing: typeof spacing;
   fontSize: typeof fontSize;
   radius: typeof radius;
+  overlay: typeof overlay;
+  cardOnBrew: typeof cardOnBrew;
+  textShadowOnBrew: typeof textShadowOnBrew;
+  hub: typeof hub;
   lab: typeof lab;
 };

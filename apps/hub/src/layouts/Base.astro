@@ -10,6 +10,7 @@
 
 import { t, type Locale } from '@ttsui/i18n';
 import Footer from '../components/Footer.astro';
+import HubBrewBackground from '../components/HubBrewBackground.astro';
 
 // Self-hosted IBM Plex Sans via @fontsource (same-origin, no third-party requests).
 // Keep weight list in sync with typography.weights in @ttsui/tokens.
@@ -39,6 +40,12 @@ const otherLocale: Locale = locale === 'ja' ? 'en' : 'ja';
 const switchHref = `/${otherLocale}/`;
 const switchLabel = t('common_locale_switch', locale);
 
+// --- Brew background enable/disable ---
+// Hub pages get the sticky Brew background; /lab/ pages already host their
+// own Lab #002 BrewCanvas inside an ExperimentFrame and must NOT stack a
+// second WebGL canvas behind them. Guarded explicitly by pathname.
+const enableBrewBg = !Astro.url.pathname.includes('/lab/');
+
 ---
 
 <!doctype html>
@@ -57,6 +64,10 @@ const switchLabel = t('common_locale_switch', locale);
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
+
+    {/* Sticky Brew background — body-direct child, behind <main>.
+        Disabled on /lab/ to avoid stacking two WebGL canvases. */}
+    <HubBrewBackground enable={enableBrewBg} />
 
     <main id="main">
       <slot />
@@ -121,6 +132,17 @@ const switchLabel = t('common_locale_switch', locale);
     --radius-chip: 999px;
 
     --max-content: 56rem; /* ~896px — comfortable single-column reading width */
+
+    /* --- Brew background overlay tokens ---
+       Used by hub section backgrounds (Works / Manifesto / About / Footer
+       band / ProductCard / Hero scroll cue) to remain legible while the
+       Brew WebGL background scrolls underneath. See @ttsui/tokens
+       (overlay, cardOnBrew, textShadowOnBrew). */
+    --overlay-soft: rgba(11, 11, 11, 0.35);
+    --overlay-strong: rgba(11, 11, 11, 0.6);
+    --card-bg-onbrew: rgba(11, 11, 11, 0.55);
+    --card-border-onbrew: rgba(255, 255, 255, 0.08);
+    --text-shadow-onbrew: 0 1px 2px rgba(0, 0, 0, 0.45);
 
     /* --- Lab-scope tokens (used only under /lab/) ---
        Mirrored from @ttsui/tokens `lab`. Hub Hero / Works / Manifesto must NOT

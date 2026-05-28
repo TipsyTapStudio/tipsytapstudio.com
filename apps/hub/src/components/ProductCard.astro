@@ -89,11 +89,25 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
     flex-direction: column;
     gap: var(--space-sm);
     padding: var(--space-md);
-    border: 1px solid var(--border-hairline);
+    /* Brew background sits behind: half-opaque card + white-side hairline +
+       backdrop blur so the card reads as a distinct surface against any
+       beer palette. .card__media stays opaque (#141414) so thumbnails are
+       not desaturated by the underlying gradient. */
+    border: 1px solid var(--card-border-onbrew);
     border-radius: var(--radius-card);
-    background: transparent;
+    background: var(--card-bg-onbrew);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     transition: border-color 180ms ease, transform 180ms ease;
     height: 100%;
+  }
+
+  /* backdrop-filter fallback — bump opacity so the card stays legible on
+     browsers that don't composite the blur layer. */
+  @supports not (backdrop-filter: blur(8px)) {
+    .card {
+      background: rgba(11, 11, 11, 0.7);
+    }
   }
 
   .card:hover {

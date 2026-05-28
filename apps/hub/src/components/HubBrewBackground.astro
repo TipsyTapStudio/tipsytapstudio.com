@@ -1,0 +1,396 @@
+---
+// HubBrewBackground — site-wide sticky Brew background for the hub.
+//
+// Derived from apps/hub/src/components/lab/BrewCanvas.astro (B1 manual switch
+// edition), but stripped of the BrewSwitch coupling. Instead of a visitor
+// driving the beer choice, the hub auto-cycles pilsner → wit → ipa on a
+// 180s period with a 75% dwell (smoothstep crossfade over the remaining
+// 25%), starting from `pilsner`.
+//
+// Layering contract:
+//   <body>
+//     <HubBrewBackground />   ← position: fixed; inset: 0; z-index: -1; aria-hidden
+//     <main> ... sections add their own overlay backgrounds ... </main>
+//     <Footer />
+//
+// Conditional output:
+//   Hub pages use this background, but /lab/ pages already host their own Lab
+//   #002 BrewCanvas inside an ExperimentFrame. Outputting both would stack
+//   two WebGL canvases. Therefore Base.astro passes `enable={false}` for any
+//   pathname containing '/lab/'. As a belt-and-suspenders measure, this
+//   component also short-circuits when `enable` is false.
+//
+// Performance discipline (matches FluxCanvas / Lab BrewCanvas):
+//   - devicePixelRatio clamped to <= 1.5
+//   - powerPreference: 'low-power'
+//   - Page Visibility API pauses rAF when tab hidden (IO not needed — always
+//     in viewport since position: fixed)
+//   - prefers-reduced-motion: skip rAF, render a single still frame
+//   - WebGL init failure OR context loss → hide .brew-bg entirely
+//     (display: none). Rationale: leaving a gradient strip behind the hub
+//     text harms legibility AND fails to convey brand. Pure var(--bg) is the
+//     cleanest no-WebGL fallback.
+
+interface Props {
+  enable?: boolean;
+}
+
+const { enable = true } = Astro.props;
+---
+
+{enable && (
+  <div class="brew-bg" aria-hidden="true" data-canvas="hub-brew">
+    {/* Fallback gradient. Sits *under* the canvas; visible during the brief
+        moment before WebGL spins up. If WebGL fails entirely, the parent
+        .brew-bg is hidden via JS — so this gradient does NOT linger. */}
+    <div class="brew-bg__fallback"></div>
+    <canvas class="brew-bg__gl" aria-hidden="true"></canvas>
+  </div>
+)}
+
+<style>
+  .brew-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    /* Sticky background: stays put while <main> scrolls above it. */
+  }
+  .brew-bg__fallback {
+    position: absolute;
+    inset: 0;
+    /* Pilsner palette colA → colB (the hub start state), per designer:
+       more brand-resonant than the muddier IPA. */
+    background: linear-gradient(180deg, #0f0c05 0%, #92711b 100%);
+  }
+  .brew-bg__gl {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+</style>
+
+<script>
+  // Only ever one HubBrewBackground per page (Base.astro mounts it once).
+  // Scoped query keeps it future-proof if that ever changes.
+  const hosts = document.querySelectorAll<HTMLElement>('.brew-bg');
+
+  const VERT = `#version 300 es
+in vec2 a_pos;
+void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }`;
+
+  // Same fbm field as Lab BrewCanvas — colour identity is uniform-driven.
+  const FRAG = `#version 300 es
+precision highp float;
+out vec4 outColor;
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform float u_intensity;
+uniform vec3 u_colA;
+uniform vec3 u_colB;
+
+float hash(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  float a = hash(i);
+  float b = hash(i + vec2(1.0, 0.0));
+  float c = hash(i + vec2(0.0, 1.0));
+  float d = hash(i + vec2(1.0, 1.0));
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+float fbm(vec2 p) {
+  float v = 0.0;
+  float amp = 0.5;
+  for (int i = 0; i < 4; i++) {
+    v += amp * noise(p);
+    p *= 2.0;
+    amp *= 0.5;
+  }
+  return v;
+}
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+  vec2 p = uv * 2.5;
+  float n1 = fbm(p + vec2(u_time, u_time * 0.7));
+  float n2 = fbm(p * 1.6 - vec2(u_time * 0.4, u_time));
+  float n = mix(n1, n2, 0.5);
+
+  n = 0.5 + (n - 0.5) * (0.5 + u_intensity * 1.2);
+
+  float k = pow(clamp(n, 0.0, 1.0), 2.2);
+  vec3 color = mix(u_colA, u_colB, k);
+
+  outColor = vec4(color, 1.0);
+}`;
+
+  // --- Color helpers (sRGB ↔ linear ↔ OKLab). Identical to Lab BrewCanvas;
+  // duplicated rather than imported so this component remains a single-file
+  // drop-in with no shared-module surface.
+  type RGB = [number, number, number];
+  type Lab = [number, number, number];
+
+  const hexToRgb = (hex: string): RGB => {
+    const h = hex.replace('#', '');
+    return [
+      parseInt(h.slice(0, 2), 16) / 255,
+      parseInt(h.slice(2, 4), 16) / 255,
+      parseInt(h.slice(4, 6), 16) / 255,
+    ];
+  };
+
+  const srgbToLinear = (c: number): number =>
+    c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+
+  const linearToSrgb = (c: number): number =>
+    c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+
+  const linToOklab = ([r, g, b]: RGB): Lab => {
+    const l = 0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b;
+    const m = 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b;
+    const s = 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b;
+    const l_ = Math.cbrt(l);
+    const m_ = Math.cbrt(m);
+    const s_ = Math.cbrt(s);
+    return [
+      0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_,
+      1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_,
+      0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_,
+    ];
+  };
+
+  const oklabToLin = ([L, a, b]: Lab): RGB => {
+    const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+    const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+    const s_ = L - 0.0894841775 * a - 1.291485548 * b;
+    const l = l_ * l_ * l_;
+    const m = m_ * m_ * m_;
+    const s = s_ * s_ * s_;
+    return [
+      4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+      -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+      -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+    ];
+  };
+
+  const hexToOklab = (hex: string): Lab => {
+    const [r, g, b] = hexToRgb(hex);
+    return linToOklab([srgbToLinear(r), srgbToLinear(g), srgbToLinear(b)]);
+  };
+
+  const lerpOklab = (A: Lab, B: Lab, t: number): Lab => [
+    A[0] + (B[0] - A[0]) * t,
+    A[1] + (B[1] - A[1]) * t,
+    A[2] + (B[2] - A[2]) * t,
+  ];
+
+  const oklabToRgb = (lab: Lab): RGB => {
+    const [lr, lg, lb] = oklabToLin(lab);
+    const r = linearToSrgb(Math.max(0, Math.min(1, lr)));
+    const g = linearToSrgb(Math.max(0, Math.min(1, lg)));
+    const b = linearToSrgb(Math.max(0, Math.min(1, lb)));
+    return [r, g, b];
+  };
+
+  const smooth = (x: number): number => {
+    const t = Math.max(0, Math.min(1, x));
+    return t * t * (3 - 2 * t);
+  };
+
+  // --- Hub auto-cycle parameters (mirrors tokens.hub.brew).
+  // Order matches lab.brew.cycle (pilsner, wit, ipa) by design — the hub
+  // boots on pilsner because that palette read warmest in designer review.
+  const BEERS = [
+    { name: 'pilsner', colA: '#0F0C05', colB: '#92711B' },
+    { name: 'wit',     colA: '#0F0E0A', colB: '#7C6F49' },
+    { name: 'ipa',     colA: '#0E0905', colB: '#6E4A1E' },
+  ] as const;
+
+  const BEER_LAB = BEERS.map((b) => ({
+    name: b.name,
+    A: hexToOklab(b.colA),
+    B: hexToOklab(b.colB),
+  }));
+
+  // Hub-specific (NOT lab) fixed values per spec.
+  const SPEED = 0.1;
+  const INTENSITY = 1.0;
+  const PERIOD_MS = 180_000; // 3 minutes for a full pilsner→wit→ipa→pilsner loop
+  const DWELL_RATIO = 0.75;  // 75% dwell, 25% smoothstep crossfade
+
+  // INITIAL pilsner: BEERS[0] is already pilsner, so the natural phase=0 start
+  // resolves to currentIndex=0=pilsner. No offset required. Kept explicit for
+  // clarity in case the array order is ever rearranged.
+  const INITIAL_INDEX = 0; // pilsner
+
+  function getActiveBeer(nowMs: number): { currentIndex: number; nextIndex: number; weight: number } {
+    // phase ∈ [0, BEERS.length) — fractional position in the cycle.
+    const phase = ((nowMs / PERIOD_MS) * BEERS.length + INITIAL_INDEX) % BEERS.length;
+    const currentIndex = Math.floor(phase);
+    const nextIndex = (currentIndex + 1) % BEERS.length;
+    const t = phase - currentIndex;
+    const w = t < DWELL_RATIO
+      ? 0
+      : smooth((t - DWELL_RATIO) / (1 - DWELL_RATIO));
+    return { currentIndex, nextIndex, weight: w };
+  }
+
+  function initOne(host: HTMLElement) {
+    const canvas = host.querySelector<HTMLCanvasElement>('.brew-bg__gl');
+    if (!canvas) return;
+    const gl = canvas.getContext('webgl2', { antialias: false, powerPreference: 'low-power' });
+    if (!gl) {
+      // WebGL unavailable → hide entire bg layer. var(--bg) shows through cleanly.
+      host.style.display = 'none';
+      return;
+    }
+
+    const compile = (type: number, src: string): WebGLShader | null => {
+      const sh = gl.createShader(type);
+      if (!sh) return null;
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+        // eslint-disable-next-line no-console
+        console.warn('[HubBrewBackground] shader compile failed', gl.getShaderInfoLog(sh));
+        return null;
+      }
+      return sh;
+    };
+
+    const vs = compile(gl.VERTEX_SHADER, VERT);
+    const fs = compile(gl.FRAGMENT_SHADER, FRAG);
+    if (!vs || !fs) { host.style.display = 'none'; return; }
+
+    const prog = gl.createProgram()!;
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { host.style.display = 'none'; return; }
+    gl.useProgram(prog);
+
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'a_pos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    const uTime = gl.getUniformLocation(prog, 'u_time');
+    const uRes = gl.getUniformLocation(prog, 'u_resolution');
+    const uIntensity = gl.getUniformLocation(prog, 'u_intensity');
+    const uColA = gl.getUniformLocation(prog, 'u_colA');
+    const uColB = gl.getUniformLocation(prog, 'u_colB');
+
+    const state = {
+      time: 0,
+      raf: 0,
+      reduced: false,
+      startMs: performance.now(), // anchor for getActiveBeer phase
+    };
+
+    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    state.reduced = mql.matches;
+    mql.addEventListener?.('change', (e) => {
+      state.reduced = e.matches;
+      if (state.reduced) { stop(); drawOnce(); }
+      else { start(); }
+    });
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const w = Math.floor(canvas!.clientWidth * dpr);
+      const h = Math.floor(canvas!.clientHeight * dpr);
+      if (canvas!.width !== w || canvas!.height !== h) {
+        canvas!.width = w;
+        canvas!.height = h;
+        gl!.viewport(0, 0, w, h);
+      }
+    }
+
+    function uploadColors(nowMs: number) {
+      if (state.reduced) {
+        // Lock to the initial palette (pilsner) — no cycle when motion is off.
+        const pal = BEER_LAB[INITIAL_INDEX];
+        const a = oklabToRgb(pal.A);
+        const b = oklabToRgb(pal.B);
+        gl!.uniform3f(uColA, a[0], a[1], a[2]);
+        gl!.uniform3f(uColB, b[0], b[1], b[2]);
+        return;
+      }
+      const { currentIndex, nextIndex, weight } = getActiveBeer(nowMs - state.startMs);
+      const cur = BEER_LAB[currentIndex];
+      const nxt = BEER_LAB[nextIndex];
+      const A = lerpOklab(cur.A, nxt.A, weight);
+      const B = lerpOklab(cur.B, nxt.B, weight);
+      const a = oklabToRgb(A);
+      const b = oklabToRgb(B);
+      gl!.uniform3f(uColA, a[0], a[1], a[2]);
+      gl!.uniform3f(uColB, b[0], b[1], b[2]);
+    }
+
+    function draw() {
+      resize();
+      const now = performance.now();
+      gl!.uniform1f(uTime, state.time);
+      gl!.uniform2f(uRes, canvas!.width, canvas!.height);
+      gl!.uniform1f(uIntensity, INTENSITY);
+      uploadColors(now);
+      gl!.drawArrays(gl!.TRIANGLES, 0, 3);
+    }
+
+    function drawOnce() {
+      state.time = 0;
+      draw();
+    }
+
+    function tick() {
+      // Same speed mapping as Lab BrewCanvas: base 0.0008 + speed * 0.012.
+      state.time += 0.0008 + SPEED * 0.012;
+      draw();
+      state.raf = requestAnimationFrame(tick);
+    }
+
+    function start() {
+      if (state.raf) return;
+      if (state.reduced) { drawOnce(); return; }
+      state.raf = requestAnimationFrame(tick);
+    }
+    function stop() {
+      if (state.raf) { cancelAnimationFrame(state.raf); state.raf = 0; }
+    }
+
+    // Page Visibility API — pause when the tab is hidden. The background is
+    // always in the viewport (position: fixed), so IntersectionObserver is
+    // unnecessary; visibility is the only meaningful pause signal.
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop();
+      else start();
+    });
+
+    window.addEventListener('resize', () => { draw(); });
+
+    // Context loss: hide the layer entirely (matches init-failure handling).
+    canvas.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      stop();
+      host.style.display = 'none';
+    });
+
+    // First paint + kick off rAF (or single still frame for reduced-motion).
+    drawOnce();
+    start();
+  }
+
+  hosts.forEach(initOne);
+</script>

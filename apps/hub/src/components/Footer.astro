@@ -31,6 +31,9 @@ const license = t('hub_footer_license', locale);
 const copyright = t('hub_footer_copyright', locale);
 ---
 
+{/* Top fade band — soft transition from the Brew background into the
+    opaque footer. Decorative only (aria-hidden). */}
+<div class="footer__top-fade" aria-hidden="true"></div>
 <footer class="site-footer" data-locale={locale}>
   <div class="footer__grid">
     <FooterColumn>
@@ -52,12 +55,25 @@ const copyright = t('hub_footer_copyright', locale);
 </footer>
 
 <style>
+  /* Bridges the Brew background into the opaque footer — 48px linear
+     fade from transparent to var(--bg). Negative margin so the band
+     visually overlaps the footer's top edge without consuming layout. */
+  .footer__top-fade {
+    height: 48px;
+    background: linear-gradient(to bottom, transparent 0%, var(--bg) 100%);
+    margin-top: -48px;
+    pointer-events: none;
+  }
+
   .site-footer {
     flex-shrink: 0;
     border-top: 1px solid var(--border-hairline);
     padding: var(--space-xl) var(--space-md);
     color: var(--muted);
     font-size: var(--fs-sm);
+    /* Opaque — footer is the "land" the Brew sea fades into. */
+    background: var(--bg);
+    position: relative;
   }
 
   .footer__grid {

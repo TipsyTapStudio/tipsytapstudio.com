@@ -30,41 +30,49 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
     </a>
   </section>
 
-  <section id="works" class="section" aria-labelledby="works-heading">
-    <SectionHeading id="works-heading">{t('hub_works_heading', locale)}</SectionHeading>
-    <p class="section-lede">{t('hub_works_lede', locale)}</p>
-    <ul class="works-grid" role="list">
-      {works.map((work) => (
-        <li>
-          <ProductCard
-            slug={work.slug}
-            status={work.status}
-            tags={work.tags}
-            thumb={work.thumb}
-            demoUrl={work.demoUrl}
-            repoUrl={work.repoUrl}
-            lpUrl={work.lpUrl}
-            locale={locale}
-          />
-        </li>
-      ))}
-    </ul>
-  </section>
+  {/* Full-width bands so the Brew overlay covers the viewport; inner
+      .section keeps its max-width text column. */}
+  <div class="section-band section-band--soft">
+    <section id="works" class="section" aria-labelledby="works-heading">
+      <SectionHeading id="works-heading">{t('hub_works_heading', locale)}</SectionHeading>
+      <p class="section-lede">{t('hub_works_lede', locale)}</p>
+      <ul class="works-grid" role="list">
+        {works.map((work) => (
+          <li>
+            <ProductCard
+              slug={work.slug}
+              status={work.status}
+              tags={work.tags}
+              thumb={work.thumb}
+              demoUrl={work.demoUrl}
+              repoUrl={work.repoUrl}
+              lpUrl={work.lpUrl}
+              locale={locale}
+            />
+          </li>
+        ))}
+      </ul>
+    </section>
+  </div>
 
-  <section id="manifesto" class="section" aria-labelledby="manifesto-heading">
-    <SectionHeading id="manifesto-heading">{t('hub_manifesto_heading', locale)}</SectionHeading>
-    <div class="manifesto">
-      <ManifestoArrow keyword={t('hub_manifesto_kw1', locale)} body={t('hub_manifesto_p1', locale)} />
-      <ManifestoArrow keyword={t('hub_manifesto_kw2', locale)} body={t('hub_manifesto_p2', locale)} />
-      <ManifestoArrow keyword={t('hub_manifesto_kw3', locale)} body={t('hub_manifesto_p3', locale)} />
-    </div>
-  </section>
+  <div class="section-band section-band--strong">
+    <section id="manifesto" class="section" aria-labelledby="manifesto-heading">
+      <SectionHeading id="manifesto-heading">{t('hub_manifesto_heading', locale)}</SectionHeading>
+      <div class="manifesto">
+        <ManifestoArrow keyword={t('hub_manifesto_kw1', locale)} body={t('hub_manifesto_p1', locale)} />
+        <ManifestoArrow keyword={t('hub_manifesto_kw2', locale)} body={t('hub_manifesto_p2', locale)} />
+        <ManifestoArrow keyword={t('hub_manifesto_kw3', locale)} body={t('hub_manifesto_p3', locale)} />
+      </div>
+    </section>
+  </div>
 
-  <section id="about" class="section" aria-labelledby="about-heading">
-    <SectionHeading id="about-heading">{t('hub_about_heading', locale)}</SectionHeading>
-    <p class="about__body">{t('hub_about_body', locale)}</p>
-    <span class="about__placeholder">{t('hub_about_devlog_link', locale)}</span>
-  </section>
+  <div class="section-band section-band--strong">
+    <section id="about" class="section" aria-labelledby="about-heading">
+      <SectionHeading id="about-heading">{t('hub_about_heading', locale)}</SectionHeading>
+      <p class="about__body">{t('hub_about_body', locale)}</p>
+      <span class="about__placeholder">{t('hub_about_devlog_link', locale)}</span>
+    </section>
+  </div>
 </Base>
 
 <style>
@@ -85,6 +93,8 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
     font-weight: 600;
     line-height: 1.05;
     margin: 0;
+    /* Brew background sits behind the hero — shadow rescues legibility. */
+    text-shadow: var(--text-shadow-onbrew);
     animation: hero-fade 720ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
 
@@ -94,6 +104,7 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
     line-height: 1.2;
     margin: 0;
     color: var(--fg);
+    text-shadow: var(--text-shadow-onbrew);
     animation: hero-fade 720ms cubic-bezier(0.2, 0.7, 0.2, 1) 120ms both;
   }
 
@@ -106,6 +117,8 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
     margin-inline: 0;
     color: var(--muted);
     max-width: 42rem; /* en は欧文密度低、ja の 32rem とは別値 */
+    /* Slightly stronger shadow on the muted subtitle. */
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
     animation: hero-fade 720ms cubic-bezier(0.2, 0.7, 0.2, 1) 240ms both;
   }
 
@@ -120,6 +133,9 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
     text-decoration: none;
     padding: var(--space-2xs) var(--space-sm);
     border-radius: var(--radius-chip);
+    background: rgba(11, 11, 11, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     transition: color 120ms ease;
     animation: cue-bob 2400ms ease-in-out infinite;
   }
@@ -127,6 +143,23 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
   .hero__cue:hover,
   .hero__cue:focus-visible {
     color: var(--fg);
+  }
+
+  /* Full-width Brew overlay bands — see ja/index.astro for rationale. */
+  .section-band {
+    width: 100%;
+  }
+  .section-band--soft {
+    background: var(--overlay-soft);
+  }
+  .section-band--strong {
+    background: var(--overlay-strong);
+  }
+
+  @supports not (backdrop-filter: blur(6px)) {
+    .hero__cue {
+      background: rgba(11, 11, 11, 0.6);
+    }
   }
 
   .manifesto {
