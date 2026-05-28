@@ -149,11 +149,11 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
   .section-band {
     width: 100%;
   }
-  .section-band--soft {
-    background: var(--overlay-soft);
-  }
+  /* 2026-05-28: overlay 階段が「区切り線」として見える指摘を受けて
+     段差を解消、全セクション透明化。文字可読性は text-shadow 側で確保 */
+  .section-band--soft,
   .section-band--strong {
-    background: var(--overlay-strong);
+    background: transparent;
   }
 
   @supports not (backdrop-filter: blur(6px)) {
