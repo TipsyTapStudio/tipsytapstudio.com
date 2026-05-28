@@ -215,11 +215,12 @@ const enableHeader = enableBrewBg;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Japanese family override — JP glyph family fronted, latin Plex Sans as the
-     fallback so mixed-script lines keep a unified Plex feel. System stack stays
-     as the last-resort fallback for font load failures. */
+  /* Japanese family override — Latin family FIRST so "Tipsy Tap Studio" (en
+     字) on ja pages renders with EB Garamond, JP family fronts CJK glyphs only
+     via per-glyph fallback. Without this, Shippori's Latin glyphs override
+     EB Garamond on mixed lines. (2026-05-28 fix) */
   :lang(ja) {
-    font-family: 'Shippori Mincho B1', 'EB Garamond', ui-serif, Georgia,
+    font-family: 'EB Garamond', 'Shippori Mincho B1', ui-serif, Georgia,
       'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', serif;
   }
 
