@@ -87,7 +87,7 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
   .hero {
     max-width: var(--max-content);
     margin: 0 auto;
-    padding: var(--space-2xl) var(--space-md);
+    padding: clamp(4rem, 3rem + 4vw, 7rem) clamp(1.25rem, 0.5rem + 3vw, 4rem);
     min-height: calc(100svh - 6rem); /* leave room for footer */
     display: flex;
     flex-direction: column;
@@ -126,9 +126,9 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
     /* :lang(ja) では --font-display = Noto Serif JP だが、英字グリフは
        fallback で Fraunces Variable に落ちる (fontFamily 順序の通り)。 */
     font-family: 'Fraunces Variable', 'Fraunces', var(--font-display);
-    font-size: clamp(4rem, 3rem + 8vw, 10rem);
+    font-size: clamp(3.5rem, 2.4rem + 7vw, 9.5rem);
     font-weight: 600;
-    line-height: 0.9;
+    line-height: 0.88;
     letter-spacing: -0.03em;
     font-variation-settings: 'opsz' 144, 'SOFT' 50;
     text-shadow: var(--text-shadow-onbrew);
@@ -141,22 +141,26 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
 
   .hero__statement {
     font-family: var(--font-display);
-    font-size: var(--fs-xl);
-    font-weight: 500;
+    font-size: clamp(1.375rem, 1rem + 1.5vw, 2.25rem);
+    font-weight: 400;
     line-height: 1.2;
+    letter-spacing: 0;
     margin: 0;
     color: var(--fg);
-    /* Noto Serif JP は variable ではないが、無視されるだけで害なし。 */
-    font-variation-settings: 'opsz' 100, 'SOFT' 30;
+    /* statement を副題に降格 — opsz=72, SOFT=50 でやわらかく。
+       Noto Serif JP は variable ではないが、無視されるだけで害なし。 */
+    font-variation-settings: 'opsz' 72, 'SOFT' 50;
     text-shadow: var(--text-shadow-onbrew);
     animation: hero-fade 720ms cubic-bezier(0.2, 0.7, 0.2, 1) 120ms both;
+    /* ja: 「鳴らす、光らす、刻む。」9 文字、絶対 1 行維持 */
+    white-space: nowrap;
   }
 
   .hero__sub {
     font-size: var(--fs-base);
     font-weight: 400;
     line-height: 1.5;
-    margin-block-start: var(--space-lg);
+    margin-block-start: var(--space-xl);
     margin-block-end: 0;
     margin-inline: 0;
     color: var(--muted);
@@ -172,7 +176,7 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
   .hero__cue {
     position: absolute;
     left: 50%;
-    bottom: var(--space-lg);
+    bottom: var(--space-xl);
     transform: translateX(-50%);
     color: var(--muted);
     font-size: var(--fs-lg);
@@ -252,18 +256,8 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
     padding-bottom: 2px;
   }
 
-  @media (min-width: 640px) {
-    .hero {
-      padding: var(--space-3xl) var(--space-xl);
-      gap: var(--space-lg);
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .hero {
-      padding: var(--space-3xl) var(--space-2xl);
-    }
-  }
+  /* 640+/1024+ の .hero padding/gap 上書きは削除済み。
+     .hero の clamp() が全幅で padding を吸収する。 */
 
   @keyframes hero-fade {
     from {
