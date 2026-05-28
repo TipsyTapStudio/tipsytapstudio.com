@@ -9,6 +9,8 @@
   "hub_hero_substatement": "音もビジュアルも、時計の針もタイマーの拍も、スタンプも拡張機能も。リズムを持つものを叩いて作る、インタラクティブな実験スタジオ。",
 
   "hub_nav_skip_to_works": "Works へスキップ",
+  "hub_nav_works": "Works",
+  "hub_nav_studio": "Studio",
 
   "hub_works_heading": "Works",
   "hub_works_lede": "触れる、いじれる、遊べる。スタジオで動いているもの全部。",
@@ -46,17 +48,9 @@
   "hub_works_item_lp_stamps_title": "LINE Stamps",
   "hub_works_item_lp_stamps_desc": "LINE スタンプ枠、準備中。スタジオのキャラクターを別チャンネルに連れていく試み。",
 
-  "hub_manifesto_heading": "Manifesto",
-  "hub_manifesto_kw1": "鳴らす",
-  "hub_manifesto_kw2": "光らす",
-  "hub_manifesto_kw3": "刻む",
-  "hub_manifesto_p1": "音、ビジュアル、時計、タイマー、スタンプ、拡張機能。カテゴリは決めない。共通項はひとつ、触れて拍を返してくることだけ。",
-  "hub_manifesto_p2": "TouchDesigner でも、Max for Live でも、Strudel でも TidalCycles でも届かない隙間がある。そこへウェブと Claude Code で手を伸ばす。",
-  "hub_manifesto_p3": "ひとりで、数を出す。README を丁寧に書く。途中で楽しくなくなったら、そこで間違っている。",
-
   "hub_about_heading": "Studio",
-  "hub_about_body": "Tipsy Tap Studio はインタラクティブな実験場。音、ビジュアル、時計、タイマー、スタンプ、拡張機能、ガジェット、ゲーム — 触れて、いじって、遊べるものなら何でも作る。ジャンルは決めていない。思いついた順に形にして、READMEを添えて並べていく。経過は devlog に残す（準備中）。",
-  "hub_about_devlog_link": "devlog を読む（準備中）",
+  "hub_about_body": "作ったものは README を添えて並べ、考えたことは devlog に書き留める。試作・実験・改稿の経過を、そのまま記録として残していくスタジオです。devlog は準備中。",
+  "hub_about_devlog_link": "devlog を読む",
 
   "hub_footer_contact_label": "Contact",
   "hub_footer_lab_label": "Lab",

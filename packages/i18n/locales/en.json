@@ -9,6 +9,8 @@
   "hub_hero_substatement": "Sounds, visuals, clocks, timers, stickers, extensions — an interactive studio that builds things with a beat you can tap.",
 
   "hub_nav_skip_to_works": "Skip to Works",
+  "hub_nav_works": "Works",
+  "hub_nav_studio": "Studio",
 
   "hub_works_heading": "Works",
   "hub_works_lede": "Everything in motion at the studio — tap, tweak, play.",
@@ -46,17 +48,9 @@
   "hub_works_item_lp_stamps_title": "LINE Stamps",
   "hub_works_item_lp_stamps_desc": "LINE sticker slot, in preparation. Taking the studio's characters out to another channel.",
 
-  "hub_manifesto_heading": "Manifesto",
-  "hub_manifesto_kw1": "Tap",
-  "hub_manifesto_kw2": "Light",
-  "hub_manifesto_kw3": "Tick",
-  "hub_manifesto_p1": "Sounds, visuals, clocks, timers, stickers, extensions. No fixed category — only one rule: it has to tap back when you touch it.",
-  "hub_manifesto_p2": "TouchDesigner, Max for Live, Strudel, TidalCycles — great tools, but each leaves gaps. We reach into those gaps with the web and Claude Code.",
-  "hub_manifesto_p3": "One person, many shipments. READMEs written with care. The moment it stops being fun, something is wrong.",
-
   "hub_about_heading": "Studio",
-  "hub_about_body": "Tipsy Tap Studio is an interactive playground. Sound, visuals, clocks, timers, stamps, browser extensions, gadgets, games — anything you can touch, tweak, or play with. No fixed category. Ideas get built in the order they arrive, shipped with a README, and lined up side by side. The process is logged in the devlog (coming soon).",
-  "hub_about_devlog_link": "Read the devlog (coming soon)",
+  "hub_about_body": "A studio that lines up its work with a README attached, and writes down its thinking in a devlog. Prototypes, experiments, and revisions are left as they are — kept as a record. The devlog is in preparation.",
+  "hub_about_devlog_link": "Read the devlog",
 
   "hub_footer_contact_label": "Contact",
   "hub_footer_lab_label": "Lab",

@@ -1,0 +1,206 @@
+---
+// Site Header (N2) — fixed nav that lives transparent over Hero and morphs
+// into a translucent chip bar once Hero scrolls off.
+//
+// Behavior:
+//   - Two IntersectionObservers, both JS-scoped to this component:
+//     1) Sentinel IO: watches [data-nav-sentinel] (placed at the end of Hero).
+//        While the sentinel is visible, data-nav-scrolled="false" → transparent.
+//        Once it leaves the viewport, "true" → chip bar.
+//     2) Section IO: watches each <section> referenced by the nav links and
+//        sets aria-current="location" on the matching link as the user scrolls.
+//
+// /lab/ does NOT receive this Header — Base.astro guards on pathname, matching
+// the HubBrewBackground guard so the two stay in lockstep.
+//
+// Skip-link compatibility: the global .skip-link sits above this header at
+// z-index 51 (Header is 50), so focusing it still surfaces it visually.
+
+import { t, type Locale } from '@ttsui/i18n';
+
+interface Props {
+  locale: Locale;
+  switchHref: string;
+  otherLocale: Locale;
+}
+
+const { locale, switchHref, otherLocale } = Astro.props;
+
+const sections = [
+  { id: 'works', label: t('hub_nav_works', locale) },
+  { id: 'about', label: t('hub_nav_studio', locale) },
+];
+const switchLabel = t('common_locale_switch', locale);
+const navLabel = locale === 'ja' ? 'ページ内移動' : 'In-page navigation';
+---
+
+<header class="site-nav" data-nav-scrolled="false">
+  <a class="site-nav__brand" href={`/${locale}/`}>Tipsy Tap Studio</a>
+  <nav class="site-nav__sections" aria-label={navLabel}>
+    <ul role="list">
+      {sections.map((s) => (
+        <li>
+          <a href={`#${s.id}`} data-section-link={s.id}>{s.label}</a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+  <a class="site-nav__locale" href={switchHref} hreflang={otherLocale}>{switchLabel}</a>
+</header>
+
+<style>
+  .site-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    max-width: var(--max-content);
+    margin: 0 auto;
+    background: transparent;
+    transition:
+      background-color 200ms var(--ease-flux),
+      border-color 200ms var(--ease-flux);
+    border-bottom: 1px solid transparent;
+  }
+
+  /* Scroll-state: chip-bar — translucent panel over the Brew background. */
+  .site-nav[data-nav-scrolled='true'] {
+    background: var(--card-bg-onbrew);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom-color: var(--card-border-onbrew);
+  }
+
+  .site-nav__brand {
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    color: var(--fg);
+    text-decoration: none;
+    text-shadow: var(--text-shadow-onbrew);
+    letter-spacing: var(--track-display);
+  }
+
+  /* Sections list: hidden over Hero, fades in with the chip bar. */
+  .site-nav__sections {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms var(--ease-flux);
+  }
+  .site-nav[data-nav-scrolled='true'] .site-nav__sections {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .site-nav__sections ul {
+    display: flex;
+    gap: var(--space-md);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .site-nav__sections a {
+    font-size: var(--fs-sm);
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: var(--track-badge);
+    text-transform: uppercase;
+    padding: var(--space-3xs) 0;
+    border-bottom: 1px solid transparent;
+    transition:
+      color 120ms ease,
+      border-color 120ms ease;
+  }
+
+  .site-nav__sections a:hover,
+  .site-nav__sections a:focus-visible {
+    color: var(--fg);
+  }
+
+  .site-nav__sections a[aria-current='location'] {
+    color: var(--fg);
+    border-bottom-color: var(--fg);
+  }
+
+  .site-nav__locale {
+    font-size: var(--fs-sm);
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: var(--track-badge);
+    text-transform: uppercase;
+    text-shadow: var(--text-shadow-onbrew);
+    transition: color 120ms ease;
+  }
+  .site-nav__locale:hover,
+  .site-nav__locale:focus-visible {
+    color: var(--fg);
+  }
+
+  /* Fallback for environments without backdrop-filter (older Firefox / some WebViews). */
+  @supports not (backdrop-filter: blur(10px)) {
+    .site-nav[data-nav-scrolled='true'] {
+      background: rgba(11, 11, 11, 0.85);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .site-nav,
+    .site-nav__sections {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  // Two scoped IOs — both no-op safely if their targets aren't present
+  // (e.g. a sub-page with no sentinel or section ids).
+  const nav = document.querySelector<HTMLElement>('.site-nav');
+  const sentinel = document.querySelector('[data-nav-sentinel]');
+  const links = document.querySelectorAll<HTMLAnchorElement>(
+    '.site-nav__sections [data-section-link]'
+  );
+
+  if (nav && sentinel) {
+    // Sentinel sits at the end of Hero. While it's intersecting, we're still
+    // on Hero → transparent. Once it scrolls out → chip bar.
+    const sentinelIO = new IntersectionObserver(
+      ([entry]) => {
+        nav.dataset.navScrolled = entry.isIntersecting ? 'false' : 'true';
+      },
+      { rootMargin: '0px' }
+    );
+    sentinelIO.observe(sentinel);
+  }
+
+  const sectionIds = Array.from(links)
+    .map((a) => a.dataset.sectionLink)
+    .filter((v): v is string => Boolean(v));
+  const sections = sectionIds
+    .map((id) => document.getElementById(id))
+    .filter((el): el is HTMLElement => Boolean(el));
+
+  if (sections.length) {
+    // rootMargin -40%/-55%: trigger active state when the section's mid-band
+    // is in the central viewport stripe, not when its top edge merely enters.
+    const sectionIO = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return;
+          links.forEach((a) => a.removeAttribute('aria-current'));
+          const active = document.querySelector(
+            `[data-section-link="${e.target.id}"]`
+          );
+          active?.setAttribute('aria-current', 'location');
+        });
+      },
+      { rootMargin: '-40% 0px -55% 0px', threshold: 0 }
+    );
+    sections.forEach((s) => sectionIO.observe(s));
+  }
+</script>

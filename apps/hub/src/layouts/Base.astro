@@ -10,6 +10,7 @@
 
 import { t, type Locale } from '@ttsui/i18n';
 import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
 import HubBrewBackground from '../components/HubBrewBackground.astro';
 
 // Self-hosted IBM Plex Sans via @fontsource (same-origin, no third-party requests).
@@ -45,6 +46,9 @@ const switchLabel = t('common_locale_switch', locale);
 // own Lab #002 BrewCanvas inside an ExperimentFrame and must NOT stack a
 // second WebGL canvas behind them. Guarded explicitly by pathname.
 const enableBrewBg = !Astro.url.pathname.includes('/lab/');
+// Header (N2) follows the same guard — /lab/ runs its own ExperimentFrame
+// chrome and shouldn't carry the hub's fixed nav over the top of it.
+const enableHeader = enableBrewBg;
 
 ---
 
@@ -68,6 +72,12 @@ const enableBrewBg = !Astro.url.pathname.includes('/lab/');
     {/* Sticky Brew background — body-direct child, behind <main>.
         Disabled on /lab/ to avoid stacking two WebGL canvases. */}
     <HubBrewBackground enable={enableBrewBg} />
+
+    {/* Fixed nav — transparent over Hero, chip-bar after the Hero sentinel
+        scrolls off. Same /lab/ guard as the Brew background. */}
+    {enableHeader && (
+      <Header locale={locale} switchHref={switchHref} otherLocale={otherLocale} />
+    )}
 
     <main id="main">
       <slot />
@@ -234,7 +244,8 @@ const enableBrewBg = !Astro.url.pathname.includes('/lab/');
     background: var(--fg);
     color: var(--bg);
     padding: var(--space-2xs) var(--space-sm);
-    z-index: 10;
+    /* Sits above .site-nav (z-index 50) so it remains visible on focus. */
+    z-index: 60;
   }
   .skip-link:focus {
     left: var(--space-sm);
