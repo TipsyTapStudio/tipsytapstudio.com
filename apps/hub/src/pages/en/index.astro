@@ -35,10 +35,6 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
     <a class="hero__cue" href="#works" aria-label={skipLabel}>
       <span aria-hidden="true">↓</span>
     </a>
-
-    {/* Sentinel — Header watches this via IO; once it leaves the viewport,
-        the nav switches from transparent to chip-bar mode. */}
-    <div data-nav-sentinel aria-hidden="true"></div>
   </section>
 
   {/* Full-width bands so the Brew overlay covers the viewport; inner
@@ -79,7 +75,11 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
   .hero {
     max-width: var(--max-content);
     margin: 0 auto;
-    padding: clamp(4rem, 3rem + 4vw, 7rem) clamp(1.25rem, 0.5rem + 3vw, 4rem);
+    /* N3 (2026-05-28): 上 padding を増量。常時表示の Header 高さ約 3rem を吸収 +
+       「上が詰まりすぎ」ユーザー指摘の余裕確保。 */
+    padding-top: clamp(6rem, 5rem + 4vw, 10rem);
+    padding-bottom: clamp(4rem, 3rem + 4vw, 7rem);
+    padding-inline: clamp(1.25rem, 0.5rem + 3vw, 4rem);
     min-height: calc(100svh - 6rem);
     display: flex;
     flex-direction: column;

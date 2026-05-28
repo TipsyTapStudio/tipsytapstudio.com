@@ -1,14 +1,15 @@
 ---
-// Site Header (N2) — fixed nav that lives transparent over Hero and morphs
-// into a translucent chip bar once Hero scrolls off.
+// Site Header (N3) — always-transparent nav with anchor list permanently visible.
+//
+// 2026-05-28: dropped sentinel/chip-bar morph (N2). User feedback:
+//   "ヘッダーメニューは常時表示でいい / 背景座布団はいらない"
+// → Anchor list shows over Hero from the start; no scroll-state toggle.
+// Readability over Brew background is handled by text-shadow on every nav text.
 //
 // Behavior:
-//   - Two IntersectionObservers, both JS-scoped to this component:
-//     1) Sentinel IO: watches [data-nav-sentinel] (placed at the end of Hero).
-//        While the sentinel is visible, data-nav-scrolled="false" → transparent.
-//        Once it leaves the viewport, "true" → chip bar.
-//     2) Section IO: watches each <section> referenced by the nav links and
-//        sets aria-current="location" on the matching link as the user scrolls.
+//   - One IntersectionObserver (section IO): watches each <section> referenced
+//     by nav links and sets aria-current="location" on the matching link as
+//     the user scrolls.
 //
 // /lab/ does NOT receive this Header — Base.astro guards on pathname, matching
 // the HubBrewBackground guard so the two stay in lockstep.
@@ -34,7 +35,7 @@ const switchLabel = t('common_locale_switch', locale);
 const navLabel = locale === 'ja' ? 'ページ内移動' : 'In-page navigation';
 ---
 
-<header class="site-nav" data-nav-scrolled="false">
+<header class="site-nav">
   <a class="site-nav__brand" href={`/${locale}/`}>Tipsy Tap Studio</a>
   <nav class="site-nav__sections" aria-label={navLabel}>
     <ul role="list">
@@ -62,19 +63,7 @@ const navLabel = locale === 'ja' ? 'ページ内移動' : 'In-page navigation';
     padding: var(--space-sm) var(--space-md);
     max-width: var(--max-content);
     margin: 0 auto;
-    background: transparent;
-    transition:
-      background-color 200ms var(--ease-flux),
-      border-color 200ms var(--ease-flux);
-    border-bottom: 1px solid transparent;
-  }
-
-  /* Scroll-state: chip-bar — translucent panel over the Brew background. */
-  .site-nav[data-nav-scrolled='true'] {
-    background: var(--card-bg-onbrew);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-bottom-color: var(--card-border-onbrew);
+    /* N3 (2026-05-28): 常時透明、座布団なし。可読性は子要素の text-shadow で確保 */
   }
 
   .site-nav__brand {
@@ -90,17 +79,7 @@ const navLabel = locale === 'ja' ? 'ページ内移動' : 'In-page navigation';
     letter-spacing: var(--track-display);
   }
 
-  /* Sections list: hidden over Hero, fades in with the chip bar. */
-  .site-nav__sections {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 200ms var(--ease-flux);
-  }
-  .site-nav[data-nav-scrolled='true'] .site-nav__sections {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
+  /* N3: sections list は常時表示 (opacity toggle 削除) */
   .site-nav__sections ul {
     display: flex;
     gap: var(--space-md);
@@ -117,6 +96,7 @@ const navLabel = locale === 'ja' ? 'ページ内移動' : 'In-page navigation';
     text-transform: uppercase;
     padding: var(--space-3xs) 0;
     border-bottom: 1px solid transparent;
+    text-shadow: var(--text-shadow-onbrew);
     transition:
       color 120ms ease,
       border-color 120ms ease;
@@ -146,41 +126,20 @@ const navLabel = locale === 'ja' ? 'ページ内移動' : 'In-page navigation';
     color: var(--fg);
   }
 
-  /* Fallback for environments without backdrop-filter (older Firefox / some WebViews). */
-  @supports not (backdrop-filter: blur(10px)) {
-    .site-nav[data-nav-scrolled='true'] {
-      background: rgba(11, 11, 11, 0.85);
-    }
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    .site-nav,
-    .site-nav__sections {
+    .site-nav__sections a,
+    .site-nav__locale {
       transition: none;
     }
   }
 </style>
 
 <script>
-  // Two scoped IOs — both no-op safely if their targets aren't present
-  // (e.g. a sub-page with no sentinel or section ids).
-  const nav = document.querySelector<HTMLElement>('.site-nav');
-  const sentinel = document.querySelector('[data-nav-sentinel]');
+  // N3 (2026-05-28): sentinel IO 削除。section IO のみ残す
+  // (no-op safely if section ids absent — e.g. sub-pages).
   const links = document.querySelectorAll<HTMLAnchorElement>(
     '.site-nav__sections [data-section-link]'
   );
-
-  if (nav && sentinel) {
-    // Sentinel sits at the end of Hero. While it's intersecting, we're still
-    // on Hero → transparent. Once it scrolls out → chip bar.
-    const sentinelIO = new IntersectionObserver(
-      ([entry]) => {
-        nav.dataset.navScrolled = entry.isIntersecting ? 'false' : 'true';
-      },
-      { rootMargin: '0px' }
-    );
-    sentinelIO.observe(sentinel);
-  }
 
   const sectionIds = Array.from(links)
     .map((a) => a.dataset.sectionLink)
