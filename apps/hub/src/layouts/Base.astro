@@ -211,15 +211,16 @@ const enableHeader = enableBrewBg;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Japanese family override (Set B) — Shippori Mincho fronted for both
-     display and body. Latin serifs trail as fallback so mixed-script lines
-     keep a unified mincho/serif feel; system stack is last-resort. */
+  /* Japanese family override (Set B) — 2026-05-28 fix: Latin family FIRST
+     so mixed-script lines ("Tipsy Tap Studio" on ja pages) render with
+     DM Serif / Source Serif Latin glyphs, not Shippori's Latin. CJK glyphs
+     fall back to Shippori via per-glyph fallback. */
   :lang(ja) {
     --font-display:
-      'Shippori Mincho', 'DM Serif Display', ui-serif, 'Hiragino Mincho ProN',
+      'DM Serif Display', 'Shippori Mincho', ui-serif, 'Hiragino Mincho ProN',
       'Yu Mincho', serif;
     --font-body:
-      'Shippori Mincho', 'Source Serif 4 Variable', ui-serif,
+      'Source Serif 4 Variable', 'Shippori Mincho', ui-serif,
       'Hiragino Mincho ProN', 'Yu Mincho', serif;
     --font-sans: var(--font-body);
     font-family: var(--font-body);
