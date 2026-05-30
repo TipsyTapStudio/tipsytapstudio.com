@@ -75,19 +75,20 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
   .hero {
     max-width: var(--max-content);
     margin: 0 auto;
-    /* N3 (2026-05-28): 上 padding を増量。常時表示の Header 高さ約 3rem を吸収 +
-       「上が詰まりすぎ」ユーザー指摘の余裕確保。
-       2026-05-30 hotfix: padding-top 再増量 + min-height は dvh 化で
-       iOS Safari URL バー収縮時の跳ねを回避。 */
-    padding-top: clamp(7rem, 5.5rem + 4.5vw, 11rem);
-    padding-bottom: clamp(4rem, 3rem + 4vw, 7rem);
+    /* 経緯:
+       - 初期: justify-content: center (大画面 H1 沈み問題が出た)
+       - b2ba58e: center → flex-start (対症療法、上気味問題が新たに発生)
+       - 78c12ec: padding-top 7-11rem + flex-start (上気味未解消)
+       - 2026-05-30 X5 (本): padding-top を 5-7rem に圧縮 + center 復帰 +
+         padding-bottom を非対称 (上 < 下) で「光学中央」補正。
+         塊重心が viewport 中央より僅か上に着地、cue 領域も bottom 側で確保。 */
+    padding-top: clamp(5rem, 4rem + 2vw, 7rem);
+    padding-bottom: clamp(7rem, 5rem + 3.5vw, 10rem);
     padding-inline: clamp(1.25rem, 0.5rem + 3vw, 4rem);
-    min-height: calc(100dvh - 8rem);
+    min-height: calc(100dvh - 6rem);
     display: flex;
     flex-direction: column;
-    /* 2026-05-28 hotfix: center → flex-start。padding-top + min-height + center
-       の三重制御で大画面 H1 が沈んでいたため、上余白は padding-top のみが決める */
-    justify-content: flex-start;
+    justify-content: center;
     gap: var(--space-md);
     position: relative;
     isolation: isolate; /* radial dim ::before を hero スコープに閉じ込める */
