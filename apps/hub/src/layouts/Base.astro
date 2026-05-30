@@ -157,8 +157,17 @@ const enableHeader = enableBrewBg;
        (overlay, cardOnBrew, textShadowOnBrew). */
     --overlay-soft: rgba(11, 11, 11, 0.35);
     --overlay-strong: rgba(11, 11, 11, 0.6);
-    --card-bg-onbrew: rgba(11, 11, 11, 0.55);
-    --card-border-onbrew: rgba(255, 255, 255, 0.08);
+    /* 2026-05-30 トーン整合 (designer spec): 純黒/純白 → 暖暗褐/暖オフホワイト。
+       Brew 琥珀の上でカードが「冷たい灰島」になる問題を解消。bg 不透明度 .55→.66
+       は隠れ AA 違反の是正: 明部 Pilsner (#92711B) 透けの最悪ケースで desc
+       (--muted) が 4.10:1 で本文 AA 4.5:1 を割っていたのを 4.88:1 へ回復。 */
+    --card-bg-onbrew: rgba(20, 16, 8, 0.66);
+    --card-border-onbrew: rgba(239, 231, 214, 0.14);
+    --card-media-bg: #16120a;       /* サムネ台座、カード bg と同族の暖暗褐 */
+    /* カード elevation。2層目を暖い rgba(8,5,0) にし琥珀背景で影が寒く浮かない
+       (designer)。動く Brew 上で border だけだと明部で境界が溶けるため影で接地。 */
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 24px rgba(8, 5, 0, 0.4);
+    --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.45), 0 14px 36px rgba(8, 5, 0, 0.5);
     --text-shadow-onbrew: 0 1px 2px rgba(0, 0, 0, 0.55), 0 0 12px rgba(0, 0, 0, 0.3);
 
     /* --- Lab-scope tokens (used only under /lab/) ---

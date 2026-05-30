@@ -105,9 +105,15 @@ export const overlay = {
   strong: 'rgba(11, 11, 11, 0.6)',  // Manifesto / About — heavier veil for prose legibility
 } as const;
 
+// 2026-05-30 トーン整合 (warm pivot 追随, designer spec): 純黒/純白 → 暖暗褐/暖白。
+// bg α 0.55→0.66 は明部 Brew 透け時の desc AA 違反 (4.10:1) を 4.88:1 へ回復。
+// media / shadow も追加。Base.astro :root の --card-* と同値ミラー (手動同期)。
 export const cardOnBrew = {
-  bg: 'rgba(11, 11, 11, 0.55)',
-  border: 'rgba(255, 255, 255, 0.08)',
+  bg: 'rgba(20, 16, 8, 0.66)',
+  border: 'rgba(239, 231, 214, 0.14)',
+  mediaBg: '#16120A',
+  shadow: '0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 24px rgba(8, 5, 0, 0.4)',
+  shadowHover: '0 2px 4px rgba(0, 0, 0, 0.45), 0 14px 36px rgba(8, 5, 0, 0.5)',
 } as const;
 
 export const textShadowOnBrew = '0 1px 2px rgba(0, 0, 0, 0.55), 0 0 12px rgba(0, 0, 0, 0.3)';

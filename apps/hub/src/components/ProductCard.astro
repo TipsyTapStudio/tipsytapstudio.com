@@ -89,16 +89,20 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
     flex-direction: column;
     gap: var(--space-sm);
     padding: var(--space-md);
-    /* Brew background sits behind: half-opaque card + white-side hairline +
+    /* Brew background sits behind: half-opaque warm card + warm hairline +
        backdrop blur so the card reads as a distinct surface against any
-       beer palette. .card__media stays opaque (#141414) so thumbnails are
-       not desaturated by the underlying gradient. */
+       beer palette. .card__media stays opaque (--card-media-bg) so thumbnails
+       are not desaturated by the underlying gradient. */
     border: 1px solid var(--card-border-onbrew);
     border-radius: var(--radius-card);
     background: var(--card-bg-onbrew);
+    /* blur は 8px 維持 (designer Must): これ以上上げると Brew が潰れて
+       「透ける」意図が薄れる。bg α を 0.66 に上げたので 8px で背景可読性は十分。 */
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    transition: border-color 180ms ease, transform 180ms ease;
+    /* elevation: 影ゼロだと動く Brew にカードが沈む。暖色寄りの二段影 (token) で接地。 */
+    box-shadow: var(--shadow-card);
+    transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
     height: 100%;
   }
 
@@ -106,18 +110,24 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
      browsers that don't composite the blur layer. */
   @supports not (backdrop-filter: blur(8px)) {
     .card {
-      background: rgba(11, 11, 11, 0.7);
+      /* blur 非対応環境では Brew 透けが汚れるので暖色寄せ + 不透明度を .82 まで上げる
+         (designer N3)。 */
+      background: rgba(20, 16, 8, 0.82);
     }
   }
 
   .card:hover {
-    border-color: var(--muted);
+    /* hover の border を --fg (暖白) に。--muted は明部 Brew で縁が弱く溶ける
+       (designer S4)。影も hover token に拡張し translateY と物理一致 (S2)。 */
+    border-color: var(--fg);
     transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
   }
 
   .card:focus-within {
-    border-color: var(--muted);
+    border-color: var(--fg);
     transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
     outline: 2px solid var(--fg);
     outline-offset: 4px;
   }
@@ -125,7 +135,9 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
   .card__media {
     aspect-ratio: 1 / 1;
     overflow: hidden;
-    background: #141414;
+    /* 純グレー → 暖暗褐。サムネ台座をカード bg と同族にし、アイコン透過部が
+       灰色から暖色へ (designer M3)。 */
+    background: var(--card-media-bg, #16120a);
     border-radius: calc(var(--radius-card) - 2px);
     display: flex;
     align-items: center;
@@ -221,6 +233,12 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
     .card:focus-within {
       transform: none;
       transition: none;
+    }
+    /* reduced 時は影の瞬間変化を避け、resting elevation に固定 (designer 注4)。
+       focus-within の outline は a11y 上残す。 */
+    .card:hover,
+    .card:focus-within {
+      box-shadow: var(--shadow-card);
     }
   }
 </style>
