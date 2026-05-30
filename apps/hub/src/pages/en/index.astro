@@ -15,7 +15,6 @@ const subtitle = t('hub_hero_subtitle', locale);
 const substatement = t('hub_hero_substatement', locale);
 
 const works = sortWorks(worksRaw as Work[]);
-const skipLabel = t('hub_nav_skip_to_works', locale);
 ---
 
 <Base locale={locale} title={title} description={substatement}>
@@ -31,10 +30,6 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
     </h1>
     <p class="hero__statement">{subtitle}</p>
     <p class="hero__sub">{substatement}</p>
-
-    <a class="hero__cue" href="#works" aria-label={skipLabel}>
-      <span aria-hidden="true">↓</span>
-    </a>
   </section>
 
   {/* Full-width bands so the Brew overlay covers the viewport; inner
@@ -75,21 +70,21 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
   .hero {
     max-width: var(--max-content);
     margin: 0 auto;
-    /* 経緯:
-       - 初期: justify-content: center (大画面 H1 沈み問題が出た)
-       - b2ba58e: center → flex-start (対症療法、上気味問題が新たに発生)
-       - 78c12ec: padding-top 7-11rem + flex-start (上気味未解消)
-       - 2026-05-30 X5 (本): padding-top を 5-7rem に圧縮 + center 復帰 +
-         padding-bottom を非対称 (上 < 下) で「光学中央」補正。
-         塊重心が viewport 中央より僅か上に着地、cue 領域も bottom 側で確保。 */
-    padding-top: clamp(5rem, 4rem + 2vw, 7rem);
-    padding-bottom: clamp(7rem, 5rem + 3.5vw, 10rem);
+    /* 2026-05-30 一発確定: flex → grid 1fr auto auto に転換。
+       X5 失敗の真因は (1) min-height で box が viewport より短い (2) center
+       が塊重心配置 (3) padding-bottom > padding-top が flex で逆作用、の
+       3 つの誤りの掛け算。今回は H1 単独を 1fr 行の中央に数学的固定。
+       height: 100dvh で box = viewport ぴったり。
+       padding-top 14rem (Header 補正 + 下バイアス強め、ユーザー指定値)。
+       試算: H1 中央線が viewport 中央 +25〜27px 下に着地。 */
+    height: 100dvh;
+    padding-top: 14rem;
+    padding-bottom: 3rem;
     padding-inline: clamp(1.25rem, 0.5rem + 3vw, 4rem);
-    min-height: calc(100dvh - 6rem);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: var(--space-md);
+    display: grid;
+    grid-template-rows: 1fr auto auto;  /* 1fr=H1中央 / auto=statement / auto=sub */
+    justify-items: start;
+    row-gap: var(--space-md);
     position: relative;
     isolation: isolate; /* radial dim ::before を hero スコープに閉じ込める */
   }
@@ -99,6 +94,9 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
 
   /* Font Set C Hero H1 — 縦 3 段詰み、左寄せ、opsz=144 で巨大化。 */
   .hero__title--vertical {
+    /* grid item として 1fr 行の中央に配置 */
+    align-self: center;
+    justify-self: start;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -142,38 +140,13 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
     font-size: var(--fs-base);
     font-weight: 400;
     line-height: 1.5;
-    margin-block-start: var(--space-xl);
-    margin-block-end: 0;
-    margin-inline: 0;
+    margin: 0;
     /* 2026-05-30: muted → muted-onbrew で Pilsner colB 上でも WCAG AA 確保。
        text-shadow も座布団削除分を補う強化。 */
     color: var(--muted-onbrew);
     max-width: 42rem; /* en は欧文密度低、ja の 32rem とは別値 */
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65), 0 0 10px rgba(0, 0, 0, 0.35);
     animation: hero-fade 720ms cubic-bezier(0.2, 0.7, 0.2, 1) 240ms both;
-  }
-
-  .hero__cue {
-    position: absolute;
-    left: 50%;
-    bottom: var(--space-xl);
-    transform: translateX(-50%);
-    color: var(--muted);
-    font-size: var(--fs-lg);
-    line-height: 1;
-    text-decoration: none;
-    padding: var(--space-2xs) var(--space-sm);
-    border-radius: var(--radius-chip);
-    background: rgba(11, 11, 11, 0.35);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    transition: color 120ms ease;
-    animation: cue-bob 2400ms ease-in-out infinite;
-  }
-
-  .hero__cue:hover,
-  .hero__cue:focus-visible {
-    color: var(--fg);
   }
 
   /* Full-width Brew overlay bands — see ja/index.astro for rationale. */
@@ -185,12 +158,6 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
   .section-band--soft,
   .section-band--strong {
     background: transparent;
-  }
-
-  @supports not (backdrop-filter: blur(6px)) {
-    .hero__cue {
-      background: rgba(11, 11, 11, 0.6);
-    }
   }
 
   .works-grid {
@@ -244,17 +211,11 @@ const skipLabel = t('hub_nav_skip_to_works', locale);
     }
   }
 
-  @keyframes cue-bob {
-    0%, 100% { transform: translate(-50%, 0); }
-    50%      { transform: translate(-50%, 0.3rem); }
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .hero__title,
     .hero__title--vertical,
     .hero__statement,
-    .hero__sub,
-    .hero__cue {
+    .hero__sub {
       animation: none;
     }
   }
