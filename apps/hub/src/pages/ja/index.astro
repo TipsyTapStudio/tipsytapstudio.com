@@ -73,8 +73,10 @@ const works = sortWorks(worksRaw as Work[]);
     max-width: var(--max-content);
     margin: 0 auto;
     height: 100dvh;
-    padding-top: clamp(9rem, 7rem + 4vw, 13rem);
-    padding-bottom: 3rem;
+    /* 2026-05-30 上下バランス調整: 大画面で上重すぎ問題を解消、全 viewport
+       で 1.06-1.14:1 (上微重 = Header 視覚補正) に収束 */
+    padding-top: clamp(7rem, 5rem + 3.2vw, 10rem);
+    padding-bottom: clamp(5.5rem, 4rem + 2.6vw, 8rem);
     padding-inline: clamp(1.25rem, 0.5rem + 3vw, 4rem);
     display: grid;
     place-items: center start;
