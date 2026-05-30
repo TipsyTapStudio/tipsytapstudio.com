@@ -8,16 +8,23 @@
 //
 // The card is purely structural — visual lift on hover is the only motion,
 // and it self-disables under prefers-reduced-motion. JS-zero by design.
+//
+// Layout: a horizontal row (media left, body right) at >=640px; stacks
+// vertically on mobile. `size` drives a 'large' vs 'small' variant — only
+// SPV-2 is large today (see works.json). Large = bigger media + larger title +
+// more desc lines + tags shown. Small = compact media + 2-line desc + no tags.
 
 import { t, type Locale } from '@ttsui/i18n';
 import StatusBadge from './StatusBadge.astro';
 import TagChip from './TagChip.astro';
 
 type Status = 'live' | 'beta' | 'tinkering' | 'sketch';
+type Size = 'large' | 'small';
 
 interface Props {
   slug: string;
   status: Status;
+  size?: Size;
   tags: string[];
   thumb: string | null;
   demoUrl: string | null;
@@ -26,7 +33,11 @@ interface Props {
   locale: Locale;
 }
 
-const { slug, status, tags, thumb, demoUrl, repoUrl, lpUrl, locale } = Astro.props;
+const { slug, status, size = 'small', tags, thumb, demoUrl, repoUrl, lpUrl, locale } = Astro.props;
+
+// Tags only render on large cards — small cards keep status (via badge) but
+// drop tag chips to avoid density overload in the compact row.
+const showTags = size === 'large' && tags.length > 0;
 
 const title = t(`hub_works_item_${slug}_title`, locale);
 const desc = t(`hub_works_item_${slug}_desc`, locale);
@@ -37,7 +48,7 @@ const repoLabel = t('hub_works_cta_repo', locale);
 const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
 ---
 
-<article class="card" aria-labelledby={`card-${slug}-title`}>
+<article class:list={['card', `card--${size}`]} aria-labelledby={`card-${slug}-title`}>
   <div class={`card__media${thumb ? ' card__media--has-image' : ''}`} aria-hidden={thumb ? undefined : 'true'}>
     {thumb ? (
       <img src={thumb} alt={title} loading="lazy" decoding="async" />
@@ -46,45 +57,49 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
     )}
   </div>
 
-  <header class="card__header">
-    <h3 id={`card-${slug}-title`} class="card__title">
-      {titleHref ? (
-        titleHref.startsWith('http') ? (
-          <a href={titleHref} target="_blank" rel="noopener noreferrer">{title}</a>
+  <div class="card__body">
+    <header class="card__header">
+      <h4 id={`card-${slug}-title`} class="card__title">
+        {titleHref ? (
+          titleHref.startsWith('http') ? (
+            <a href={titleHref} target="_blank" rel="noopener noreferrer">{title}</a>
+          ) : (
+            <a href={titleHref}>{title}</a>
+          )
         ) : (
-          <a href={titleHref}>{title}</a>
-        )
-      ) : (
-        title
-      )}
-    </h3>
-    <StatusBadge status={status} locale={locale} />
-  </header>
+          title
+        )}
+      </h4>
+      <StatusBadge status={status} locale={locale} />
+    </header>
 
-  <p class="card__desc">{desc}</p>
+    <p class="card__desc">{desc}</p>
 
-  {tags.length > 0 && (
-    <ul class="card__tags" role="list" aria-label="Tags">
-      {tags.map((tag) => (
-        <li><TagChip label={tag} /></li>
-      ))}
-    </ul>
-  )}
+    {showTags && (
+      <ul class="card__tags" role="list" aria-label="Tags">
+        {tags.map((tag) => (
+          <li><TagChip label={tag} /></li>
+        ))}
+      </ul>
+    )}
 
-  {(demoUrl || repoUrl) && (
-    <nav class="card__ctas" aria-label={`${title} links`}>
-      {demoUrl && (
-        <a class="card__cta" href={demoUrl} target="_blank" rel="noopener noreferrer">{demoLabel}</a>
-      )}
-      {repoUrl && (
-        <a class="card__cta" href={repoUrl} target="_blank" rel="noopener noreferrer">{repoLabel}</a>
-      )}
-    </nav>
-  )}
+    {(demoUrl || repoUrl) && (
+      <nav class="card__ctas" aria-label={`${title} links`}>
+        {demoUrl && (
+          <a class="card__cta" href={demoUrl} target="_blank" rel="noopener noreferrer">{demoLabel}</a>
+        )}
+        {repoUrl && (
+          <a class="card__cta" href={repoUrl} target="_blank" rel="noopener noreferrer">{repoLabel}</a>
+        )}
+      </nav>
+    )}
+  </div>
 </article>
 
 <style>
   .card {
+    /* Mobile-first: stacked (media on top, body below). At >=640px this flips
+       to a horizontal row (see media query). */
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
@@ -104,6 +119,41 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
     box-shadow: var(--shadow-card);
     transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
     height: 100%;
+  }
+
+  /* --- Horizontal row layout (tablet/desktop) ---
+     Media pinned left at a fixed square; body fills the rest. Card height
+     follows content. Large variant gets a wider media well + min-height. */
+  @media (min-width: 640px) {
+    .card {
+      flex-direction: row;
+      align-items: stretch;
+      gap: var(--space-md);
+    }
+    .card--small {
+      min-height: 8rem;
+    }
+    .card--large {
+      min-height: 13rem;
+    }
+    .card__media {
+      flex: 0 0 8rem;
+      align-self: center;
+    }
+    .card--large .card__media {
+      flex-basis: 16rem;
+    }
+  }
+
+  /* Body wraps everything to the right of the media. Column flex so the CTA
+     row can pin to the bottom (margin-top:auto) now that .card itself is a
+     row at >=640px. */
+  .card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    flex: 1;
+    min-width: 0;
   }
 
   /* backdrop-filter fallback — bump opacity so the card stays legible on
@@ -133,7 +183,11 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
   }
 
   .card__media {
-    aspect-ratio: 1 / 1;
+    /* Mobile: a wide banner; desktop row: a fixed square (set in the media
+       query above via flex-basis). Large gets a slightly taller mobile banner
+       so the size hierarchy survives the stacked layout. */
+    aspect-ratio: 16 / 9;
+    width: 100%;
     overflow: hidden;
     /* 純グレー → 暖暗褐。サムネ台座をカード bg と同族にし、アイコン透過部が
        灰色から暖色へ (designer M3)。 */
@@ -142,6 +196,20 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  .card--large .card__media {
+    aspect-ratio: 4 / 3;
+  }
+
+  @media (min-width: 640px) {
+    /* In the desktop row, media is a fixed-width square regardless of variant
+       banner ratios above. */
+    .card__media,
+    .card--large .card__media {
+      aspect-ratio: 1 / 1;
+      width: auto;
+    }
   }
 
   .card__media--has-image {
@@ -180,6 +248,14 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
     color: var(--fg);
   }
 
+  /* Large card: bump the title up for hero emphasis — but NOT to --fs-xl,
+     which is the same token as the section H2 ("Works") and would make the
+     card title compete with the page heading (designer Must). Sit it between
+     --fs-lg (22px) and --fs-xl (60px): ~40px at desktop, ~1.8x the small card. */
+  .card--large .card__title {
+    font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem);
+  }
+
   .card__title a {
     color: inherit;
     text-decoration: none;
@@ -195,6 +271,28 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
     color: var(--muted);
     font-size: var(--fs-sm);
     line-height: var(--lh-normal);
+  }
+
+  /* Desc line-clamp keeps rows even. Small = 2 lines (compact), large = 4.
+     Clamp only trims line count; color/size/background are untouched so the
+     desc AA contrast (4.88:1 over the brightest Brew) is preserved. */
+  .card--small .card__desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    /* 広い本文(desktop で ~550px)だと小カードの desc が「横長の帯」に間延び
+       するので読み幅を絞る。title 行/CTA は全幅維持で右端を揃える (designer S)。 */
+    max-width: 34rem;
+  }
+
+  .card--large .card__desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .card__tags {

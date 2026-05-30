@@ -2,6 +2,8 @@
   {
     "slug": "spv2",
     "status": "live",
+    "category": "extensions",
+    "size": "large",
     "tags": ["extension"],
     "thumb": "/icons/spv2.svg",
     "demoUrl": null,
@@ -13,6 +15,7 @@
   {
     "slug": "galton_timer",
     "status": "live",
+    "category": "clocks",
     "tags": ["gadget", "clock"],
     "thumb": "/icons/galton_timer.svg",
     "demoUrl": "https://tipsytapstudio.github.io/galton-timer/",
@@ -24,6 +27,7 @@
   {
     "slug": "wall_clock",
     "status": "live",
+    "category": "clocks",
     "tags": ["gadget", "clock"],
     "thumb": "/icons/wall_clock.svg",
     "demoUrl": "https://tipsytapstudio.github.io/wall-clock/",
@@ -35,6 +39,7 @@
   {
     "slug": "galton_tempo",
     "status": "live",
+    "category": "clocks",
     "tags": ["gadget"],
     "thumb": "/icons/galton_tempo.svg",
     "demoUrl": "https://tipsytapstudio.github.io/galton-tempo/",
@@ -46,6 +51,7 @@
   {
     "slug": "vogel_timer",
     "status": "live",
+    "category": "clocks",
     "tags": ["gadget", "clock"],
     "thumb": "/icons/vogel_timer.svg",
     "demoUrl": "https://tipsytapstudio.github.io/vogel-timer/",
@@ -57,6 +63,7 @@
   {
     "slug": "planktonight",
     "status": "beta",
+    "category": "games_visuals",
     "tags": ["game"],
     "thumb": null,
     "demoUrl": null,
@@ -68,6 +75,7 @@
   {
     "slug": "noctiluka",
     "status": "beta",
+    "category": "games_visuals",
     "tags": ["game"],
     "thumb": null,
     "demoUrl": null,
@@ -79,6 +87,7 @@
   {
     "slug": "fractal_drive",
     "status": "tinkering",
+    "category": "games_visuals",
     "tags": ["visualizer"],
     "thumb": null,
     "demoUrl": null,
@@ -90,6 +99,7 @@
   {
     "slug": "fractal_beat",
     "status": "tinkering",
+    "category": "games_visuals",
     "tags": ["visualizer"],
     "thumb": "/icons/fractal_beat.svg",
     "demoUrl": "https://tipsytapstudio.github.io/fractal-beat/",
@@ -101,6 +111,7 @@
   {
     "slug": "spcc",
     "status": "sketch",
+    "category": "extensions",
     "tags": ["extension"],
     "thumb": null,
     "demoUrl": null,
@@ -112,6 +123,7 @@
   {
     "slug": "sps",
     "status": "sketch",
+    "category": "extensions",
     "tags": ["extension"],
     "thumb": null,
     "demoUrl": null,
@@ -123,6 +135,7 @@
   {
     "slug": "speq",
     "status": "sketch",
+    "category": "extensions",
     "tags": ["extension"],
     "thumb": null,
     "demoUrl": null,
@@ -134,6 +147,7 @@
   {
     "slug": "lp_stamps",
     "status": "sketch",
+    "category": "stickers",
     "tags": ["sticker"],
     "thumb": null,
     "demoUrl": null,

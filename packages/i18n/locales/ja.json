@@ -13,7 +13,10 @@
   "hub_nav_studio": "Studio",
 
   "hub_works_heading": "Works",
-  "hub_works_lede": "触れる、いじれる、遊べる。スタジオで動いているもの全部。",
+  "hub_works_category_extensions": "Extensions",
+  "hub_works_category_clocks": "Clocks & Timers",
+  "hub_works_category_games_visuals": "Games & Visuals",
+  "hub_works_category_stickers": "Stickers",
   "hub_works_status_live": "Live",
   "hub_works_status_beta": "Beta",
   "hub_works_status_tinkering": "Tinkering",

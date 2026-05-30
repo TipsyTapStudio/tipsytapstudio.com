@@ -8,7 +8,7 @@ import Base from '../../layouts/Base.astro';
 import { t } from '@ttsui/i18n';
 import SectionHeading from '../../components/SectionHeading.astro';
 import ProductCard from '../../components/ProductCard.astro';
-import { sortWorks, type Work } from '../../lib/sortWorks.ts';
+import { groupWorksByCategory, type Work } from '../../lib/sortWorks.ts';
 import worksRaw from '../../data/works.json' with { type: 'json' };
 
 const locale = 'ja';
@@ -18,7 +18,8 @@ const title = t('hub_hero_title', locale);
 // meta description で substatement を使うため frontmatter では引き続き取得する。
 const substatement = t('hub_hero_substatement', locale);
 
-const works = sortWorks(worksRaw as Work[]);
+// Works はカテゴリ別ブロックに分けて表示。各ブロック内は既存ソート順を継承。
+const works = groupWorksByCategory(worksRaw as Work[]);
 ---
 
 <Base locale={locale} title={title} description={substatement}>
@@ -39,23 +40,32 @@ const works = sortWorks(worksRaw as Work[]);
   <div class="section-band section-band--soft">
     <section id="works" class="section" aria-labelledby="works-heading">
       <SectionHeading id="works-heading">{t('hub_works_heading', locale)}</SectionHeading>
-      <p class="section-lede">{t('hub_works_lede', locale)}</p>
-      <ul class="works-grid" role="list">
-        {works.map((work) => (
-          <li>
-            <ProductCard
-              slug={work.slug}
-              status={work.status}
-              tags={work.tags}
-              thumb={work.thumb}
-              demoUrl={work.demoUrl}
-              repoUrl={work.repoUrl}
-              lpUrl={work.lpUrl}
-              locale={locale}
-            />
-          </li>
+      <div class="works-cats">
+        {works.map((group) => (
+          <section class="works-cat" aria-labelledby={`works-cat-${group.category}`}>
+            <h3 id={`works-cat-${group.category}`} class="works-cat__heading">
+              {t(`hub_works_category_${group.category}`, locale)}
+            </h3>
+            <ul class="works-list" role="list">
+              {group.items.map((work) => (
+                <li>
+                  <ProductCard
+                    slug={work.slug}
+                    status={work.status}
+                    size={work.size ?? 'small'}
+                    tags={work.tags}
+                    thumb={work.thumb}
+                    demoUrl={work.demoUrl}
+                    repoUrl={work.repoUrl}
+                    lpUrl={work.lpUrl}
+                    locale={locale}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
         ))}
-      </ul>
+      </div>
     </section>
   </div>
 
@@ -129,26 +139,37 @@ const works = sortWorks(worksRaw as Work[]);
     background: transparent;
   }
 
-  /* Sections */
-  .works-grid {
+  /* Sections — Works はカテゴリ別ブロックの積層。各ブロックは見出し +
+     横長カード1列。3列グリッドは廃止 (2026-05-30 再構成)。 */
+  .works-cats {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xl);
+  }
+
+  .works-cat__heading {
+    font-family: var(--font-display);
+    font-variation-settings: 'opsz' 40, 'SOFT' 30;
+    font-size: var(--fs-lg);
+    font-weight: 500;
+    line-height: var(--lh-tight);
+    color: var(--fg);
+    margin: 0 0 var(--space-md);
+    /* Brew 明部 (Pilsner #92711B) 上で輪郭が溶けないよう既存トークンの影 */
+    text-shadow: var(--text-shadow-onbrew);
+  }
+
+  .works-cat__heading:lang(ja) {
+    letter-spacing: 0.02em;
+  }
+
+  .works-list {
     list-style: none;
-    padding: 0;
     margin: 0;
-    display: grid;
-    grid-template-columns: 1fr;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
     gap: var(--space-lg);
-  }
-
-  @media (min-width: 640px) {
-    .works-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .works-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
   }
 
   .about__body {
