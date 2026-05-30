@@ -165,3 +165,117 @@ Nice-to-have（モーション短縮、`3xs` 未使用トークン削除、`spv.
 ### 次やること（1 行）
 
 ヒーローコピー確定（マーケ担当）→ Phase 1 残スコープ（Works / Manifesto / About / 正式 Footer）の IA 設計（UI/UX 担当）。
+
+---
+
+## 2026-05-23 〜 30: Thesis pivot から Hero ガラス化までの大規模磨き上げ（24 commit）
+
+### 概要
+
+長期セッション（7 日間、24 commit、`79620fb` 〜 `7acc8ed`）で Phase 1 完成 → Phase 2 大幅磨き上げ → ハブ全体が「Tipsy Tap」として動き出す状態まで持っていった。最終的に Brew 背景が稼働するハブで巨大ガラス H1 がドーンと中央に出る状態。
+
+### 主要マイルストーン（時系列）
+
+#### 1. Thesis pivot (2026-05-23)
+旧 thesis「音楽が本体、器の多様性」を破棄、新 thesis「**インタラクティブな実験スタジオ、カテゴリ無限定**」に転換。実態（時計・タイマー・LINE スタンプ等が音楽に紐づかない）と乖離していたため。CLAUDE.md / PRD §1, §4, §5 / メモリー (`project_studio_thesis.md`) 同時更新。メタリポ `~/Desktop/tipsy-tap-studio/ROADMAP.md` は同期更新待ち（ユーザー手動）。
+
+#### 2. Hero copy v3
+マーケ担当 3 周（音楽寄り → 酒場系 → 波/拍系）の検討を経て確定:
+- ja「鳴らす、光らす、刻む。」/「音もビジュアルも、時計の針もタイマーの拍も、スタンプも拡張機能も。リズムを持つものを叩いて作る、インタラクティブな実験スタジオ。」
+- en "Tap it, light it, let it tick." / "Sounds, visuals, clocks, timers, stickers, extensions — an interactive studio that builds things with a beat you can tap."
+
+ブランド名 `Tap` を蛇口ではなく「拍を tap する」打音動作として再解釈、カテゴリ無限定の thesis と整合。デザイナーレビューで span 分割マークアップ + `.sep` margin-inline-end で読点リズム視覚化。
+
+#### 3. Phase 1 完成（2026-05-23）
+PRD §5 残 4 セクション（Works / Manifesto / About / 正式 Footer）を実装、Hero と合わせて 5 セクション縦構成。新コンポーネント 7 種（ProductCard / StatusBadge / TagChip / SectionHeading / ManifestoArrow / Footer / FooterColumn）。works.json データ駆動、Honey Derby ユーザー指示で除外。Featured 3 件（SPV-2 / Galton Timer / Wall Clock）。メタリポ README から残 11 件 desc を確定。ステータスは `Live / Beta / Tinkering / Sketch` で実態反映。
+
+#### 4. フォント刷新（IBM Plex Sans + JP）
+Inter → IBM Plex Sans + IBM Plex Sans JP に切替（ja の OS フォントガチャ解消）。後に Phase 2 で再刷新される。
+
+#### 5. Works 完成度向上
+- 6 件アイコン取り込み（spv2 / galton_timer / wall_clock / galton_tempo / vogel_timer / fractal_beat）
+- GH Pages リンク補完（5 件）
+- 全 23 外部リンクに `target="_blank" rel="noopener noreferrer"`、内部リンクは同タブ維持
+- ProductCard の head 構造を flex row → column に修正（title 行揃え）
+
+#### 6. About 「ひとり」問題（2026-05-23）
+ユーザー指摘「by one person って書けって一度も指示してないんだけど」で重大ミス発覚。Studio Persona ルール（対外コピーで「ひとり / ソロ / 個人」禁止）を新規メモリー `feedback_studio_persona.md` として確立。About body を「READMEを添えて並べる / devlog に書き留める」の活動・記録スタイルに書き直し、PRD §5 も同時更新。
+
+#### 7. /lab/ 実験ページ（2026-05-23）
+「Tinkering バッジの実体」「触れる原典」として独立。揺らぎグラデーション 3 案（Drift CSS / Grain SVG / Flux WebGL）を縦並びフルビューポート × scroll-snap で並列展示。ParamSlider / ExperimentFrame / BackToHub などコンポーネント新規。UI/UX 設計 → マーケ i18n 22 キー → デザイナー仕様 → エンジニア実装の正規順序。
+
+#### 8. Brew 誕生（lab-002）
+ユーザー直言「Tipsy Tap Studio の名称からするとどこかビールっぽい印象を、ビール醸造のタンク内のイメージ」を受けて Flux 系新実験を lab-002 として独立追加。F1-F5 案検討 → F2 発酵中採用（暗琥珀対流 + 上昇する泡）→ 「泡がマーブル状でミルクコーヒー」と評価され泡削除 + 3 ビール（Pilsner / Wit / IPA）12 分自動循環に再設計 → 「12 分待てない」で B1 完全手動切替に再々設計。BrewSwitch radiogroup + URL hash で完成。
+
+#### 9. Brew をハブ全画面背景に昇格（2026-05-28）
+ユーザー直言「ここまで来たらもうサイトトップに実装しようよ。速さ 0.1 / 循環 1.00 / ピルスナー・ウィット・IPA をループ」を受けて、Brew を全ページ sticky 背景に。CLAUDE.md ブランド原則を「ハブ＝Brew 背景 (3 ビール循環) + 上層モノトーン UI」に書き換え。各セクション overlay 設計、ProductCard 半透明化、Footer 上端 fade band。/lab/ 配下は二重起動回避で除外。**ハブが Tipsy Tap として動き出した瞬間**。
+
+#### 10. Overlay 区切り線問題
+ユーザー指摘「区切り線が入ってる、いらない」を受けて Hero 透明 / Works soft / Manifesto strong の overlay 階段を全削除。Brew が全画面を貫く形に。
+
+#### 11. Phase 2 フォント 3 案 PR preview（2026-05-28）
+ユーザー「フォントがダサい」を受けて IBM Plex Sans から再刷新。3 ブランチ並列で PR 作成（Cloudflare Pages 自動 preview URL）:
+- Set A: EB Garamond × しっぽり明朝 B1 × Hero H3 階段状
+- Set B: DM Serif × Source Serif 4 × しっぽり明朝 × Hero H1 centered
+- Set C: Fraunces variable × Noto Serif JP × Hero H2 縦 3 段
+
+ユーザー圧勝 Set C 採用。`:lang(ja)` font-family スタックは Latin 先頭 / JP は CJK 用 fallback に修正（ja/en 切替で英語フォントが変わる挙動の是正）。
+
+#### 12. Phase 1.5（2026-05-28）
+- Manifesto 削除（5 → 4 セクション）、p3 の「ひとりで」を含めて消滅、thesis 重複解消
+- About 簡略化（カテゴリ列挙削除、活動・記録に絞る）
+- ナビ N2: Top transparent → scroll で chip bar 出現（後に N3 常時表示に変更）
+- `--fg` を `#EDEDED` → `#EFE7D6` の暖オフホワイトに、`--muted-onbrew #D8CDB4` 新トークンで WCAG AA 確保
+
+#### 13. Hero 配置の試行錯誤（複数 commit、ディレクター運用ミス事例）
+
+7 commit にわたって Hero 上下中央配置で迷走。**ディレクターが委譲順序を守らずに即実装した複数回のミス**が記録される:
+
+- `bc32a00`: ユーザー直言「常時表示 / 座布団除去 / 上が詰まりすぎ」をデザイナー判定スキップで実装 → WCAG AA 不合格コードを本番反映 → hotfix `b2ba58e`
+- `78c12ec`: padding-top 拡張 + flex-start → 「上気味」評価
+- `94f714a (X5)`: 光学中央 + padding 非対称 + center 復帰 → 「より上に詰めてどうすんだ」激怒
+- `c94d663`: grid 1fr auto auto + place-items: center start + cue 削除 → 「下げすぎ」
+- `1b52a6a`: text-stroke + transparent + halo（G ハイブリッド）→ 「ただの枠線じゃねーか」激怒
+- `167c54e`: 半透明塗り（rgba 0.55 + drop-shadow）に修正 → OK
+- `7acc8ed`: padding-top/bottom クランプ非対称で 1.1:1 バランス → OK
+
+ディレクター運用ルールに 2 回追記（`feedback_director_mode.md`、2026-05-28 / 30）:
+- 「ユーザー直言の『明確な仕様変更』も視覚判断ならデザイナー必須」
+- 「『ガラス』のような抽象語は実装上の見え方を視覚的に確認してから承認」
+
+#### 14. Hero ガラス H1 ドーン（最終形）
+statement / sub 削除、H1 単独で巨大化 `clamp(4.5rem, 2rem + 13vw, 14rem)`。文字色を `rgba(239, 231, 214, 0.55)` で半透明、Brew 揺らぎが文字越しに透けるガラス感。drop-shadow で立体感。padding-top/bottom 非対称で全 viewport で上下比 1.06-1.14:1（Header 視覚補正の上微重）。
+
+### 配信中 URL (本番反映済み、`7acc8ed`)
+
+- https://tipsytapstudio.com/ja/ — ガラス H1 + Brew 背景
+- https://tipsytapstudio.com/en/
+- https://tipsytapstudio.com/ja/lab/ — Drift / Grain / Flux + Brew #002
+- https://tipsytapstudio.com/en/lab/
+
+### ディレクター運用の最大の学び（再発防止）
+
+委譲順序を守らないと **本番に不合格コードが乗る**。今回起きた:
+1. ユーザー直言「常時表示 / 座布団除去」を即実装 → muted on Brew が 1.9-2.5:1 で AA 全不合格のまま本番デプロイ
+2. デザイナーの「ガラス輪郭」を視覚確認せず承認 → 「ただの枠線」激怒
+3. 単純な padding 調整に 6 案比較ラウンド挟む → 「トークン無駄使い」激怒
+
+`feedback_director_mode.md` に判定フロー追記:
+> ユーザー要望を受けたら即座に「(a) コピー (b) 視覚 (c) IA (d) 純実装」を分類、(a)(b)(c) を含むなら必ず担当サブエージェント先行。**ユーザー要望の明確さに関わらず適用**。ただし設計判断は終わってる「値だけ調整」「明示的仕様」では過剰な比較ラウンドを避ける。
+
+両極のバランスが必要。
+
+### 残宿題（次セッションへ）
+
+- **Works 磨き込み**（次セッションのメイン）
+- メタリポ ROADMAP の core thesis 同期更新（本リポからは触らない、ユーザー手動）
+- PRD §4「全サブドメイン統一」原則の最終整理（Set C 採用で Hub 専用フォント既定化）
+- `.claude/worktrees/` を .gitignore に追加
+- Lab `/lab/` での `--fg` 暖色化が Lab Flux 深海版で違和感ないか実機確認
+- 残 i18n キー整理（`hub_hero_subtitle` 等、参照ゼロのキーが残存）
+- テスター発注: 実機 LCP / FPS / 発熱、特に Brew 全画面 WebGL の電池影響
+- ロゴ確定（PRD §13 未決、Hero ガラス H1 のスタイルとの整合検討）
+
+### 次やること（1 行）
+
+Works セクションの磨き込み（カードレイアウト・残 11 件 desc 確認・アイコン・カテゴリ整理）。
