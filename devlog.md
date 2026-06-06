@@ -346,3 +346,73 @@ galton_timer / galton_tempo / vogel_timer の SVG からブランド文字（GAL
 ### 次やること（1 行）
 
 Works 残アイコン 3 件取得 or カテゴリ日本語訳確定（マーケ）。いいベースができたので、次は細部の充実フェーズ。
+
+---
+
+## 2026-06-07: Works を実体7件に整理 + カード/導線リファイン + Studio→Lab（2 commit）
+
+### 概要
+
+Works の充実フェーズ。アイコン3件取得を予定していたが、ユーザー判断で「未リリース/開発停止のものは一旦削除」に方針転換。実体7件に絞り込み、カードの導線（バッジ廃止・アイコンクリック遷移・CTA整理）とトップ最終セクション（Studio→Lab ティザー）をまとめてリファインした。`c327105` → `1e2cc01`、本番反映済み。
+
+### マイルストーン
+
+#### 1. Works 絞り込み（7件へ）
+未リリース/開発ペンディング/停止の6件を削除: **SPCC / SPS / SPEQ**（拡張・開発ペンディング）、**Planktonight / Noctiluka**（ゲーム・開発中/停止）、**Fractal Drive**（停止）。
+- works.json から6件削除 → 残**7件**（spv2 / galton_timer / wall_clock / galton_tempo / vogel_timer / fractal_beat / lp_stamps）
+- i18n 孤児キー12対（6件 × title/desc）を ja/en 両方から撤去、parity 維持
+- 4カテゴリ構造は健在（各カテゴリに最低1件残り空ブロックなし）: Extensions=spv2 / Clocks & Timers=4件 / Games & Visuals=fractal_beat / Stickers=lp_stamps
+- **Fractal Beat の desc 修正**: 旧文は「Drive と対をなす別アルゴリズム」と削除した Fractal Drive を前提にしていた → Drive 参照を除去した自立文へ（ja「拍に合わせてフラクタルが育つビジュアライザー。音楽の幾何をまだ手探りで描いている。」/ en "A visualizer where fractals grow to the beat. Still feeling out the geometry of music."）。マーケ確定、tinkering の実験中ニュアンスを保持
+
+#### 2. ステータスバッジ全廃
+「Live が意味不明 + 未リリース削除で不要」を受けて ProductCard から StatusBadge を撤去。
+- `status` prop / 型 / works.json の status フィールドは**温存**（sortWorks.ts の statusRank が依存）。UI からのみ削除
+- StatusBadge.astro 本体と `hub_works_status_*` 4キーは残置（参照ゼロだが将来再利用余地 + parity リスク回避）
+- `.card__header` は h4 タイトル単独に簡素化
+
+#### 3. アイコンクリックで別タブ遷移
+`.card__media` を条件付き `<a target="_blank" rel="noopener noreferrer">` 化。
+- 遷移先ロジック `mediaHref = lpUrl ?? demoUrl ?? null`: SPV-2=既存LP / 時計類・Fractal Beat=GitHub Pages デモ / **LINE Stamps=LINE store**（`https://store.line.me/stickershop/author/5362208/` を works.json の demoUrl に設定。thumb=null なので "T" プレースホルダがリンク化）
+- デザイナーa11y指摘で **media リンクを SR/Tab から除外**（aria-hidden + tabindex=-1）→ title リンクに一本化。マウス用の大標的は維持しつつ、同一遷移先の重複リンク読み上げ/2回 Tab を回避（現データは全カード media と title が同一宛先なので安全）
+- hover: img は opacity 0.85 + scale 1.03、"T" プレースホルダは opacity 0.55→0.8。reduced-motion で transform 無効化
+
+#### 4. CTA は Repo のみ
+`.card__ctas` から Demo 文字リンク削除（demoUrl はアイコンリンクに用途変更）。Repo のみ残す。lp_stamps は repoUrl=null で CTA 自体非表示。未使用化した demoLabel 定数削除（`hub_works_cta_demo` キーは温存）。
+
+#### 5. Studio → Lab ティザー化
+中身が空疎で**存在しない devlog を参照していた** "Studio" セクションを廃止し、実在する `/lab/` への誘導ティザーに置換。
+- section id `about`→`lab`、見出し "Lab"、本文 + 誘導リンク（ja「鳴らす前、光らせる前、刻む前。まだ削っている途中の試作を、触れる状態で置いている棚。」+「作業台に上がる」/ en も workbench メタファー継承。マーケ確定）
+- Header.astro の nav を `{id:'lab', label:hub_nav_lab}` に同期（IO の aria-current が #lab に追従）
+- i18n: `hub_nav_studio` / `hub_about_*` 3キー削除、`hub_nav_lab` / `hub_lab_heading` / `hub_lab_body` / `hub_lab_link` 新設（heading/nav は英字 "Lab" 固定 = Hero/Footer 英字統一に整合）
+- デザイナー Must 指摘: Lab ティザーが `section-band--strong`（transparent）で Brew が透けるのに text-shadow が抜けていた（Works 見出しには付与済みなのに漏れ）→ body/link に `text-shadow-onbrew` 付与、下線色を明部で消えない暖白半透明 `rgba(239,231,214,.4)` に
+- **既知の「存在しない devlog 参照」問題がこの置換で物理的に解消**
+
+#### 6. Clocks & Timers 並び替え
+ユーザー指定の「新しい順」= Vogel Timer → Galton Tempo → Galton Timer → Wall Clock に。
+- 原因: 4件とも addedAt が同一 `2026-02` + galton_timer/wall_clock が featured:true で先頭固定されていた
+- 対応: addedAt を実制作順の降順に（vogel=05 / tempo=04 / timer=03 / wall=02）、galton_timer/wall_clock の featured:true を解除（featured は現状ソート順にしか効かず視覚差別化なし＝副作用なし）
+
+### プロセス / 学び
+
+- **委譲順序を完遂**: plan mode で設計 → マーケ(Lab文言/Fractal Beat文言)・デザイナー先行 → 実装 → デザイナーレビュー（5点指摘、Must=Lab の text-shadow 漏れ）反映 → ユーザー実機確認 → push。今セッションは先走りなし
+- デザイナーレビューが「既存パターンからの漏れ」（Lab だけ text-shadow 抜け）を実装後に捕捉。視覚変更は実装後レビューが効くパターンの好例
+- works.json は削除・demoUrl・並び替え・featured が1ファイルに絡みファイル単位のコミット分割不可 → 「Works/Lab 改修」一連として1コミットに集約
+
+### 配信中 URL（本番反映済み、`1e2cc01`）
+
+- https://tipsytapstudio.com/ja/ — Works 7件、バッジなし、アイコンクリック遷移、Lab ティザー
+- https://tipsytapstudio.com/en/
+
+### 残宿題（次セッションへ）
+
+- **SPV-2 サイト作成**（次セッションのメイン。下記「次やること」参照）
+- カテゴリ表示名の日本語訳確定（暫定英字のまま、マーケ領分）
+- Featured pin の視覚的差別化（現状 spv2 のみ featured:true、視覚差なし）
+- i18n 孤児キー整理（`hub_works_status_*` `hub_works_cta_demo` が今回参照ゼロ化。既存の hub_manifesto_* / honey_derby_* 等も）
+- メタリポ ROADMAP の core thesis 同期（ユーザー手動）
+- `.claude/worktrees/` を .gitignore に追加
+- テスター発注: 実機 LCP / FPS / 発熱（Brew 全画面 WebGL の電池影響）
+
+### 次やること（1 行）
+
+SPV-2 プロダクトサイト（spv.tipsytapstudio.com）の作成。Chrome Web Store ページ内容把握 → リファレンス選定 → コンテンツ構成・原稿 → YouTube 埋め込み → 対応サイト一覧（Web Store ではスパム判定回避でサムネのみ記載）→ リリースノート置き場（当面1ページ、将来別ページ化）。
