@@ -279,3 +279,70 @@ statement / sub 削除、H1 単独で巨大化 `clamp(4.5rem, 2rem + 13vw, 14rem
 ### 次やること（1 行）
 
 Works セクションの磨き込み（カードレイアウト・残 11 件 desc 確認・アイコン・カテゴリ整理）。
+
+---
+
+## 2026-05-30: Works 磨き込み（カード暖色整合 → カテゴリ再構成 → アイコン文字除去、3 commit）
+
+### 概要
+
+前セッションの宿題「Works 磨き込み」を 3 commit で実施。カードのトーン整合（隠れ WCAG 違反の是正含む）→ カテゴリ別ブロック + 横長 1 列 + 大小 2 サイズへの大規模再構成 → タイマー系 3 アイコンの文字除去まで。`34a469d` → `c327105`、いずれも本番反映済み。Works が「均質に並ぶ 13 件」から「カテゴリで整理され主役が立つ棚」になった。
+
+### マイルストーン（時系列）
+
+#### 1. カード暖色トーン整合 + 隠れ AA 違反是正（`34a469d`）
+
+Brew 背景 + ガラス H1 が暖色 pivot した一方、ProductCard の表面トークンだけが純黒・純白・純グレーの寒色中立で取り残されていた問題を解消。デザイナー先行でスペック確定 → 実装。
+
+- `--card-bg-onbrew` 純黒 `rgba(11,11,11,.55)` → 暖暗褐 `rgba(20,16,8,.66)`
+- **隠れ WCAG AA 違反を是正**: 明部 Pilsner (`#92711B`) が透ける最悪ケースで desc (`--muted`) が **4.10:1** と本文 AA 4.5:1 を割っていた。α 0.55→0.66 で **4.88:1** へ回復。デザイナー算出、0.66 が Must
+- `--card-border-onbrew` 純白 → 暖白 `rgba(239,231,214,.14)`、`.card__media` `#141414` → `#16120a`（`--card-media-bg` トークン化）
+- 暖色二段影 `--shadow-card` / `--shadow-card-hover` を新設しカードを接地。hover/focus border を `--fg` に。blur は 8px 維持（透け意図を残す）。reduced-motion 時は影固定
+- tokens/index.ts ミラーも `cardOnBrew.bg/border/mediaBg/shadow/shadowHover` で同期（runtime は Base.astro :root）
+- ⚠️ プロセス反省: デザイナースペック返却前に推測値で実装着手 → 返却後に全値リコンサイル（委譲順序の先走り。次回は spec 待ち）
+
+#### 2. Works カテゴリ再構成（`017fd07`）— 今セッションのメイン
+
+縦 3 列グリッド・全アイテム同サイズ・区切りなしの並びを廃止し、**4 カテゴリのブロック積層 + 各ブロック横長カード 1 列 + 大小 2 サイズ**へ。plan mode で設計 → 実装 → デザイナーレビュー → ユーザー実機確認 → push の正規順序を遵守（今回は先走りなし）。
+
+- **データモデル**: works.json に `category`（extensions / clocks / games_visuals / stickers）と `size` を**明示フィールド**で追加。tags は重複（galton_timer は gadget+clock だが galton_tempo は gadget のみ）、featured はソート専用のため、どちらも導出に流用不可と判断
+- **グループ化**: sortWorks.ts に `CATEGORY_ORDER` 定数と `groupWorksByCategory()` を追加。全体 sortWorks（featured > status > addedAt）を先に通してから filter するので、カテゴリ内順序は既存契約を継承。extensions 先頭に featured/live の SPV-2 が来て、それが唯一の large なのでブロック頭に大カードが自然に乗る。空カテゴリは除外
+- **レイアウト**: ProductCard を `size` prop 対応に拡張（作り直さない）。本文を `.card__body` ラッパで包み、640px↑で `.card` を column→row（メディア左・本文右）、未満は縦積みに退避。大=メディア 16rem / desc 4 行 / tags 表示、小=メディア 8rem / desc 2 行 / tags 非表示。title h3→h4（h2 Works > h3 カテゴリ > h4 カード名の階層）
+- **割り当て**: SPV-2 のみ large、他 12 点 small（works.json は全 **13 点**。Honey Derby は前から除外で 14 ではなく 13 が正）
+- **デザイナーレビューで 2 点修正**: ① 大 title が `--fs-xl`（= セクション H2 と同一トークン、1280px で両方 60px）で階層衝突 → 中間 `clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem)` ≈ 40px に。② 小 desc が広い本文（~550px）で間延び → `max-width: 34rem`
+- **i18n**: lede `hub_works_lede`（「触れる、いじれる、遊べる。…」）を ja/en 両方削除。`hub_works_category_*` 4 キー新設。**カテゴリ表示名は暫定で英字**（Hero の英字統一方針に整合、parity チェックは値でなくキー集合のみ検査するため英字でも通る）。日本語訳の確定はマーケ TODO
+- トークン新規追加は不要で済み、tokens ミラー契約に触れず影響最小
+
+#### 3. タイマー系アイコンの文字除去（`c327105`）
+
+galton_timer / galton_tempo / vogel_timer の SVG からブランド文字（GALTON TIMER / GALTON TEMPO / VOGEL-TIMER）を除去し、グリフのみの正方形 viewBox に。カードの `.card__media`（正方形 + object-fit:contain）に最適。色・グリフ形状は不変。純粋なアセット差し替えでデザイナーレビュー不要と判断
+
+### 今セッションの学び / プロセス
+
+- **委譲順序は前半で 1 回先走り（commit 1）、後半は遵守（commit 2）**。plan mode を使った commit 2 は設計 → 実装 → レビューが綺麗に流れ、デザイナーが H2 トークン衝突という構造破綻を実装後に捕捉できた。視覚・構造変更は plan mode + デザイナーレビューが効く
+- **プレビュー MCP は serverId 必須**（name ではない）。また WebGL Brew 背景が常時 rAF を回すため `preview_screenshot` がタイムアウトする。視覚検証は `preview_eval` で computed style を数値計測する方式で代替した（card bg / title fs / media 寸法 / desc clamp 等を実測）。サーバはセッション中に数回落ちたので都度 `preview_start { name }` で再起動
+- **ハブのページは ja/en 個別ファイル**（`[lang]` 動的ルートではない）。セッション冒頭でこれを誤認し phantom 調査を空回りさせた。実ファイルは Glob / git ls-files で確認すること（メモリー `project_hub_page_structure.md` に記録済み）
+
+### 配信中 URL（本番反映済み、`c327105`）
+
+- https://tipsytapstudio.com/ja/ — Works が 4 カテゴリブロック + 横長 1 列 + SPV-2 大カード
+- https://tipsytapstudio.com/en/
+
+### 残宿題（次セッションへ）
+
+- **Works 残候補**:
+  - アイコン未取得 3 件（thumb:null）: planktonight / noctiluka / fractal_drive（sketch の spcc/sps/speq/lp_stamps は意図的 placeholder "T"）
+  - カテゴリ表示名の**日本語訳確定**（現状暫定英字、マーケ領分）
+  - Featured pin の視覚的差別化（works.json で spv2/galton_timer/wall_clock が featured:true だが並び順優先のみで pin バッジ等なし）
+  - status バッジの実態整合（メタリポ README 同期）
+  - i18n 孤児キー整理（`hub_works_lede` が今回参照ゼロ化。他に hub_manifesto_* / honey_derby_* / hub_hero_subtitle / hub_about_body_extended）
+- メタリポ ROADMAP の core thesis 同期更新（本リポからは触らない、ユーザー手動）
+- PRD §4「全サブドメイン統一」原則の最終整理
+- `.claude/worktrees/` を .gitignore に追加
+- Lab `/lab/` での `--fg` 暖色化が Lab Flux 深海版で違和感ないか実機確認
+- テスター発注: 実機 LCP / FPS / 発熱、特に Brew 全画面 WebGL の電池影響
+- ロゴ確定（PRD §13 未決、Hero ガラス H1 との整合検討）
+
+### 次やること（1 行）
+
+Works 残アイコン 3 件取得 or カテゴリ日本語訳確定（マーケ）。いいベースができたので、次は細部の充実フェーズ。
