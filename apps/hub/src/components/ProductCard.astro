@@ -15,7 +15,6 @@
 // more desc lines + tags shown. Small = compact media + 2-line desc + no tags.
 
 import { t, type Locale } from '@ttsui/i18n';
-import StatusBadge from './StatusBadge.astro';
 import TagChip from './TagChip.astro';
 
 type Status = 'live' | 'beta' | 'tinkering' | 'sketch';
@@ -33,7 +32,10 @@ interface Props {
   locale: Locale;
 }
 
-const { slug, status, size = 'small', tags, thumb, demoUrl, repoUrl, lpUrl, locale } = Astro.props;
+// `status` is accepted for prop-contract parity (index passes work.status, and
+// it still drives sortWorks ordering) but is no longer rendered — the status
+// badge was dropped 2026-06-07. Intentionally not destructured here.
+const { slug, size = 'small', tags, thumb, demoUrl, repoUrl, lpUrl, locale } = Astro.props;
 
 // Tags only render on large cards — small cards keep status (via badge) but
 // drop tag chips to avoid density overload in the compact row.
@@ -41,21 +43,48 @@ const showTags = size === 'large' && tags.length > 0;
 
 const title = t(`hub_works_item_${slug}_title`, locale);
 const desc = t(`hub_works_item_${slug}_desc`, locale);
-const demoLabel = t('hub_works_cta_demo', locale);
 const repoLabel = t('hub_works_cta_repo', locale);
 
 // If an LP is set, the title links there; otherwise the card stays inert.
 const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
+
+// Media (icon) click target: SPV-2 → its LP, everything else → the GitHub
+// Pages demo (or LINE store for the stickers). lpUrl is null on all but SPV-2,
+// so `lpUrl ?? demoUrl` resolves correctly per item. Falls back to a plain
+// div (no link) when neither URL exists.
+const mediaHref = lpUrl ?? demoUrl ?? null;
 ---
 
 <article class:list={['card', `card--${size}`]} aria-labelledby={`card-${slug}-title`}>
-  <div class={`card__media${thumb ? ' card__media--has-image' : ''}`} aria-hidden={thumb ? undefined : 'true'}>
-    {thumb ? (
-      <img src={thumb} alt={title} loading="lazy" decoding="async" />
-    ) : (
-      <span class="card__placeholder">T</span>
-    )}
-  </div>
+  {mediaHref ? (
+    /* Media is a big mouse target that duplicates the title link's
+       destination. It's hidden from SR + Tab (aria-hidden + tabindex=-1) so
+       keyboard/SR users hit the title link once instead of two identical
+       links (designer a11y note). Safe because every card's media and title
+       resolve to the same href in current data. */
+    <a
+      class={`card__media${thumb ? ' card__media--has-image' : ''}`}
+      href={mediaHref}
+      target="_blank"
+      rel="noopener noreferrer"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      {thumb ? (
+        <img src={thumb} alt="" loading="lazy" decoding="async" />
+      ) : (
+        <span class="card__placeholder" aria-hidden="true">T</span>
+      )}
+    </a>
+  ) : (
+    <div class={`card__media${thumb ? ' card__media--has-image' : ''}`} aria-hidden={thumb ? undefined : 'true'}>
+      {thumb ? (
+        <img src={thumb} alt={title} loading="lazy" decoding="async" />
+      ) : (
+        <span class="card__placeholder">T</span>
+      )}
+    </div>
+  )}
 
   <div class="card__body">
     <header class="card__header">
@@ -70,7 +99,6 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
           title
         )}
       </h4>
-      <StatusBadge status={status} locale={locale} />
     </header>
 
     <p class="card__desc">{desc}</p>
@@ -83,14 +111,9 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
       </ul>
     )}
 
-    {(demoUrl || repoUrl) && (
+    {repoUrl && (
       <nav class="card__ctas" aria-label={`${title} links`}>
-        {demoUrl && (
-          <a class="card__cta" href={demoUrl} target="_blank" rel="noopener noreferrer">{demoLabel}</a>
-        )}
-        {repoUrl && (
-          <a class="card__cta" href={repoUrl} target="_blank" rel="noopener noreferrer">{repoLabel}</a>
-        )}
+        <a class="card__cta" href={repoUrl} target="_blank" rel="noopener noreferrer">{repoLabel}</a>
       </nav>
     )}
   </div>
@@ -212,6 +235,34 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
     }
   }
 
+  /* media-as-link: cursor + focus ring only; the card-wide lift is handled by
+     .card:focus-within. A subtle img dim on hover signals interactivity
+     without competing with the warm-tone elevation. */
+  a.card__media {
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  a.card__media:focus-visible {
+    outline: 2px solid var(--fg);
+    outline-offset: 2px;
+  }
+
+  a.card__media:hover img {
+    opacity: 0.85;
+    transform: scale(1.03);
+  }
+
+  /* "T" placeholder (LINE Stamps, no thumb): lift its base opacity when it's a
+     link so it reads as a target, and react on hover like the img does. */
+  a.card__media .card__placeholder {
+    opacity: 0.55;
+  }
+
+  a.card__media:hover .card__placeholder {
+    opacity: 0.8;
+  }
+
   .card__media--has-image {
     padding: var(--space-md);
   }
@@ -221,6 +272,7 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
     height: 100%;
     object-fit: contain;
     display: block;
+    transition: opacity 180ms ease, transform 180ms ease;
   }
 
   .card__placeholder {
@@ -233,11 +285,9 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
     user-select: none;
   }
 
+  /* badge dropped 2026-06-07 — header is now the title alone. */
   .card__header {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-2xs);
+    margin: 0;
   }
 
   .card__title {
@@ -337,6 +387,12 @@ const titleHref = lpUrl ?? demoUrl ?? repoUrl ?? null;
     .card:hover,
     .card:focus-within {
       box-shadow: var(--shadow-card);
+    }
+    /* media img の hover scale/transition も reduced 時は無効化 */
+    .card__media img,
+    a.card__media:hover img {
+      transform: none;
+      transition: none;
     }
   }
 </style>

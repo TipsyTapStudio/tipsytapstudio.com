@@ -62,10 +62,10 @@ const works = groupWorksByCategory(worksRaw as Work[]);
   </div>
 
   <div class="section-band section-band--strong">
-    <section id="about" class="section" aria-labelledby="about-heading">
-      <SectionHeading id="about-heading">{t('hub_about_heading', locale)}</SectionHeading>
-      <p class="about__body">{t('hub_about_body', locale)}</p>
-      <span class="about__placeholder">{t('hub_about_devlog_link', locale)}</span>
+    <section id="lab" class="section" aria-labelledby="lab-heading">
+      <SectionHeading id="lab-heading">{t('hub_lab_heading', locale)}</SectionHeading>
+      <p class="lab-teaser__body">{t('hub_lab_body', locale)}</p>
+      <a class="lab-teaser__link" href={`/${locale}/lab/`}>{t('hub_lab_link', locale)}</a>
     </section>
   </div>
 </Base>
@@ -159,20 +159,34 @@ const works = groupWorksByCategory(worksRaw as Work[]);
     gap: var(--space-lg);
   }
 
-  .about__body {
+  .lab-teaser__body {
     color: var(--fg);
     font-size: var(--fs-base);
     line-height: var(--lh-normal);
     max-width: 42rem;
     margin: 0 0 var(--space-md);
+    /* Halo so the prose stays legible over the brightest Brew (same token as
+       the Works category headings). */
+    text-shadow: var(--text-shadow-onbrew);
   }
 
-  .about__placeholder {
+  /* Understated underline CTA (same family as card__cta) — the teaser is a
+     light nudge, not a button. No blur plate behind it (unlike cards), so the
+     underline uses a warm-white tint that survives the bright Brew. */
+  .lab-teaser__link {
     display: inline-block;
-    color: var(--muted);
+    color: var(--fg);
     font-size: var(--fs-sm);
-    border-bottom: 1px dashed var(--rule);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(239, 231, 214, 0.4);
     padding-bottom: 2px;
+    text-shadow: var(--text-shadow-onbrew);
+    transition: border-color 120ms ease;
+  }
+
+  .lab-teaser__link:hover,
+  .lab-teaser__link:focus-visible {
+    border-color: var(--fg);
   }
 
   /* 640+/1024+ の .hero padding/gap 上書きは削除済み。
@@ -193,6 +207,9 @@ const works = groupWorksByCategory(worksRaw as Work[]);
     .hero__title,
     .hero__title--vertical {
       animation: none;
+    }
+    .lab-teaser__link {
+      transition: none;
     }
   }
 </style>

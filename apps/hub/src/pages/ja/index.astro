@@ -70,10 +70,10 @@ const works = groupWorksByCategory(worksRaw as Work[]);
   </div>
 
   <div class="section-band section-band--strong">
-    <section id="about" class="section" aria-labelledby="about-heading">
-      <SectionHeading id="about-heading">{t('hub_about_heading', locale)}</SectionHeading>
-      <p class="about__body">{t('hub_about_body', locale)}</p>
-      <span class="about__placeholder">{t('hub_about_devlog_link', locale)}</span>
+    <section id="lab" class="section" aria-labelledby="lab-heading">
+      <SectionHeading id="lab-heading">{t('hub_lab_heading', locale)}</SectionHeading>
+      <p class="lab-teaser__body">{t('hub_lab_body', locale)}</p>
+      <a class="lab-teaser__link" href={`/${locale}/lab/`}>{t('hub_lab_link', locale)}</a>
     </section>
   </div>
 </Base>
@@ -172,20 +172,32 @@ const works = groupWorksByCategory(worksRaw as Work[]);
     gap: var(--space-lg);
   }
 
-  .about__body {
+  .lab-teaser__body {
     color: var(--fg);
     font-size: var(--fs-base);
     line-height: var(--lh-normal);
     max-width: 38rem;
     margin: 0 0 var(--space-md);
+    /* Brew 明部上で輪郭が溶けないよう (Works 見出しと同じ既存トークン)。 */
+    text-shadow: var(--text-shadow-onbrew);
   }
 
-  .about__placeholder {
+  /* 控えめ下線 CTA (card__cta と同系)。ティザーは軽い誘導なのでボタン化しない。
+     カードと違い背後に blur 台座がないので、下線色は明部で消えない暖白半透明に。 */
+  .lab-teaser__link {
     display: inline-block;
-    color: var(--muted);
+    color: var(--fg);
     font-size: var(--fs-sm);
-    border-bottom: 1px dashed var(--rule);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(239, 231, 214, 0.4);
     padding-bottom: 2px;
+    text-shadow: var(--text-shadow-onbrew);
+    transition: border-color 120ms ease;
+  }
+
+  .lab-teaser__link:hover,
+  .lab-teaser__link:focus-visible {
+    border-color: var(--fg);
   }
 
   /* 640+/1024+ の .hero padding/gap 上書きは削除済み。
@@ -206,6 +218,9 @@ const works = groupWorksByCategory(worksRaw as Work[]);
     .hero__title,
     .hero__title--vertical {
       animation: none;
+    }
+    .lab-teaser__link {
+      transition: none;
     }
   }
 </style>
