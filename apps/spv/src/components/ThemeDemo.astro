@@ -1,0 +1,147 @@
+---
+// ThemeDemo — interactive theme picker for S4. A sample Spectrum meter on the
+// left (recolorable), a grid of color swatches on the right. Clicking a swatch
+// sets --demo-* CSS variables on the sample meter's root, which the meter's
+// styles read with a fallback to the standard neon tokens. Progressive
+// enhancement: with JS off you see the standard neon meter + the full swatch
+// list (swatches just don't recolor on click). reduced-motion is honored by
+// the meter itself.
+
+import { t, type Locale } from '@ttsui/i18n';
+import InstrumentVisual from './InstrumentVisual.astro';
+import themes from '../data/themes.json' with { type: 'json' };
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+---
+
+<div class="themedemo">
+  <div class="themedemo__preview">
+    <InstrumentVisual kind="spectrum" id="theme-sample" />
+    <p class="themedemo__hint">{t('spv_themes_demo_hint', locale)}</p>
+  </div>
+
+  <div class="themedemo__picker">
+    <p id="themedemo-label" class="themedemo__label">{t('spv_themes_demo_label', locale)}</p>
+    <div class="themedemo__swatches" role="group" aria-labelledby="themedemo-label">
+      {themes.map((th, i) => (
+        <button
+          type="button"
+          class="swatch"
+          data-osc={th.osc}
+          data-spec-lo={th.specLo}
+          data-spec-hi={th.specHi}
+          data-chroma={th.chroma}
+          data-bg={th.bg}
+          data-peak={('peak' in th && th.peak === 'dark') ? 'dark' : undefined}
+          aria-label={`${th.label} theme`}
+          aria-pressed={i === 0 ? 'true' : 'false'}
+          style={`background:linear-gradient(135deg, ${th.osc} 0 40%, ${th.chroma} 40% 70%, ${th.specHi} 70% 100%)`}
+        ></button>
+      ))}
+    </div>
+    <p class="themedemo__count">
+      <span class="themedemo__count-built">{t('spv_themes_demo_builtin', locale)}</span>
+      <span class="themedemo__count-strudel">{t('spv_themes_demo_strudel_count', locale)}</span>
+    </p>
+  </div>
+</div>
+
+<style>
+  .themedemo {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    align-items: start;
+    gap: var(--space-2xl);
+    max-width: var(--max-wide);
+  }
+
+  .themedemo__preview { min-width: 0; }
+  .themedemo__hint {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--muted-2);
+    margin: var(--space-sm) 0 0;
+  }
+
+  .themedemo__label {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    text-transform: uppercase;
+    letter-spacing: var(--track-label);
+    color: var(--muted);
+    margin: 0 0 var(--space-sm);
+  }
+
+  .themedemo__swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+    gap: var(--space-2xs);
+  }
+
+  .swatch {
+    aspect-ratio: 1;
+    min-width: 48px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+  }
+  .swatch:hover { transform: translateY(-2px); }
+  .swatch:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  .swatch[aria-pressed='true'] {
+    border-color: var(--fg);
+    box-shadow: 0 0 0 2px var(--fg);
+  }
+
+  .themedemo__count {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--muted-2);
+    margin: var(--space-md) 0 0;
+  }
+  .themedemo__count-strudel { color: var(--chroma); }
+
+  @media (max-width: 767px) {
+    .themedemo { grid-template-columns: 1fr; gap: var(--space-lg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .swatch { transition: none; }
+    .swatch:hover { transform: none; }
+  }
+</style>
+
+<script>
+  // Recolor the sample meter by setting --demo-* vars on its root. CSS variable
+  // propagation does the rest — no rAF, no redraw. JS-off → standard neon meter.
+  const sample = document.getElementById('theme-sample');
+  const swatches = Array.from(
+    document.querySelectorAll<HTMLButtonElement>('.themedemo__swatches .swatch')
+  );
+  if (sample && swatches.length) {
+    swatches.forEach((sw) => {
+      sw.addEventListener('click', () => {
+        const { osc, specLo, specHi, chroma, bg, peak } = sw.dataset;
+        if (osc) sample.style.setProperty('--demo-osc', osc);
+        if (specLo) sample.style.setProperty('--demo-spec-lo', specLo);
+        if (specHi) sample.style.setProperty('--demo-spec-hi', specHi);
+        if (chroma) sample.style.setProperty('--demo-chroma', chroma);
+        if (bg) sample.style.setProperty('--demo-bg', bg);
+        // Light themes use a light panel bg → switch the peak-hold line to a
+        // dark color so it stays visible; clear it back to white otherwise.
+        if (peak === 'dark') sample.style.setProperty('--demo-peak', 'rgba(0, 0, 0, 0.5)');
+        else sample.style.removeProperty('--demo-peak');
+        swatches.forEach((s) => s.setAttribute('aria-pressed', s === sw ? 'true' : 'false'));
+      });
+    });
+  }
+</script>

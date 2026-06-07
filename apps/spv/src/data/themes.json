@@ -1,0 +1,17 @@
+[
+  { "key": "default",    "label": "Default",     "bg": "#0a0a0a", "osc": "#00ffff", "specLo": "#00c800", "specHi": "#ff321e", "chroma": "#ff8800" },
+  { "key": "neon",       "label": "Neon",        "bg": "#0a0a0a", "osc": "#00ffff", "specLo": "#c800b4", "specHi": "#ff64c8", "chroma": "#00ff88" },
+  { "key": "amber",      "label": "Amber",       "bg": "#0a0a0a", "osc": "#ffb54d", "specLo": "#65400b", "specHi": "#fa612e", "chroma": "#f49d25" },
+  { "key": "lemon",      "label": "Lemon",       "bg": "#0a0a0a", "osc": "#f5fb51", "specLo": "#60630d", "specHi": "#f5d433", "chroma": "#e8ee2a" },
+  { "key": "phosphor",   "label": "Phosphor",    "bg": "#0a0a0a", "osc": "#4dff4d", "specLo": "#0b650b", "specHi": "#2efa72", "chroma": "#25f425" },
+  { "key": "ice",        "label": "Ice",         "bg": "#0a0a0a", "osc": "#4dd2ff", "specLo": "#0b4f65", "specHi": "#2e94fa", "chroma": "#25c0f4" },
+  { "key": "violet",     "label": "Violet",      "bg": "#0e0a14", "osc": "#a64dff", "specLo": "#380b65", "specHi": "#d82efa", "chroma": "#8c25f4" },
+  { "key": "sakura",     "label": "Sakura",      "bg": "#120a0e", "osc": "#ff4da6", "specLo": "#650b38", "specHi": "#fa2e50", "chroma": "#f4258c" },
+  { "key": "monochrome", "label": "Monochrome",  "bg": "#0a0a0a", "osc": "#a6a6a6", "specLo": "#383838", "specHi": "#949494", "chroma": "#8c8c8c" },
+  { "key": "light",      "label": "Light",       "bg": "#f0f0f0", "osc": "#0088aa", "specLo": "#008c50", "specHi": "#783cb4", "chroma": "#cc6600", "peak": "dark" },
+  { "key": "dracula",    "label": "Dracula",     "bg": "#282a36", "osc": "#ff79c6", "specLo": "#f1fa8c", "specHi": "#f8ffc0", "chroma": "#bd93f9" },
+  { "key": "nord",       "label": "Nord",        "bg": "#2e3440", "osc": "#5e81ac", "specLo": "#a3be8c", "specHi": "#c2d9ab", "chroma": "#d08770" },
+  { "key": "monokai",    "label": "Monokai",     "bg": "#272822", "osc": "#f92672", "specLo": "#e6db74", "specHi": "#fdf08f", "chroma": "#ae81ff" },
+  { "key": "tokyoNight", "label": "Tokyo Night", "bg": "#1a1b26", "osc": "#bb9af7", "specLo": "#9ece6a", "specHi": "#bce88f", "chroma": "#c0caf5" },
+  { "key": "gruvboxDark","label": "Gruvbox Dark","bg": "#282828", "osc": "#fb4934", "specLo": "#ebdbb2", "specHi": "#fff0d0", "chroma": "#d3869b" }
+]

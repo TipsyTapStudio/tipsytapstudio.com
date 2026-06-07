@@ -1,10 +1,11 @@
 ---
-// SiteGrid — supported sites as text + neutral group icons (no brand logos /
-// brand colors, to avoid trademark issues). Each group shares one neutral
-// line-icon motif (music note, play, waveform, code, globe) so no per-service
-// logo is implied. Data is static here (mirrors the extension's
-// host_permissions); copy for group labels + the "all websites" line + DRM
-// note comes from i18n.
+// SiteGrid — supported sites as a detailed table (Service / URL pattern /
+// Notes), mirroring the extension's host_permissions. No brand logos / brand
+// colors (trademark safety); the mono URL-pattern column carries the
+// instrument tone. Below the table: an "all websites" bar, a matching-logic
+// caption, and the DRM note. Copy comes from i18n; row data is static here.
+// On narrow viewports the table collapses to stacked cards so it never
+// overflows horizontally.
 
 import { t, type Locale } from '@ttsui/i18n';
 
@@ -13,113 +14,106 @@ interface Props {
 }
 const { locale } = Astro.props;
 
-// icon: one of note | play | wave | code
-const groups = [
-  {
-    key: 'streaming',
-    icon: 'note',
-    label: t('spv_sites_group_streaming', locale),
-    sites: ['Spotify', 'Apple Music', 'Amazon Music', 'Tidal', 'YouTube Music'],
-  },
-  {
-    key: 'video',
-    icon: 'play',
-    label: t('spv_sites_group_video', locale),
-    sites: ['YouTube'],
-  },
-  {
-    key: 'creator',
-    icon: 'wave',
-    label: t('spv_sites_group_creator', locale),
-    sites: ['SoundCloud', 'Bandcamp', 'Beatport', 'Mixcloud'],
-  },
-  {
-    key: 'livecoding',
-    icon: 'code',
-    label: t('spv_sites_group_livecoding', locale),
-    sites: ['Strudel'],
-  },
+// One row per supported service (YouTube Music folded into YouTube → 10 rows).
+// noteKey is an i18n key or null (— dash) for no note.
+const rows: { service: string; pattern: string; noteKey: string | null }[] = [
+  { service: 'YouTube', pattern: '*://*.youtube.com/*', noteKey: 'spv_sites_note_yt_music' },
+  { service: 'SoundCloud', pattern: '*://*.soundcloud.com/*', noteKey: null },
+  { service: 'Bandcamp', pattern: '*://*.bandcamp.com/*', noteKey: null },
+  { service: 'Beatport', pattern: '*://*.beatport.com/*', noteKey: null },
+  { service: 'Mixcloud', pattern: '*://*.mixcloud.com/*', noteKey: null },
+  { service: 'Spotify', pattern: '*://open.spotify.com/*', noteKey: 'spv_sites_note_drm' },
+  { service: 'Apple Music', pattern: '*://music.apple.com/*', noteKey: 'spv_sites_note_drm' },
+  { service: 'Amazon Music', pattern: '*://music.amazon.co.jp/*', noteKey: 'spv_sites_note_amazon_jp' },
+  { service: 'Tidal', pattern: '*://*.tidal.com/*', noteKey: 'spv_sites_note_drm' },
+  { service: 'Strudel', pattern: '*://strudel.cc/*', noteKey: 'spv_sites_note_strudel_sync' },
 ];
+
+const colService = t('spv_sites_col_service', locale);
+const colPattern = t('spv_sites_col_pattern', locale);
+const colNotes = t('spv_sites_col_notes', locale);
 ---
 
 <div class="sites">
-  {groups.map((g) => (
-    <section class="sites__group" aria-labelledby={`sites-${g.key}`}>
-      <h3 id={`sites-${g.key}`} class="sites__group-label">
-        <svg class="sites__gicon" viewBox="0 0 24 24" aria-hidden="true">
-          {g.icon === 'note' && (
-            <path d="M9 18V5l10-2v13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-          )}
-          {g.icon === 'note' && (
-            <circle cx="6" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="1.5" />
-          )}
-          {g.icon === 'note' && (
-            <circle cx="16" cy="16" r="3" fill="none" stroke="currentColor" stroke-width="1.5" />
-          )}
-          {g.icon === 'play' && (
-            <path d="M7 5l12 7-12 7z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
-          )}
-          {g.icon === 'wave' && (
-            <path d="M3 12h2l2-6 3 14 3-10 2 4h6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-          )}
-          {g.icon === 'code' && (
-            <path d="M8 6l-5 6 5 6M16 6l5 6-5 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-          )}
-        </svg>
-        {g.label}
-      </h3>
-      <ul class="sites__list" role="list">
-        {g.sites.map((s) => <li class="sites__chip">{s}</li>)}
-      </ul>
-    </section>
-  ))}
+  <table class="sites__table">
+    <thead>
+      <tr>
+        <th scope="col" class="sites__th">{colService}</th>
+        <th scope="col" class="sites__th sites__th--pattern">{colPattern}</th>
+        <th scope="col" class="sites__th">{colNotes}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {rows.map((r) => (
+        <tr class="sites__row">
+          <td class="sites__service" data-label={colService}>{r.service}</td>
+          <td class="sites__pattern" data-label={colPattern}><code>{r.pattern}</code></td>
+          <td class="sites__notes" data-label={colNotes}>
+            {r.noteKey ? t(r.noteKey, locale) : <span class="sites__dash" aria-hidden="true">—</span>}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
 
   <p class="sites__all">{t('spv_sites_all', locale)}</p>
+  <p class="sites__match">{t('spv_sites_match_caption', locale)}</p>
   <p class="sites__drm">{t('spv_sites_drm_note', locale)}</p>
 </div>
 
 <style>
-  .sites {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-xl);
-    max-width: var(--max-content);
-  }
+  .sites { max-width: var(--max-content); }
 
-  .sites__group-label {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2xs);
-    font-family: var(--font-mono);
+  .sites__table {
+    width: 100%;
+    border-collapse: collapse;
     font-size: var(--fs-sm);
-    text-transform: uppercase;
-    letter-spacing: var(--track-label);
-    color: var(--muted);
-    margin: 0 0 var(--space-sm);
-  }
-  .sites__gicon { width: 18px; height: 18px; color: var(--osc); }
-
-  .sites__list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2xs);
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-  .sites__chip {
-    font-family: var(--font-display);
-    font-size: var(--fs-sm);
-    color: var(--fg);
     background: var(--bg-1);
     border: 1px solid var(--border);
     border-radius: var(--radius-card);
-    padding: var(--space-2xs) var(--space-sm);
+    overflow: hidden;
   }
 
-  /* "+ All websites" spans full width, set apart as a wide bar. */
+  .sites__th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--track-label);
+    color: var(--muted);
+    background: var(--bg-2);
+    padding: var(--space-sm) var(--space-md);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sites__row { border-top: 1px solid var(--grid); }
+  .sites__row:first-child { border-top: none; }
+
+  .sites__service,
+  .sites__pattern,
+  .sites__notes {
+    padding: var(--space-sm) var(--space-md);
+    vertical-align: top;
+    line-height: var(--lh-normal);
+  }
+
+  .sites__service {
+    font-family: var(--font-display);
+    color: var(--fg);
+    white-space: nowrap;
+  }
+  .sites__pattern code {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--osc);
+    overflow-wrap: anywhere;
+  }
+  .sites__notes { color: var(--muted); }
+  .sites__dash { color: var(--muted-2); }
+
+  /* "+ All websites" — wide bar set apart below the table. */
   .sites__all {
-    grid-column: 1 / -1;
     font-family: var(--font-mono);
     font-size: var(--fs-base);
     color: var(--data);
@@ -127,19 +121,63 @@ const groups = [
     border: 1px dashed var(--cta-ghost-border);
     border-radius: var(--radius-card);
     padding: var(--space-sm) var(--space-md);
-    margin: 0;
+    margin: var(--space-lg) 0 0;
+  }
+
+  .sites__match {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--muted-2);
+    margin: var(--space-sm) 0 0;
   }
 
   .sites__drm {
-    grid-column: 1 / -1;
     color: var(--muted-2);
     font-size: var(--fs-xs);
     line-height: var(--lh-normal);
-    margin: 0;
+    margin: var(--space-sm) 0 0;
     max-width: var(--reading);
   }
 
+  /* Narrow: collapse each row into a stacked card so nothing overflows. */
   @media (max-width: 639px) {
-    .sites { grid-template-columns: 1fr; gap: var(--space-lg); }
+    .sites__table,
+    .sites__table tbody,
+    .sites__row,
+    .sites__service,
+    .sites__pattern,
+    .sites__notes {
+      display: block;
+      width: 100%;
+    }
+    .sites__table thead { display: none; }
+    .sites__table { background: transparent; border: none; border-radius: 0; }
+    .sites__row {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      background: var(--bg-1);
+      padding: var(--space-sm) 0;
+      margin-bottom: var(--space-sm);
+    }
+    .sites__service,
+    .sites__pattern,
+    .sites__notes {
+      padding: var(--space-2xs) var(--space-md);
+    }
+    .sites__service { font-size: var(--fs-base); }
+    /* label each cell with its column name */
+    .sites__pattern::before,
+    .sites__notes::before {
+      content: attr(data-label);
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: var(--track-label);
+      color: var(--muted-2);
+      margin-bottom: 2px;
+    }
+    /* hide the dash row on mobile (no note → no clutter) */
+    .sites__notes:has(.sites__dash) { display: none; }
   }
 </style>

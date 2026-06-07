@@ -7,6 +7,10 @@
 // `data-playing` to pause offscreen animation (progressive enhancement —
 // animations run by default if JS is off). prefers-reduced-motion freezes
 // every meter on a presentable still frame.
+//
+// Meter colors are referenced through `--demo-*` first, falling back to the
+// standard neon tokens, so the Themes demo can recolor a sample meter purely
+// by setting CSS variables on the .iv root (see ThemeDemo.astro).
 
 type Kind =
   | 'hero'
@@ -21,62 +25,143 @@ interface Props {
   kind: Kind;
   /** Number of spectrum bars (spectrum/hero). */
   bars?: number;
+  /** Optional id on the root (used by the Themes demo to target it). */
+  id?: string;
 }
 
-const { kind, bars = 16 } = Astro.props;
-const barList = Array.from({ length: bars }, (_, i) => i);
-// 12 chromatic keys; light a musically plausible A-minor-ish subset.
-const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const litKeys = new Set(['A', 'C', 'E']);
-const isBlack = (n: string) => n.includes('#');
+const { kind, id } = Astro.props;
+const isHero = kind === 'hero';
+// hero packs three meters → fewer bars; standalone spectrum → full count.
+const bars = Astro.props.bars ?? (isHero ? 16 : 24);
+
+// Static spectrum profile: right-falling with bumps (never monotone).
+const SPEC24 = [88, 72, 80, 64, 58, 70, 52, 48, 60, 44, 40, 52, 36, 46, 30, 38, 26, 34, 22, 30, 18, 24, 16, 20];
+const barHeights = Array.from({ length: bars }, (_, i) =>
+  SPEC24[Math.round((i / Math.max(1, bars - 1)) * (SPEC24.length - 1))]
+);
+// log-ish frequency labels, left-tight / right-wide (% positions).
+const freqLabels = [
+  { label: '60', x: 4 },
+  { label: '250', x: 22 },
+  { label: '1k', x: 44 },
+  { label: '4k', x: 68 },
+  { label: '20k', x: 94 },
+];
+
+// Chromagram geometry (viewBox 0 0 280 160).
+const padX = 14;
+const kW = 18;
+const cellW = 14;
+const cell = (col: number) => padX + col * kW + 2;
+// Black keys: 2 octaves × 5, at positions {0.5,1.5,3.5,4.5,5.5} within each octave.
+const blackPos = [0.5, 1.5, 3.5, 4.5, 5.5];
+const blackKeys = [0, 1].flatMap((oct) =>
+  blackPos.map((pos) => ({ x: cell(oct * 7 + pos), note: blackNoteAt(pos) }))
+);
+// White keys: 2 octaves × 7.
+const whiteNotes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+const whiteKeys = [0, 1].flatMap((oct) =>
+  Array.from({ length: 7 }, (_, wi) => ({ x: cell(oct * 7 + wi), note: whiteNotes[wi] }))
+);
+// A-minor triad → A, C, E. rank 0 = lit, 1 = mid, 2 = faint.
+const litRank: Record<string, number> = { A: 0, C: 1, E: 2 };
+function blackNoteAt(pos: number): string {
+  // map the 5 black-key slots to their sharp names (informational only)
+  const map: Record<number, string> = { 0.5: 'C#', 1.5: 'D#', 3.5: 'F#', 4.5: 'G#', 5.5: 'A#' };
+  return map[pos] ?? '';
+}
+const rankOf = (note: string) => (note in litRank ? litRank[note] : -1);
+const rankOpacity = [1.0, 0.38, 0.1];
+
+// 12-point key dial (Key meter): current key index 9 = A.
+const dialPts = Array.from({ length: 12 }, (_, i) => {
+  const a = (i / 12) * Math.PI * 2 - Math.PI / 2;
+  return { x: 32 + Math.cos(a) * 26, y: 32 + Math.sin(a) * 26, current: i === 9 };
+});
 ---
 
-<div class={`iv iv--${kind}`} data-instrument data-playing aria-hidden="true">
+<div class={`iv iv--${kind}`} id={id} data-instrument data-playing aria-hidden="true">
   {(kind === 'oscilloscope' || kind === 'hero') && (
-    <svg class="iv__osc" viewBox="0 0 240 80" preserveAspectRatio="none" role="presentation">
-      <line class="iv__axis" x1="0" y1="40" x2="240" y2="40" />
-      <path
-        class="iv__wave"
-        d="M0,40 C15,10 30,10 45,40 S75,70 90,40 S120,10 135,40 S165,70 180,40 S210,10 225,40 S255,70 270,40"
-        pathLength="100"
-      />
+    <svg class="iv__osc" viewBox="0 0 240 100" preserveAspectRatio="xMidYMid meet" role="presentation">
+      <line class="iv__axis" x1="0" y1="50" x2="240" y2="50" />
+      <g class="iv__osc-trace">
+        <path
+          class="iv__wave"
+          d="M0,50 C10,22 18,20 26,38 S40,8 52,30 S70,72 84,46 S104,18 120,50 S150,80 168,52 S196,20 214,48 S232,64 240,50"
+        />
+      </g>
     </svg>
   )}
 
   {(kind === 'spectrum' || kind === 'hero') && (
-    <div class="iv__spectrum">
-      {barList.map((i) => (
-        <span class="iv__bar" style={`--i:${i}; --n:${bars};`}></span>
-      ))}
+    <div class="iv__spectrum-wrap">
+      <div class="iv__spectrum">
+        {barHeights.map((h) => (
+          <span class="iv__bar" style={`--h:${h}%;`}><span class="iv__peak"></span></span>
+        ))}
+      </div>
+      <div class="iv__freqaxis" aria-hidden="true">
+        {freqLabels.map((f) => (
+          <span class="iv__freq" style={`left:${f.x}%;`}>{f.label}</span>
+        ))}
+      </div>
     </div>
   )}
 
   {(kind === 'chromagram' || kind === 'hero') && (
-    <div class="iv__chroma">
-      <div class="iv__keys">
-        {keys.map((n) => (
-          <span
-            class:list={['iv__key', { 'iv__key--black': isBlack(n), 'iv__key--lit': litKeys.has(n) }]}
-          ></span>
-        ))}
-      </div>
-      <div class="iv__noteflow"></div>
-    </div>
+    <svg class="iv__chroma" viewBox="0 0 280 160" preserveAspectRatio="xMidYMid meet" role="presentation">
+      {/* Note Flow ribbon (top band) */}
+      <g class="iv__noteflow">
+        <text class="iv__nf iv__nf--black" x="210" y="18">A</text>
+        <text class="iv__nf iv__nf--white" x="232" y="22">C</text>
+        <text class="iv__nf iv__nf--black" x="252" y="16">E</text>
+        <text class="iv__nf iv__nf--white" x="186" y="22">C</text>
+        <text class="iv__nf iv__nf--black" x="162" y="18">A</text>
+      </g>
+      {/* octave divider */}
+      <line class="iv__octdiv" x1="140" y1="32" x2="140" y2="136" />
+      {/* upper row: black keys */}
+      {blackKeys.map((k) => {
+        const r = rankOf(k.note);
+        return (
+          <rect
+            class:list={['iv__cell', { 'iv__cell--lit': r === 0 }]}
+            x={k.x} y="40" width={cellW} height="44" rx="5"
+            style={r >= 0 ? `--lit-op:${rankOpacity[r]}` : undefined}
+          />
+        );
+      })}
+      {/* lower row: white keys */}
+      {whiteKeys.map((k) => {
+        const r = rankOf(k.note);
+        return (
+          <rect
+            class:list={['iv__cell', { 'iv__cell--lit': r === 0 }]}
+            x={k.x} y="92" width={cellW} height="44" rx="5"
+            style={r >= 0 ? `--lit-op:${rankOpacity[r]}` : undefined}
+          />
+        );
+      })}
+    </svg>
   )}
 
   {kind === 'bpm' && (
     <div class="iv__bpm">
       <span class="iv__bpm-dot"></span>
-      <span class="iv__bpm-num">128.0</span>
+      <span class="iv__bpm-num">128</span>
       <span class="iv__bpm-unit">BPM</span>
     </div>
   )}
 
   {kind === 'key' && (
     <div class="iv__key-readout">
-      <svg class="iv__wheel" viewBox="0 0 64 64" role="presentation">
-        <circle class="iv__wheel-ring" cx="32" cy="32" r="26" />
-        <path class="iv__wheel-arc" d="M32 6 A26 26 0 0 1 54.5 19" />
+      <svg class="iv__dial" viewBox="0 0 64 64" role="presentation">
+        {dialPts.map((p) => (
+          <circle
+            class:list={['iv__dial-pt', { 'iv__dial-pt--cur': p.current }]}
+            cx={p.x} cy={p.y} r={p.current ? 2 : 1.2}
+          />
+        ))}
       </svg>
       <span class="iv__key-camelot">8A</span>
       <span class="iv__key-name">A minor</span>
@@ -87,7 +172,7 @@ const isBlack = (n: string) => n.includes('#');
     <div class="iv__track">
       <span class="iv__track-dot"></span>
       <span class="iv__track-line">So U Kno — Overmono</span>
-      <span class="iv__track-meta">128.0 BPM · 8A</span>
+      <span class="iv__track-meta">128 BPM · 8A</span>
     </div>
   )}
 </div>
@@ -98,7 +183,7 @@ const isBlack = (n: string) => n.includes('#');
     width: 100%;
     aspect-ratio: 16 / 10;
     min-height: clamp(200px, 28vw, 340px);
-    background: var(--bg-2);
+    background: var(--demo-bg, var(--bg-2));
     border: 1px solid var(--border);
     border-radius: var(--radius-meter);
     /* instrument grid */
@@ -122,71 +207,125 @@ const isBlack = (n: string) => n.includes('#');
   .iv__axis { stroke: var(--grid-strong); stroke-width: 1; }
   .iv__wave {
     fill: none;
-    stroke: var(--osc-vivid);
-    stroke-width: 2;
+    stroke: var(--demo-osc, var(--osc-vivid));
+    stroke-width: 1.5;
+    stroke-linejoin: round;
     vector-effect: non-scaling-stroke;
     filter: drop-shadow(var(--glow-osc));
-    stroke-dasharray: 8 4;
-    animation: iv-osc 2.4s linear infinite;
   }
-  @keyframes iv-osc { to { stroke-dashoffset: -36; } }
+  /* subtle horizontal drift of the trace (still readable when paused/frozen) */
+  .iv__osc-trace {
+    animation: iv-osc 2.4s ease-in-out infinite alternate;
+  }
+  @keyframes iv-osc {
+    from { transform: translateX(-3px); }
+    to { transform: translateX(3px); }
+  }
 
   /* ===== Spectrum ===== */
+  .iv__spectrum-wrap {
+    width: 100%;
+    height: 56%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3xs);
+  }
+  .iv--spectrum .iv__spectrum-wrap { height: 88%; }
   .iv__spectrum {
     display: flex;
     align-items: flex-end;
     gap: 2px;
     width: 100%;
-    height: 45%;
-  }
-  .iv--spectrum .iv__spectrum { height: 80%; }
-  .iv__bar {
     flex: 1;
-    /* magenta (low) → purple (high) across the row */
-    background: color-mix(in oklab, #ff2ea6, #7c5cff calc(var(--i) / var(--n) * 100%));
-    border-radius: 1px 1px 0 0;
-    height: 30%;
-    transform-origin: bottom;
-    animation: iv-bar 1.1s ease-in-out infinite alternate;
-    animation-delay: calc(var(--i) * -90ms);
-    box-shadow: 0 0 6px rgba(155, 107, 255, 0.3);
+    min-height: 0;
   }
-  @keyframes iv-bar {
-    0% { height: 18%; }
-    100% { height: 88%; }
+  .iv__bar {
+    position: relative;
+    flex: 1;
+    height: var(--h, 50%);
+    border-radius: 2px 2px 0 0;
+    background: linear-gradient(
+      to top,
+      var(--demo-spec-lo, var(--spec-lo)) 0%,
+      var(--demo-spec-lo, var(--spec-lo)) 60%,
+      var(--demo-spec-hi, var(--spec-hi)) 85%,
+      var(--demo-spec-hi, var(--spec-hi)) 100%
+    );
+    box-shadow: 0 0 6px color-mix(in srgb, var(--demo-spec-hi, var(--spec-hi)) 30%, transparent);
+  }
+  /* peak-hold marker: thin white line just above the bar top */
+  .iv__peak {
+    position: absolute;
+    top: -3px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--demo-peak, var(--peak, #ffffff));
+    opacity: 0.6;
+  }
+  .iv__freqaxis {
+    position: relative;
+    height: 16px;
+    flex: 0 0 auto;
+  }
+  .iv__freq {
+    position: absolute;
+    top: 6px;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    line-height: 1;
+    color: var(--muted-2);
+    white-space: nowrap;
+  }
+  .iv__freq::before {
+    /* 1px × 4px tick above the label */
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    width: 1px;
+    height: 4px;
+    background: var(--grid-strong);
   }
 
-  /* ===== Chromagram ===== */
-  .iv__chroma { width: 100%; }
-  .iv__keys {
-    display: flex;
-    gap: 2px;
-    height: 48px;
-    align-items: flex-end;
+  /* ===== Chromagram (2-row piano roll) ===== */
+  .iv__chroma { width: 100%; height: 70%; display: block; }
+  .iv--chromagram .iv__chroma { height: 88%; }
+  .iv__cell {
+    /* unlit keys must sit lighter than the panel (--bg-2) so the 2-row
+       keyboard reads even when no note is lit — mirrors the product's
+       cell(#18181c)-on-bg(#0a0a0a) contrast step. */
+    fill: #22222c;
+    stroke: var(--grid-strong);
+    stroke-width: 0.75;
   }
-  .iv__key {
-    flex: 1;
-    height: 100%;
-    background: #2a2a32;
-    border-radius: 0 0 2px 2px;
+  .iv__cell[style] {
+    /* lit cells (any rank) use the chroma hue at their rank opacity */
+    fill: var(--demo-chroma, var(--chroma-vivid));
+    fill-opacity: var(--lit-op, 1);
   }
-  .iv__key--black { height: 62%; background: #15151a; }
-  .iv__key--lit {
-    background: var(--chroma);
-    box-shadow: 0 0 8px rgba(255, 149, 0, 0.5);
-    animation: iv-key 1.8s ease-in-out infinite;
+  .iv__cell--lit {
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--demo-chroma, var(--chroma-vivid)) 45%, transparent));
   }
-  @keyframes iv-key { 50% { opacity: 0.5; } }
+  .iv__octdiv {
+    stroke: var(--grid);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+  }
   .iv__noteflow {
-    margin-top: var(--space-2xs);
-    height: 10px;
-    border-radius: 2px;
-    background: linear-gradient(90deg, transparent, var(--chroma), transparent);
-    background-size: 50% 100%;
-    opacity: 0.6;
-    animation: iv-flow 3s linear infinite;
+    animation: iv-flow 6s linear infinite;
   }
-  @keyframes iv-flow { to { background-position: 200% 0; } }
+  .iv__nf {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    fill: var(--demo-chroma, var(--chroma));
+    opacity: 0.55;
+  }
+  @keyframes iv-flow {
+    from { transform: translateX(40px); }
+    to { transform: translateX(-40px); }
+  }
 
   /* ===== BPM ===== */
   .iv__bpm {
@@ -225,27 +364,39 @@ const isBlack = (n: string) => n.includes('#');
 
   /* ===== Key ===== */
   .iv__key-readout {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--space-2xs);
   }
-  .iv__wheel { width: 96px; height: 96px; }
-  .iv__wheel-ring { fill: none; stroke: var(--grid-strong); stroke-width: 4; }
-  .iv__wheel-arc {
-    fill: none;
-    stroke: var(--key-vivid);
-    stroke-width: 4;
-    stroke-linecap: round;
-    filter: drop-shadow(0 0 8px rgba(179, 136, 255, 0.5));
+  .iv__dial {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120px;
+    height: 120px;
+    transform: translate(-50%, -50%);
+    opacity: 0.4;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .iv__dial-pt { fill: var(--grid-strong); }
+  .iv__dial-pt--cur {
+    fill: var(--key-vivid);
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--key-vivid) 60%, transparent));
   }
   .iv__key-camelot {
+    position: relative;
+    z-index: 1;
     font-family: var(--font-mono);
     font-size: var(--fs-xl);
     font-weight: 700;
     color: var(--key);
   }
   .iv__key-name {
+    position: relative;
+    z-index: 1;
     font-family: var(--font-mono);
     font-size: var(--fs-sm);
     color: var(--muted);
@@ -272,9 +423,7 @@ const isBlack = (n: string) => n.includes('#');
   .iv__track-meta { color: var(--data); font-size: var(--fs-sm); }
 
   /* Pause when the page marks this instrument offscreen (JS enhancement). */
-  .iv:not([data-playing]) .iv__wave,
-  .iv:not([data-playing]) .iv__bar,
-  .iv:not([data-playing]) .iv__key--lit,
+  .iv:not([data-playing]) .iv__osc-trace,
   .iv:not([data-playing]) .iv__noteflow,
   .iv:not([data-playing]) .iv__bpm-dot,
   .iv:not([data-playing]) .iv__track-dot {
@@ -282,14 +431,9 @@ const isBlack = (n: string) => n.includes('#');
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .iv__wave, .iv__bar, .iv__key--lit, .iv__noteflow,
-    .iv__bpm-dot, .iv__track-dot {
+    .iv__osc-trace, .iv__noteflow, .iv__bpm-dot, .iv__track-dot {
       animation: none !important;
     }
-    /* present a static, readable frame for spectrum (varied heights) */
-    .iv__bar { height: 55%; }
-    .iv__bar:nth-child(3n) { height: 80%; }
-    .iv__bar:nth-child(3n + 1) { height: 35%; }
   }
 </style>
 

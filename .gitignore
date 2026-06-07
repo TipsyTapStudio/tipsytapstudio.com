@@ -40,3 +40,4 @@ Desktop.ini
 # Claude Code local settings (per-machine)
 .claude/settings.local.json
 .claude/launch.json
+.claude/worktrees/

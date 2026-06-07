@@ -11,6 +11,7 @@ import LogoMosaic from '../../components/LogoMosaic.astro';
 import DemoVideo from '../../components/DemoVideo.astro';
 import ModuleBlock from '../../components/ModuleBlock.astro';
 import SiteGrid from '../../components/SiteGrid.astro';
+import ThemeDemo from '../../components/ThemeDemo.astro';
 import releases from '../../data/releases.json' with { type: 'json' };
 
 const locale = 'en';
@@ -78,6 +79,7 @@ const modules = [
   <section class="section band-1" aria-labelledby="themes-heading">
     <h2 id="themes-heading" class="section-heading">{t('spv_themes_heading', locale)}</h2>
     <p class="section-lede">{t('spv_themes_body', locale)}</p>
+    <ThemeDemo locale={locale} />
     <p class="themes__strudel">{t('spv_themes_strudel', locale)}</p>
   </section>
 
