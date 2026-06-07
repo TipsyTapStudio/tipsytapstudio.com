@@ -42,6 +42,19 @@ const otherLocale: Locale = locale === 'ja' ? 'en' : 'ja';
 const switchHref = `/${otherLocale}/`;
 const switchLabel = t('common_locale_switch', locale);
 
+// --- SEO: canonical + hreflang ---
+// canonical は現在パスを Astro.site で絶対 URL 化(Astro 標準の末尾スラッシュ処理に従う)。
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+
+// hreflang 相互参照。ロケール接頭辞(/ja|/en)だけを差し替える汎用ロジックで、
+// /ja/lab/ → /en/lab/ のような深いルートにも対応する(ルート直下にハードコードしない)。
+const localeSwapPath = (target: Locale) =>
+  Astro.url.pathname.replace(/^\/(ja|en)(?=\/|$)/, `/${target}`);
+const jaURL = new URL(localeSwapPath('ja'), Astro.site);
+const enURL = new URL(localeSwapPath('en'), Astro.site);
+// x-default は defaultLocale(ja)版を指す。
+const xDefaultURL = jaURL;
+
 // --- Brew background enable/disable ---
 // Hub pages get the sticky Brew background; /lab/ pages already host their
 // own Lab #002 BrewCanvas inside an ExperimentFrame and must NOT stack a
@@ -61,6 +74,12 @@ const enableHeader = enableBrewBg;
     <meta name="color-scheme" content="dark" />
     <title>{siteTitle}</title>
     <meta name="description" content={siteDescription} />
+    {/* SEO — canonical + ja/en/x-default hreflang 相互参照。
+        パスのロケール接頭辞のみ差し替えるため /lab/ 配下でも正しく動く。 */}
+    <link rel="canonical" href={canonicalURL.href} />
+    <link rel="alternate" hreflang="ja" href={jaURL.href} />
+    <link rel="alternate" hreflang="en" href={enURL.href} />
+    <link rel="alternate" hreflang="x-default" href={xDefaultURL.href} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     {/* Fraunces variable (+ Noto Serif JP) is bundled via @fontsource (imported in frontmatter).
         No external font requests — privacy-friendly and zero third-party DNS.

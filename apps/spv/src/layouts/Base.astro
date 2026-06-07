@@ -37,6 +37,11 @@ const siteDescription =
   'Studio-grade audio meters in your browser side panel — oscilloscope, spectrum, chromagram, BPM and key detection. A Tipsy Tap Studio extension.';
 
 // English-only for now (2026-06-07) — no locale switcher.
+
+// --- SEO: canonical ---
+// en 単一なので hreflang は不要。現在パスを Astro.site で絶対 URL 化する
+// (Astro 標準の末尾スラッシュ処理に従う)。
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
@@ -47,6 +52,8 @@ const siteDescription =
     <meta name="color-scheme" content="dark" />
     <title>{siteTitle}</title>
     <meta name="description" content={siteDescription} />
+    {/* SEO — canonical(en 単一のため self-referential のみ)。 */}
+    <link rel="canonical" href={canonicalURL.href} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png" />
     <link rel="apple-touch-icon" sizes="128x128" href="/icon-128.png" />

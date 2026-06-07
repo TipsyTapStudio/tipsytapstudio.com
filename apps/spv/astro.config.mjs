@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import sitemap from '@astrojs/sitemap';
 
 // SPV-2 LP — `spv.tipsytapstudio.com`.
 // PRD §6 — Astro + Cloudflare Pages, JS-zero by default.
@@ -17,4 +18,8 @@ export default defineConfig({
       prefixDefaultLocale: true,
     },
   },
+  // @astrojs/sitemap — outputs sitemap-index.xml (+ sitemap-0.xml) to match
+  // the existing public/robots.txt `Sitemap:` declaration. en 単一なので
+  // i18n オプションは不要(素の sitemap() でよい)。
+  integrations: [sitemap()],
 });
