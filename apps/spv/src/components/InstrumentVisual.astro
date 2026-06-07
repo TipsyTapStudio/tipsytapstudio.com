@@ -34,8 +34,10 @@ const isHero = kind === 'hero';
 // hero packs three meters → fewer bars; standalone spectrum → full count.
 const bars = Astro.props.bars ?? (isHero ? 16 : 24);
 
-// Static spectrum profile: right-falling with bumps (never monotone).
-const SPEC24 = [88, 72, 80, 64, 58, 70, 52, 48, 60, 44, 40, 52, 36, 46, 30, 38, 26, 34, 22, 30, 18, 24, 16, 20];
+// Static spectrum profile: a smooth envelope — rises to a broad low-mid peak,
+// then decays smoothly toward the highs (no zig-zag bumps). Matches the clean
+// silhouette of a real spectrum rather than a jagged one.
+const SPEC24 = [72, 84, 92, 96, 97, 95, 92, 88, 83, 78, 73, 68, 63, 58, 54, 50, 46, 42, 38, 34, 30, 26, 22, 18];
 const barHeights = Array.from({ length: bars }, (_, i) =>
   SPEC24[Math.round((i / Math.max(1, bars - 1)) * (SPEC24.length - 1))]
 );
