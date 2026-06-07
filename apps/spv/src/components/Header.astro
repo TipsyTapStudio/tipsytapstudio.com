@@ -16,7 +16,8 @@ interface Props {
 
 const { locale } = Astro.props;
 
-const backHref = `https://tipsytapstudio.com/${locale}/`;
+// Studio back-link lives in the footer only — most visitors don't want the
+// studio page, so the header stays focused on SPV-2 itself.
 const webStoreHref =
   'https://chromewebstore.google.com/detail/spv-2-side-panel-visualiz/flkfiadmjmonooljmhhbapffoicdibdn';
 
@@ -31,10 +32,10 @@ const navLabel = 'In-page navigation';
 ---
 
 <header class="spv-nav">
-  <div class="spv-nav__brand">
-    <a class="spv-nav__back" href={backHref} rel="home">&larr; Tipsy Tap Studio</a>
-    <a class="spv-nav__wordmark" href={`/${locale}/`}>SPV-2</a>
-  </div>
+  <a class="spv-nav__brand" href={`/${locale}/`} aria-label="SPV-2 home">
+    <img class="spv-nav__mark" src="/favicon.svg" alt="" width="24" height="24" />
+    <span class="spv-nav__wordmark">SPV-2</span>
+  </a>
 
   <nav class="spv-nav__links" aria-label={navLabel}>
     <ul role="list">
@@ -74,28 +75,28 @@ const navLabel = 'In-page navigation';
     border-bottom: 1px solid var(--border);
   }
 
+  /* Brand = small mosaic mark + SPV-2 wordmark, inline, at the far left.
+     margin-right:auto pushes nav + CTA to the far right. */
   .spv-nav__brand {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.1;
-  }
-
-  .spv-nav__back {
-    font-family: var(--font-mono);
-    font-size: var(--fs-xs);
-    color: var(--muted-2);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
     text-decoration: none;
-    transition: color 120ms ease;
+    margin-right: auto;
   }
-  .spv-nav__back:hover { color: var(--muted); }
-
+  .spv-nav__mark {
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    display: block;
+    flex-shrink: 0;
+  }
   .spv-nav__wordmark {
     font-family: var(--font-mono);
     font-size: var(--fs-lg);
     font-weight: 700;
     letter-spacing: 0.04em;
     color: var(--osc);
-    text-decoration: none;
     text-shadow: var(--glow-osc);
   }
 

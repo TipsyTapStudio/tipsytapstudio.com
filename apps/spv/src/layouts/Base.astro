@@ -48,6 +48,8 @@ const siteDescription =
     <title>{siteTitle}</title>
     <meta name="description" content={siteDescription} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png" />
+    <link rel="apple-touch-icon" sizes="128x128" href="/icon-128.png" />
     {/* Self-hosted fonts (imported in frontmatter) — no external font requests. */}
   </head>
   <body>
@@ -158,7 +160,10 @@ const siteDescription =
 
   *, *::before, *::after { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
-  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
 
   body {
     background: var(--bg);
@@ -169,6 +174,12 @@ const siteDescription =
     min-height: 100svh;
     display: flex;
     flex-direction: column;
+    /* defensive: never let a stray wide child create horizontal scroll
+       (which reads as an asymmetric / left-shifted page). position:relative so
+       absolutely-positioned descendants (e.g. .skip-link) are contained by
+       this clipping box and can't extend the <html> scroll width. */
+    position: relative;
+    overflow-x: clip;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -195,16 +206,32 @@ const siteDescription =
     letter-spacing: 0;
   }
 
+  /* sr-only via clip — off-screen left:-9999px caused horizontal scroll
+     (the link extended the scrollable area, shifting the page). Clip has zero
+     layout footprint, so no scroll. Revealed on focus. */
   .skip-link {
     position: absolute;
-    left: -9999px;
-    top: 0;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
     background: var(--fg);
     color: var(--bg);
-    padding: var(--space-2xs) var(--space-sm);
+    padding: 0;
     z-index: 60;
   }
-  .skip-link:focus { left: var(--space-sm); top: var(--space-sm); }
+  .skip-link:focus {
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    clip-path: none;
+    left: var(--space-sm);
+    top: var(--space-sm);
+    padding: var(--space-2xs) var(--space-sm);
+  }
 
   /* ===== Shared section utilities ===== */
   .section {

@@ -292,3 +292,23 @@ const isBlack = (n: string) => n.includes('#');
     .iv__bar:nth-child(3n + 1) { height: 35%; }
   }
 </style>
+
+<script>
+  // Only animate instruments that are on screen — pause the rest to save CPU.
+  // Each .iv ships with data-playing; one shared IO removes it when offscreen
+  // and restores it when it scrolls back in. JS-off → stays animating (the
+  // attribute is present in the HTML); reduced-motion → frozen by CSS anyway.
+  const ivs = document.querySelectorAll<HTMLElement>('.iv[data-instrument]');
+  if (ivs.length && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) e.target.setAttribute('data-playing', '');
+          else e.target.removeAttribute('data-playing');
+        });
+      },
+      { rootMargin: '100px 0px' } // start a touch before they enter
+    );
+    ivs.forEach((iv) => io.observe(iv));
+  }
+</script>

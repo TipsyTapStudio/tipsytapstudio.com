@@ -110,6 +110,11 @@ const baked = (tiles as Tile[]).map((t) => {
     width: clamp(280px, 36vw, 520px);
     aspect-ratio: 1;
     /* no backing panel — float on the page's black. */
+    /* position:relative so the ::before glow (inset:-8%) is sized to THIS box,
+       not a far positioned ancestor. Without it the glow's containing block was
+       <body>, stretching it to 108% of the whole page = a huge phantom region
+       (~757px) of empty scrollable space below the footer. */
+    position: relative;
     --wave-gain: 0;
     transition: --wave-gain var(--wave-ramp, 1600ms) ease-in-out;
   }
