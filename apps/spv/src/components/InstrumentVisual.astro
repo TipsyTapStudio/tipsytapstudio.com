@@ -1,0 +1,294 @@
+---
+// InstrumentVisual — CSS/SVG instrument art (no screenshots, no video).
+//
+// One component renders any meter `kind`. Used by the Hero (kind="hero",
+// the combined console) and by each ModuleBlock. All motion is CSS @keyframes;
+// the only JS is an IntersectionObserver in the page that toggles
+// `data-playing` to pause offscreen animation (progressive enhancement —
+// animations run by default if JS is off). prefers-reduced-motion freezes
+// every meter on a presentable still frame.
+
+type Kind =
+  | 'hero'
+  | 'oscilloscope'
+  | 'spectrum'
+  | 'chromagram'
+  | 'bpm'
+  | 'key'
+  | 'trackinfo';
+
+interface Props {
+  kind: Kind;
+  /** Number of spectrum bars (spectrum/hero). */
+  bars?: number;
+}
+
+const { kind, bars = 16 } = Astro.props;
+const barList = Array.from({ length: bars }, (_, i) => i);
+// 12 chromatic keys; light a musically plausible A-minor-ish subset.
+const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const litKeys = new Set(['A', 'C', 'E']);
+const isBlack = (n: string) => n.includes('#');
+---
+
+<div class={`iv iv--${kind}`} data-instrument data-playing aria-hidden="true">
+  {(kind === 'oscilloscope' || kind === 'hero') && (
+    <svg class="iv__osc" viewBox="0 0 240 80" preserveAspectRatio="none" role="presentation">
+      <line class="iv__axis" x1="0" y1="40" x2="240" y2="40" />
+      <path
+        class="iv__wave"
+        d="M0,40 C15,10 30,10 45,40 S75,70 90,40 S120,10 135,40 S165,70 180,40 S210,10 225,40 S255,70 270,40"
+        pathLength="100"
+      />
+    </svg>
+  )}
+
+  {(kind === 'spectrum' || kind === 'hero') && (
+    <div class="iv__spectrum">
+      {barList.map((i) => (
+        <span class="iv__bar" style={`--i:${i}; --n:${bars};`}></span>
+      ))}
+    </div>
+  )}
+
+  {(kind === 'chromagram' || kind === 'hero') && (
+    <div class="iv__chroma">
+      <div class="iv__keys">
+        {keys.map((n) => (
+          <span
+            class:list={['iv__key', { 'iv__key--black': isBlack(n), 'iv__key--lit': litKeys.has(n) }]}
+          ></span>
+        ))}
+      </div>
+      <div class="iv__noteflow"></div>
+    </div>
+  )}
+
+  {kind === 'bpm' && (
+    <div class="iv__bpm">
+      <span class="iv__bpm-dot"></span>
+      <span class="iv__bpm-num">128.0</span>
+      <span class="iv__bpm-unit">BPM</span>
+    </div>
+  )}
+
+  {kind === 'key' && (
+    <div class="iv__key-readout">
+      <svg class="iv__wheel" viewBox="0 0 64 64" role="presentation">
+        <circle class="iv__wheel-ring" cx="32" cy="32" r="26" />
+        <path class="iv__wheel-arc" d="M32 6 A26 26 0 0 1 54.5 19" />
+      </svg>
+      <span class="iv__key-camelot">8A</span>
+      <span class="iv__key-name">A minor</span>
+    </div>
+  )}
+
+  {kind === 'trackinfo' && (
+    <div class="iv__track">
+      <span class="iv__track-dot"></span>
+      <span class="iv__track-line">So U Kno — Overmono</span>
+      <span class="iv__track-meta">128.0 BPM · 8A</span>
+    </div>
+  )}
+</div>
+
+<style>
+  .iv {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    min-height: clamp(200px, 28vw, 340px);
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-meter);
+    /* instrument grid */
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0 23px, var(--grid) 23px 24px),
+      repeating-linear-gradient(90deg, transparent 0 23px, var(--grid) 23px 24px);
+    overflow: hidden;
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    justify-content: center;
+  }
+
+  /* hero packs three meters; give it more room */
+  .iv--hero { gap: var(--space-md); }
+
+  /* ===== Oscilloscope ===== */
+  .iv__osc { width: 100%; height: 40%; display: block; }
+  .iv--oscilloscope .iv__osc { height: 70%; }
+  .iv__axis { stroke: var(--grid-strong); stroke-width: 1; }
+  .iv__wave {
+    fill: none;
+    stroke: var(--osc-vivid);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+    filter: drop-shadow(var(--glow-osc));
+    stroke-dasharray: 8 4;
+    animation: iv-osc 2.4s linear infinite;
+  }
+  @keyframes iv-osc { to { stroke-dashoffset: -36; } }
+
+  /* ===== Spectrum ===== */
+  .iv__spectrum {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    width: 100%;
+    height: 45%;
+  }
+  .iv--spectrum .iv__spectrum { height: 80%; }
+  .iv__bar {
+    flex: 1;
+    /* magenta (low) → purple (high) across the row */
+    background: color-mix(in oklab, #ff2ea6, #7c5cff calc(var(--i) / var(--n) * 100%));
+    border-radius: 1px 1px 0 0;
+    height: 30%;
+    transform-origin: bottom;
+    animation: iv-bar 1.1s ease-in-out infinite alternate;
+    animation-delay: calc(var(--i) * -90ms);
+    box-shadow: 0 0 6px rgba(155, 107, 255, 0.3);
+  }
+  @keyframes iv-bar {
+    0% { height: 18%; }
+    100% { height: 88%; }
+  }
+
+  /* ===== Chromagram ===== */
+  .iv__chroma { width: 100%; }
+  .iv__keys {
+    display: flex;
+    gap: 2px;
+    height: 48px;
+    align-items: flex-end;
+  }
+  .iv__key {
+    flex: 1;
+    height: 100%;
+    background: #2a2a32;
+    border-radius: 0 0 2px 2px;
+  }
+  .iv__key--black { height: 62%; background: #15151a; }
+  .iv__key--lit {
+    background: var(--chroma);
+    box-shadow: 0 0 8px rgba(255, 149, 0, 0.5);
+    animation: iv-key 1.8s ease-in-out infinite;
+  }
+  @keyframes iv-key { 50% { opacity: 0.5; } }
+  .iv__noteflow {
+    margin-top: var(--space-2xs);
+    height: 10px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, var(--chroma), transparent);
+    background-size: 50% 100%;
+    opacity: 0.6;
+    animation: iv-flow 3s linear infinite;
+  }
+  @keyframes iv-flow { to { background-position: 200% 0; } }
+
+  /* ===== BPM ===== */
+  .iv__bpm {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-xs);
+    justify-content: center;
+  }
+  .iv__bpm-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--bpm-vivid);
+    box-shadow: var(--glow-data);
+    align-self: center;
+    animation: iv-pulse 0.469s ease-out infinite; /* ~128 BPM */
+  }
+  @keyframes iv-pulse {
+    0% { transform: scale(1); opacity: 1; }
+    60% { transform: scale(0.7); opacity: 0.6; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .iv__bpm-num {
+    font-family: var(--font-mono);
+    font-size: clamp(2.5rem, 1.5rem + 5vw, 4rem);
+    font-weight: 700;
+    color: var(--data);
+    text-shadow: var(--glow-data);
+  }
+  .iv__bpm-unit {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    letter-spacing: var(--track-label);
+    color: var(--muted);
+  }
+
+  /* ===== Key ===== */
+  .iv__key-readout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2xs);
+  }
+  .iv__wheel { width: 96px; height: 96px; }
+  .iv__wheel-ring { fill: none; stroke: var(--grid-strong); stroke-width: 4; }
+  .iv__wheel-arc {
+    fill: none;
+    stroke: var(--key-vivid);
+    stroke-width: 4;
+    stroke-linecap: round;
+    filter: drop-shadow(0 0 8px rgba(179, 136, 255, 0.5));
+  }
+  .iv__key-camelot {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xl);
+    font-weight: 700;
+    color: var(--key);
+  }
+  .iv__key-name {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--muted);
+  }
+
+  /* ===== Track Info ===== */
+  .iv__track {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+  }
+  .iv__track-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--data);
+    box-shadow: var(--glow-data);
+    animation: iv-blink 1.6s steps(2, start) infinite;
+  }
+  @keyframes iv-blink { 50% { opacity: 0.3; } }
+  .iv__track-line { color: var(--fg); font-size: var(--fs-base); }
+  .iv__track-meta { color: var(--data); font-size: var(--fs-sm); }
+
+  /* Pause when the page marks this instrument offscreen (JS enhancement). */
+  .iv:not([data-playing]) .iv__wave,
+  .iv:not([data-playing]) .iv__bar,
+  .iv:not([data-playing]) .iv__key--lit,
+  .iv:not([data-playing]) .iv__noteflow,
+  .iv:not([data-playing]) .iv__bpm-dot,
+  .iv:not([data-playing]) .iv__track-dot {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .iv__wave, .iv__bar, .iv__key--lit, .iv__noteflow,
+    .iv__bpm-dot, .iv__track-dot {
+      animation: none !important;
+    }
+    /* present a static, readable frame for spectrum (varied heights) */
+    .iv__bar { height: 55%; }
+    .iv__bar:nth-child(3n) { height: 80%; }
+    .iv__bar:nth-child(3n + 1) { height: 35%; }
+  }
+</style>

@@ -1,28 +1,318 @@
 ---
-// SPV-2 LP — English placeholder.
-// TODO(copywriter): hero copy + reverse list ("What SPV-2 does NOT do").
-// TODO(designer/uiux): hero loop, theme carousel, privacy section, specs.
+// SPV-2 LP — English page. Full 10-section build (S0 Header / S1 Hero /
+// S2 Demo / S3 Modules / S4 Themes / S5 Sites / S6 Privacy / S7 Principles /
+// S8 Releases / S9 Final CTA / S10 Footer). Copy from @ttsui/i18n; tokens +
+// shells from Base/components. Mirror of ja/index.astro (keep in sync).
+
+import Base from '../../layouts/Base.astro';
 import { t } from '@ttsui/i18n';
+import InstrumentVisual from '../../components/InstrumentVisual.astro';
+import LogoMosaic from '../../components/LogoMosaic.astro';
+import DemoVideo from '../../components/DemoVideo.astro';
+import ModuleBlock from '../../components/ModuleBlock.astro';
+import SiteGrid from '../../components/SiteGrid.astro';
+import releases from '../../data/releases.json' with { type: 'json' };
+
 const locale = 'en';
+const webStoreHref =
+  'https://chromewebstore.google.com/detail/spv-2-side-panel-visualiz/flkfiadmjmonooljmhhbapffoicdibdn';
+const videoId = 'GpZiK86H74M';
+
+const modules = [
+  { kind: 'oscilloscope', chips: ['Waveform', 'Lissajous (XY)'] },
+  { kind: 'spectrum', chips: ['32-band FFT', 'Peak hold'] },
+  { kind: 'chromagram', chips: ['Polyphonic', 'Note Flow'] },
+  { kind: 'bpm', chips: ['Spectral flux'] },
+  { kind: 'key', chips: ['Camelot'] },
+] as const;
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SPV-2 — Tipsy Tap Studio</title>
-    <meta name="description" content="SPV-2 — coming soon." />
-  </head>
-  <body>
-    <header>
-      <a href="https://tipsytapstudio.com/en/">&larr; tipsytapstudio.com</a>
-    </header>
-    <main>
-      <h1>{t('spv_hero_title', locale)}</h1>
-      <p>{t('spv_hero_subtitle', locale)}</p>
-      <p><small>SPV-2 — coming soon.</small></p>
-      <p><a href="/ja/">日本語</a></p>
-    </main>
-  </body>
-</html>
+<Base locale={locale} title="SPV-2 — Side Panel Visualizer" description={t('spv_hero_subtitle', locale)}>
+  {/* S1 Hero */}
+  <section class="hero section" aria-labelledby="hero-tagline">
+    <div class="hero__copy">
+      <p class="hero__wordmark">{t('spv_hero_title', locale)}</p>
+      <h1 id="hero-tagline" class="hero__tagline">{t('spv_hero_tagline', locale)}</h1>
+      <p class="hero__subtitle">{t('spv_hero_subtitle', locale)}</p>
+      <div class="hero__actions">
+        <a class="btn-cta" href={webStoreHref} target="_blank" rel="noopener noreferrer">{t('spv_hero_cta', locale)}</a>
+        <span class="hero__note">{t('spv_hero_cta_note', locale)}</span>
+      </div>
+      <p class="hero__aside">{t('spv_hero_aside', locale)}</p>
+    </div>
+    <div class="hero__visual">
+      <LogoMosaic />
+    </div>
+  </section>
+
+  {/* S2 Demo Video */}
+  <section class="section band-1" aria-labelledby="demo-heading">
+    <h2 id="demo-heading" class="section-heading">{t('spv_demo_heading', locale)}</h2>
+    <p class="section-lede">{t('spv_demo_lede', locale)}</p>
+    <DemoVideo videoId={videoId} playLabel={t('spv_demo_play', locale)} caption={t('spv_demo_caption', locale)} thumb="/demo-thumb.jpg" />
+  </section>
+
+  {/* S3 Five Modules */}
+  <section id="modules" class="section" aria-labelledby="modules-heading">
+    <p class="eyebrow">SPV-2</p>
+    <h2 id="modules-heading" class="section-heading">{t('spv_modules_heading', locale)}</h2>
+    <p class="section-lede">{t('spv_modules_lede', locale)}</p>
+    {modules.map((m, i) => (
+      <ModuleBlock
+        kind={m.kind}
+        index={i}
+        name={t(`spv_modules_${m.kind}_name`, locale)}
+        desc={t(`spv_modules_${m.kind}_desc`, locale)}
+        chips={[...m.chips]}
+      />
+    ))}
+    <div class="trackinfo">
+      <div class="trackinfo__copy">
+        <h3 class="trackinfo__name">{t('spv_modules_trackinfo_name', locale)}</h3>
+        <p class="module__desc">{t('spv_modules_trackinfo_desc', locale)}</p>
+      </div>
+      <InstrumentVisual kind="trackinfo" />
+    </div>
+  </section>
+
+  {/* S4 Themes */}
+  <section class="section band-1" aria-labelledby="themes-heading">
+    <h2 id="themes-heading" class="section-heading">{t('spv_themes_heading', locale)}</h2>
+    <p class="section-lede">{t('spv_themes_body', locale)}</p>
+    <p class="themes__strudel">{t('spv_themes_strudel', locale)}</p>
+  </section>
+
+  {/* S5 Supported Sites */}
+  <section id="sites" class="section" aria-labelledby="sites-heading">
+    <h2 id="sites-heading" class="section-heading">{t('spv_sites_heading', locale)}</h2>
+    <p class="section-lede">{t('spv_sites_lede', locale)}</p>
+    <SiteGrid locale={locale} />
+  </section>
+
+  {/* S6 Zero Interference / Privacy */}
+  <section id="privacy" class="section band-1" aria-labelledby="privacy-heading">
+    <h2 id="privacy-heading" class="section-heading">{t('spv_privacy_heading', locale)}</h2>
+    <p class="section-lede">{t('spv_privacy_lede', locale)}</p>
+    <ul class="privacy__points" role="list">
+      {[1, 2, 3].map((n) => (
+        <li class="privacy__point">
+          <h3 class="privacy__point-title">{t(`spv_privacy_point_${n}_title`, locale)}</h3>
+          <p class="privacy__point-desc">{t(`spv_privacy_point_${n}_desc`, locale)}</p>
+        </li>
+      ))}
+    </ul>
+    <p class="privacy__tech">{t('spv_privacy_tech_note', locale)}</p>
+  </section>
+
+  {/* S7 SP 3 Principles */}
+  <section class="section" aria-labelledby="principles-heading">
+    <h2 id="principles-heading" class="section-heading">{t('spv_principles_heading', locale)}</h2>
+    <ul class="principles" role="list">
+      {['zeroinjection', 'localbydefault', 'onepanel'].map((p) => (
+        <li class="principle">
+          <span class="principle__kw">{t(`spv_principles_${p}_kw`, locale)}</span>
+          <p class="principle__desc">{t(`spv_principles_${p}_desc`, locale)}</p>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  {/* S8 Release Notes */}
+  <section id="releases" class="section band-1" aria-labelledby="releases-heading">
+    <h2 id="releases-heading" class="section-heading">{t('spv_releases_heading', locale)}</h2>
+    <p class="section-lede">{t('spv_releases_lede', locale)}</p>
+    <ol class="releases" role="list">
+      {releases.map((r) => (
+        <li class="release">
+          <div class="release__head">
+            <span class="release__version">v{r.version}</span>
+            <time class="release__date" datetime={r.date}>{r.date}</time>
+          </div>
+          <p class="release__note">{t(r.noteKey, locale)}</p>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  {/* S9 Final CTA */}
+  <section class="section finalcta" aria-labelledby="finalcta-heading">
+    <h2 id="finalcta-heading" class="finalcta__heading">{t('spv_finalcta_heading', locale)}</h2>
+    <p class="finalcta__body">{t('spv_finalcta_body', locale)}</p>
+    <a class="btn-cta" href={webStoreHref} target="_blank" rel="noopener noreferrer">{t('spv_finalcta_button', locale)}</a>
+    <p class="finalcta__trust">{t('spv_finalcta_trust', locale)}</p>
+  </section>
+</Base>
+
+<style>
+  /* ===== Hero ===== */
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    align-items: center;
+    gap: var(--space-2xl);
+    padding-top: clamp(7rem, 5rem + 4vw, 10rem);
+  }
+  .hero__wordmark {
+    font-family: var(--font-mono);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--osc);
+    text-shadow: var(--glow-osc);
+    margin: 0 0 var(--space-sm);
+  }
+  .hero__tagline {
+    font-size: var(--fs-2xl);
+    line-height: 1.1;
+    margin: 0 0 var(--space-md);
+  }
+  .hero__subtitle {
+    color: var(--muted);
+    font-size: var(--fs-lg);
+    line-height: var(--lh-normal);
+    max-width: 38rem;
+    margin: 0 0 var(--space-lg);
+  }
+  .hero__actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+  }
+  .hero__note {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--muted);
+  }
+  .hero__aside {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--muted-2);
+    margin: 0;
+    max-width: 32rem;
+  }
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+  }
+
+  /* ===== Track Info (tail of S3) ===== */
+  .trackinfo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: var(--space-2xl);
+    margin-top: var(--space-xl);
+    padding-top: var(--space-xl);
+    border-top: 1px solid var(--border);
+  }
+  .trackinfo__name {
+    font-family: var(--font-mono);
+    font-size: var(--fs-lg);
+    color: var(--data);
+    margin: 0 0 var(--space-sm);
+  }
+  .module__desc { color: var(--muted); font-size: var(--fs-base); line-height: var(--lh-normal); margin: 0; max-width: var(--reading); }
+  @media (max-width: 767px) {
+    .trackinfo { grid-template-columns: 1fr; gap: var(--space-lg); }
+  }
+
+  /* ===== Themes ===== */
+  .themes__strudel {
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--chroma);
+    border-left: 2px solid var(--chroma);
+    padding-left: var(--space-sm);
+    max-width: var(--reading);
+  }
+
+  /* ===== Privacy ===== */
+  .privacy__points {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-lg);
+    list-style: none;
+    margin: 0 0 var(--space-xl);
+    padding: 0;
+  }
+  .privacy__point {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: var(--space-lg);
+  }
+  .privacy__point-title {
+    font-family: var(--font-mono);
+    font-size: var(--fs-base);
+    color: var(--data);
+    margin: 0 0 var(--space-2xs);
+  }
+  .privacy__point-desc { color: var(--muted); font-size: var(--fs-sm); line-height: var(--lh-normal); margin: 0; }
+  .privacy__tech {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--muted-2);
+    margin: 0;
+  }
+  @media (max-width: 767px) {
+    .privacy__points { grid-template-columns: 1fr; }
+  }
+
+  /* ===== Principles ===== */
+  .principles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-lg);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .principle {
+    border-top: 2px solid var(--osc);
+    padding-top: var(--space-md);
+  }
+  .principle:nth-child(2) { border-top-color: var(--bpm); }
+  .principle:nth-child(3) { border-top-color: var(--key); }
+  .principle__kw {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    color: var(--fg);
+    margin-bottom: var(--space-2xs);
+  }
+  .principle__desc { color: var(--muted); font-size: var(--fs-sm); line-height: var(--lh-normal); margin: 0; }
+  @media (max-width: 767px) {
+    .principles { grid-template-columns: 1fr; gap: var(--space-md); }
+  }
+
+  /* ===== Releases ===== */
+  .releases { list-style: none; margin: 0; padding: 0; max-width: var(--max-content); }
+  .release {
+    display: grid;
+    grid-template-columns: 10rem 1fr;
+    gap: var(--space-lg);
+    padding: var(--space-md) 0;
+    border-top: 1px solid var(--border);
+  }
+  .release:last-child { border-bottom: 1px solid var(--border); }
+  .release__head { display: flex; flex-direction: column; gap: var(--space-3xs); }
+  .release__version {
+    font-family: var(--font-mono);
+    font-size: var(--fs-base);
+    font-weight: 700;
+    color: var(--osc);
+  }
+  .release__date { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--muted-2); }
+  .release__note { color: var(--muted); font-size: var(--fs-sm); line-height: var(--lh-normal); margin: 0; }
+  @media (max-width: 639px) {
+    .release { grid-template-columns: 1fr; gap: var(--space-2xs); }
+  }
+
+  /* ===== Final CTA ===== */
+  .finalcta { text-align: center; }
+  .finalcta__heading { font-size: var(--fs-2xl); margin: 0 0 var(--space-md); }
+  .finalcta__body { color: var(--muted); font-size: var(--fs-lg); max-width: 40rem; margin: 0 auto var(--space-lg); }
+  .finalcta__trust { font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--muted); margin: var(--space-md) 0 0; }
+</style>

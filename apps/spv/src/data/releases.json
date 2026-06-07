@@ -1,0 +1,27 @@
+[
+  {
+    "version": "1.3.1",
+    "date": "2026-06-15",
+    "noteKey": "spv_release_v131_note"
+  },
+  {
+    "version": "1.3.0",
+    "date": "2026-06-01",
+    "noteKey": "spv_release_v130_note"
+  },
+  {
+    "version": "1.2.0",
+    "date": "2026-05-02",
+    "noteKey": "spv_release_v120_note"
+  },
+  {
+    "version": "1.1.0",
+    "date": "2026-04-14",
+    "noteKey": "spv_release_v110_note"
+  },
+  {
+    "version": "1.0.0",
+    "date": "2026-04-07",
+    "noteKey": "spv_release_v100_note"
+  }
+]

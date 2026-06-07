@@ -1,0 +1,101 @@
+---
+// ModuleBlock — one of the five meters in S3. Copy on one side, instrument
+// visual on the other; alternates left/right by `index` (zig-zag, Superhuman
+// style). On mobile it stacks visual-first (show the meter, then explain).
+
+import InstrumentVisual from './InstrumentVisual.astro';
+
+type Kind = 'oscilloscope' | 'spectrum' | 'chromagram' | 'bpm' | 'key';
+
+interface Props {
+  kind: Kind;
+  name: string;
+  desc: string;
+  index: number;
+  chips?: string[];
+}
+
+const { kind, name, desc, index, chips = [] } = Astro.props;
+const reversed = index % 2 === 1;
+---
+
+<article class:list={['module', { 'module--reversed': reversed }]}>
+  <div class="module__copy">
+    <h3 class:list={['module__name', `module__name--${kind}`]}>{name}</h3>
+    <p class="module__desc">{desc}</p>
+    {chips.length > 0 && (
+      <ul class="module__chips" role="list">
+        {chips.map((c) => <li class="module__chip">{c}</li>)}
+      </ul>
+    )}
+  </div>
+  <div class="module__visual">
+    <InstrumentVisual kind={kind} />
+  </div>
+</article>
+
+<style>
+  .module {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: var(--space-2xl);
+    max-width: var(--max-wide);
+    margin: 0 auto;
+    padding-block: var(--space-xl);
+  }
+
+  .module__copy { min-width: 0; }
+
+  .module__name {
+    font-family: var(--font-mono);
+    font-size: var(--fs-lg);
+    letter-spacing: 0.02em;
+    margin: 0 0 var(--space-sm);
+  }
+  /* per-module accent on the name */
+  .module__name--oscilloscope { color: var(--osc); }
+  .module__name--spectrum { color: var(--spec-hi); }
+  .module__name--chromagram { color: var(--chroma); }
+  .module__name--bpm { color: var(--bpm); }
+  .module__name--key { color: var(--key); }
+
+  .module__desc {
+    color: var(--muted);
+    font-size: var(--fs-base);
+    line-height: var(--lh-normal);
+    margin: 0;
+    max-width: var(--reading);
+  }
+
+  .module__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    list-style: none;
+    margin: var(--space-md) 0 0;
+    padding: 0;
+  }
+  .module__chip {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-chip);
+    padding: 2px var(--space-2xs);
+  }
+
+  .module--reversed .module__copy { order: 2; }
+  .module--reversed .module__visual { order: 1; }
+
+  @media (max-width: 767px) {
+    .module {
+      grid-template-columns: 1fr;
+      gap: var(--space-lg);
+      padding-block: var(--space-lg);
+    }
+    /* always visual-first on mobile, regardless of zig-zag order */
+    .module__visual { order: 1; }
+    .module__copy { order: 2; }
+  }
+</style>

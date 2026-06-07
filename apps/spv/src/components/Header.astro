@@ -1,0 +1,181 @@
+---
+// SPV-2 LP header — fixed, transparent over the dark console.
+//
+// Left: SPV-2 wordmark (mono, cyan) with a small "← Tipsy Tap Studio" back-link
+// above it, expressing that SPV-2 is one work under the parent studio
+// (child large, parent link small). Right: in-page anchor nav + locale switch +
+// a small Web Store CTA.
+//
+// JS-zero. Anchor nav is plain links; no scroll-state toggling.
+
+import { t, type Locale } from '@ttsui/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const backHref = `https://tipsytapstudio.com/${locale}/`;
+const webStoreHref =
+  'https://chromewebstore.google.com/detail/spv-2-side-panel-visualiz/flkfiadmjmonooljmhhbapffoicdibdn';
+
+const nav = [
+  { id: 'modules', label: t('spv_nav_modules', locale) },
+  { id: 'sites', label: t('spv_nav_sites', locale) },
+  { id: 'privacy', label: t('spv_nav_privacy', locale) },
+  { id: 'releases', label: t('spv_nav_releases', locale) },
+];
+
+const navLabel = 'In-page navigation';
+---
+
+<header class="spv-nav">
+  <div class="spv-nav__brand">
+    <a class="spv-nav__back" href={backHref} rel="home">&larr; Tipsy Tap Studio</a>
+    <a class="spv-nav__wordmark" href={`/${locale}/`}>SPV-2</a>
+  </div>
+
+  <nav class="spv-nav__links" aria-label={navLabel}>
+    <ul role="list">
+      {nav.map((n) => (
+        <li><a href={`#${n.id}`} data-section-link={n.id}>{n.label}</a></li>
+      ))}
+    </ul>
+  </nav>
+
+  <div class="spv-nav__actions">
+    <a class="spv-nav__cta" href={webStoreHref} target="_blank" rel="noopener noreferrer">
+      {t('spv_nav_cta', locale)}
+    </a>
+  </div>
+</header>
+
+<style>
+  .spv-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+    row-gap: var(--space-2xs);
+    padding: var(--space-sm) clamp(1rem, 0.5rem + 2vw, 2.5rem);
+    max-width: var(--max-wide);
+    margin: 0 auto;
+    /* translucent console bar so content scrolls under it legibly */
+    background: linear-gradient(to bottom, rgba(10, 10, 10, 0.92), rgba(10, 10, 10, 0.6));
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .spv-nav__brand {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+
+  .spv-nav__back {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--muted-2);
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+  .spv-nav__back:hover { color: var(--muted); }
+
+  .spv-nav__wordmark {
+    font-family: var(--font-mono);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--osc);
+    text-decoration: none;
+    text-shadow: var(--glow-osc);
+  }
+
+  .spv-nav__links ul {
+    display: flex;
+    gap: var(--space-md);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .spv-nav__links a {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--track-label);
+    color: var(--muted);
+    text-decoration: none;
+    padding: var(--space-3xs) 0;
+    border-bottom: 2px solid transparent;
+    transition: color 120ms ease, border-color 120ms ease;
+  }
+  .spv-nav__links a:hover,
+  .spv-nav__links a:focus-visible { color: var(--fg); }
+  .spv-nav__links a[aria-current='location'] {
+    color: var(--osc);
+    border-bottom-color: var(--osc);
+  }
+
+  .spv-nav__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .spv-nav__cta {
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--cta-fg);
+    background: var(--cta-bg);
+    text-decoration: none;
+    padding: var(--space-2xs) var(--space-md);
+    border-radius: var(--radius-chip);
+    transition: background-color 120ms ease;
+  }
+  .spv-nav__cta:hover { background: var(--cta-bg-hover); }
+
+  /* Mobile: drop the in-page anchors (Footer + sections still reachable),
+     keep brand + locale + CTA. */
+  @media (max-width: 767px) {
+    .spv-nav__links { display: none; }
+  }
+</style>
+
+<script>
+  // Section IO → aria-current on the matching anchor. No-op if ids absent.
+  const links = document.querySelectorAll<HTMLAnchorElement>(
+    '.spv-nav__links [data-section-link]'
+  );
+  const ids = Array.from(links)
+    .map((a) => a.dataset.sectionLink)
+    .filter((v): v is string => Boolean(v));
+  const sections = ids
+    .map((id) => document.getElementById(id))
+    .filter((el): el is HTMLElement => Boolean(el));
+
+  if (sections.length) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return;
+          links.forEach((a) => a.removeAttribute('aria-current'));
+          document
+            .querySelector(`[data-section-link="${e.target.id}"]`)
+            ?.setAttribute('aria-current', 'location');
+        });
+      },
+      { rootMargin: '-40% 0px -55% 0px', threshold: 0 }
+    );
+    sections.forEach((s) => io.observe(s));
+  }
+</script>

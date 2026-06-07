@@ -1,0 +1,129 @@
+---
+// DemoVideo — YouTube facade. Shows a self-hosted thumbnail + play button; the
+// real <iframe> is injected only on click. Zero network requests until the
+// visitor opts in (the thumbnail is served from our own origin), consistent
+// with SPV-2's "zero network" story and good for LCP. Embed uses
+// youtube-nocookie.
+//
+// Note: the injected iframe is sized with INLINE styles, not the scoped
+// <style> block — Astro scopes CSS to build-time elements via a data-astro-cid
+// attribute, which runtime-created elements never receive. Inline keeps it
+// bulletproof.
+
+interface Props {
+  videoId: string;
+  playLabel: string;
+  caption: string;
+  thumb: string;
+}
+
+const { videoId, playLabel, caption, thumb } = Astro.props;
+---
+
+<div class="demo" data-video-id={videoId}>
+  <img class="demo__thumb" src={thumb} alt="" loading="lazy" decoding="async" width="480" height="360" />
+  <button class="demo__btn" type="button" aria-label={playLabel}>
+    <span class="demo__bezel">
+      <span class="demo__triangle"></span>
+    </span>
+    <span class="demo__caption">{caption}</span>
+  </button>
+</div>
+
+<style>
+  .demo {
+    position: relative;
+    width: 100%;
+    max-width: var(--max-content);
+    margin: 0 auto;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-meter);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    background: #000;
+  }
+
+  .demo__thumb {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* gentle dim so the play button + caption stay legible over the hi-res
+       product screenshot */
+    filter: brightness(0.82);
+  }
+
+  .demo__btn {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    color: var(--fg);
+  }
+
+  .demo__bezel {
+    width: clamp(64px, 10vw, 88px);
+    height: clamp(64px, 10vw, 88px);
+    border-radius: 50%;
+    background: rgba(10, 10, 10, 0.7);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--glow-osc);
+    transition: transform 140ms ease;
+  }
+  .demo__btn:hover .demo__bezel,
+  .demo__btn:focus-visible .demo__bezel {
+    transform: scale(1.06);
+  }
+
+  .demo__triangle {
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 12px 0 12px 20px;
+    border-color: transparent transparent transparent var(--peak);
+    margin-left: 4px;
+  }
+
+  .demo__caption {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--track-label);
+    color: var(--fg);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  }
+</style>
+
+<script>
+  // Swap the facade for the real iframe on first click. Inline sizing so the
+  // runtime-created element fills the frame regardless of CSS scoping.
+  document.querySelectorAll<HTMLElement>('.demo').forEach((demo) => {
+    const btn = demo.querySelector<HTMLButtonElement>('.demo__btn');
+    const thumb = demo.querySelector<HTMLElement>('.demo__thumb');
+    const id = demo.dataset.videoId;
+    if (!btn || !id) return;
+    btn.addEventListener('click', () => {
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+      iframe.title = 'SPV-2 demo';
+      iframe.allow =
+        'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      iframe.allowFullscreen = true;
+      iframe.style.cssText =
+        'position:absolute;inset:0;width:100%;height:100%;border:0;';
+      thumb?.remove();
+      btn.remove();
+      demo.appendChild(iframe);
+    });
+  });
+</script>

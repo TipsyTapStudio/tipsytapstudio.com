@@ -1,0 +1,145 @@
+---
+// SiteGrid — supported sites as text + neutral group icons (no brand logos /
+// brand colors, to avoid trademark issues). Each group shares one neutral
+// line-icon motif (music note, play, waveform, code, globe) so no per-service
+// logo is implied. Data is static here (mirrors the extension's
+// host_permissions); copy for group labels + the "all websites" line + DRM
+// note comes from i18n.
+
+import { t, type Locale } from '@ttsui/i18n';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+
+// icon: one of note | play | wave | code
+const groups = [
+  {
+    key: 'streaming',
+    icon: 'note',
+    label: t('spv_sites_group_streaming', locale),
+    sites: ['Spotify', 'Apple Music', 'Amazon Music', 'Tidal', 'YouTube Music'],
+  },
+  {
+    key: 'video',
+    icon: 'play',
+    label: t('spv_sites_group_video', locale),
+    sites: ['YouTube'],
+  },
+  {
+    key: 'creator',
+    icon: 'wave',
+    label: t('spv_sites_group_creator', locale),
+    sites: ['SoundCloud', 'Bandcamp', 'Beatport', 'Mixcloud'],
+  },
+  {
+    key: 'livecoding',
+    icon: 'code',
+    label: t('spv_sites_group_livecoding', locale),
+    sites: ['Strudel'],
+  },
+];
+---
+
+<div class="sites">
+  {groups.map((g) => (
+    <section class="sites__group" aria-labelledby={`sites-${g.key}`}>
+      <h3 id={`sites-${g.key}`} class="sites__group-label">
+        <svg class="sites__gicon" viewBox="0 0 24 24" aria-hidden="true">
+          {g.icon === 'note' && (
+            <path d="M9 18V5l10-2v13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          )}
+          {g.icon === 'note' && (
+            <circle cx="6" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="1.5" />
+          )}
+          {g.icon === 'note' && (
+            <circle cx="16" cy="16" r="3" fill="none" stroke="currentColor" stroke-width="1.5" />
+          )}
+          {g.icon === 'play' && (
+            <path d="M7 5l12 7-12 7z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+          )}
+          {g.icon === 'wave' && (
+            <path d="M3 12h2l2-6 3 14 3-10 2 4h6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          )}
+          {g.icon === 'code' && (
+            <path d="M8 6l-5 6 5 6M16 6l5 6-5 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+          )}
+        </svg>
+        {g.label}
+      </h3>
+      <ul class="sites__list" role="list">
+        {g.sites.map((s) => <li class="sites__chip">{s}</li>)}
+      </ul>
+    </section>
+  ))}
+
+  <p class="sites__all">{t('spv_sites_all', locale)}</p>
+  <p class="sites__drm">{t('spv_sites_drm_note', locale)}</p>
+</div>
+
+<style>
+  .sites {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-xl);
+    max-width: var(--max-content);
+  }
+
+  .sites__group-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    text-transform: uppercase;
+    letter-spacing: var(--track-label);
+    color: var(--muted);
+    margin: 0 0 var(--space-sm);
+  }
+  .sites__gicon { width: 18px; height: 18px; color: var(--osc); }
+
+  .sites__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .sites__chip {
+    font-family: var(--font-display);
+    font-size: var(--fs-sm);
+    color: var(--fg);
+    background: var(--bg-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: var(--space-2xs) var(--space-sm);
+  }
+
+  /* "+ All websites" spans full width, set apart as a wide bar. */
+  .sites__all {
+    grid-column: 1 / -1;
+    font-family: var(--font-mono);
+    font-size: var(--fs-base);
+    color: var(--data);
+    background: var(--bg-2);
+    border: 1px dashed var(--cta-ghost-border);
+    border-radius: var(--radius-card);
+    padding: var(--space-sm) var(--space-md);
+    margin: 0;
+  }
+
+  .sites__drm {
+    grid-column: 1 / -1;
+    color: var(--muted-2);
+    font-size: var(--fs-xs);
+    line-height: var(--lh-normal);
+    margin: 0;
+    max-width: var(--reading);
+  }
+
+  @media (max-width: 639px) {
+    .sites { grid-template-columns: 1fr; gap: var(--space-lg); }
+  }
+</style>

@@ -1,0 +1,85 @@
+---
+// SPV-2 LP footer — attribution + exits. Closes the parent/child story with
+// the studio tagline and links back to the hub, GitHub, and the Web Store.
+
+import { t, type Locale } from '@ttsui/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+
+const studioHref = `https://tipsytapstudio.com/${locale}/`;
+const githubHref = 'https://github.com/TipsyTapStudio/spv-2';
+const webStoreHref =
+  'https://chromewebstore.google.com/detail/spv-2-side-panel-visualiz/flkfiadmjmonooljmhhbapffoicdibdn';
+---
+
+<footer class="spv-footer">
+  <div class="spv-footer__inner">
+    <div class="spv-footer__brand">
+      <p class="spv-footer__wordmark">SPV-2</p>
+      <p class="spv-footer__tagline">{t('spv_footer_tagline', locale)}</p>
+    </div>
+
+    <nav class="spv-footer__links" aria-label="Footer">
+      <a href={studioHref} rel="home">Tipsy Tap Studio</a>
+      <a href={githubHref} target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a href={webStoreHref} target="_blank" rel="noopener noreferrer">Chrome Web Store</a>
+    </nav>
+  </div>
+</footer>
+
+<style>
+  .spv-footer {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+    background: var(--bg-1);
+    padding: var(--space-2xl) clamp(1.25rem, 0.5rem + 3vw, 4rem);
+  }
+
+  .spv-footer__inner {
+    max-width: var(--max-wide);
+    margin: 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-lg);
+  }
+
+  .spv-footer__wordmark {
+    font-family: var(--font-mono);
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--osc);
+    margin: 0 0 var(--space-2xs);
+  }
+
+  .spv-footer__tagline {
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    max-width: 28rem;
+    margin: 0;
+  }
+
+  .spv-footer__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
+
+  .spv-footer__links a {
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--track-label);
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+  .spv-footer__links a:hover,
+  .spv-footer__links a:focus-visible { color: var(--fg); }
+</style>

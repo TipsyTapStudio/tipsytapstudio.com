@@ -10,6 +10,8 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@fontsource-variable/jetbrains-mono": "^5.2.8",
+    "@fontsource-variable/space-grotesk": "^5.2.10",
     "@ttsui/i18n": "*",
     "@ttsui/tokens": "*",
     "@ttsui/ui": "*",
