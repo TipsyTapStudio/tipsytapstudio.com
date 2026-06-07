@@ -38,7 +38,6 @@ const modules = [
         <a class="btn-cta" href={webStoreHref} target="_blank" rel="noopener noreferrer">{t('spv_hero_cta', locale)}</a>
         <span class="hero__note">{t('spv_hero_cta_note', locale)}</span>
       </div>
-      <p class="hero__aside">{t('spv_hero_aside', locale)}</p>
     </div>
     <div class="hero__visual">
       <LogoMosaic />
@@ -184,13 +183,6 @@ const modules = [
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
     color: var(--muted);
-  }
-  .hero__aside {
-    font-family: var(--font-mono);
-    font-size: var(--fs-sm);
-    color: var(--muted-2);
-    margin: 0;
-    max-width: 32rem;
   }
   @media (max-width: 900px) {
     .hero { grid-template-columns: 1fr; }
