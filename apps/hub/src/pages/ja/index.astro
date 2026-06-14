@@ -14,6 +14,8 @@ import worksRaw from '../../data/works.json' with { type: 'json' };
 const locale = 'ja';
 
 const title = t('hub_hero_title', locale);
+// 検索結果用 <title> はタグライン付きの専用キー。H1/aria は title(=hub_hero_title)のまま。
+const metaTitle = t('hub_meta_title', locale);
 // hub_hero_subtitle / hub_hero_substatement は Hero マークアップから外したが、
 // meta description で substatement を使うため frontmatter では引き続き取得する。
 const substatement = t('hub_hero_substatement', locale);
@@ -22,7 +24,7 @@ const substatement = t('hub_hero_substatement', locale);
 const works = groupWorksByCategory(worksRaw as Work[]);
 ---
 
-<Base locale={locale} title={title} description={substatement}>
+<Base locale={locale} title={metaTitle} description={substatement}>
   <section class="hero" aria-labelledby="hero-title">
     {/* Font Set C — H1 縦 3 段詰み (英字統一)。
         ja でもブランド名 "Tipsy Tap Studio" は英字のまま縦 3 段で見せる。

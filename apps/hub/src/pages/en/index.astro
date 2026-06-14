@@ -10,7 +10,9 @@ import worksRaw from '../../data/works.json' with { type: 'json' };
 
 const locale = 'en';
 
-const title = t('hub_hero_title', locale);
+// 検索結果用 <title> はタグライン付きの専用キー。
+// H1 はマークアップ内の静的 span("Tipsy / Tap / Studio")なので hub_hero_title の参照は不要。
+const metaTitle = t('hub_meta_title', locale);
 // hub_hero_substatement は meta description で使用継続。
 const substatement = t('hub_hero_substatement', locale);
 
@@ -18,7 +20,7 @@ const substatement = t('hub_hero_substatement', locale);
 const works = groupWorksByCategory(worksRaw as Work[]);
 ---
 
-<Base locale={locale} title={title} description={substatement}>
+<Base locale={locale} title={metaTitle} description={substatement}>
   <section class="hero" aria-labelledby="hero-title">
     <h1 id="hero-title" class="hero__title hero__title--vertical">
       <span class="hero__word">Tipsy</span>
