@@ -478,3 +478,35 @@ SVP-2 ロゴ（icon.svg = **128×128 の 280 タイル角丸モザイク**、テ
 ### 次やること（1 行）
 
 SPV-2 Five meters の計器 SVG 作り込み（プロダクト準拠、静止画優先）→ themes 着せ替えデモ。
+
+## 2026-06-14: GSC「インデックス未登録3件」の確認と判断（コード変更なし・運用ログ）
+
+### 概要
+
+Search Console（ドメインプロパティ）でインデックス情報が上がり始め、「未登録3件」通知が届いた。3件を1件ずつコードと本番挙動で検証し、**いずれも実ページの登録失敗ではなく無害**と確認 → ユーザー判断で**放置で確定**（コード・設定とも無変更）。実ページ7件（hub の ja/en/lab + spv）は正常にインデックス済み。
+
+> 前提: SEO 技術基盤第一弾（`ec69f0b`、sitemap-index.xml / canonical / hreflang）を hub/spv に実装し GSC 送信済み。その後のクロール反映でこの3件が「未登録」として可視化された。
+
+### 内訳と判定
+
+| 種別 | URL | 原因 | 判定 |
+|---|---|---|---|
+| リダイレクト | `http://tipsytapstudio.com/` | http→https（CF Always Use HTTPS）→ `/ja/` | 意図通り・対応不要 |
+| リダイレクト | `https://tipsytapstudio.com/` | `/ → /ja/` 301（`apps/hub/public/_redirects`） | 意図通り・対応不要 |
+| 404 | `https://tipsytapstudio.com/cdn-cgi/l/email-protection` | footer の `mailto:`（`apps/hub/src/components/Footer.astro:23`）を Cloudflare Email Address Obfuscation が自動で `/cdn-cgi/l/email-protection#<hash>` に書換 → Googlebot がその CF 内部 URL をクロールして 404 | SEO 無害・放置 |
+
+- **リダイレクト2件**: Google が「転送元は index せず転送先（`/ja/`）を index する」のは正しい挙動。`/ja/` は登録済み7件に含まれる。エラーではなく情報通知。
+- **404 1件**: ライブを Googlebot UA で curl し、footer の `mailto:tipsytapstudio@gmail.com` が `/cdn-cgi/l/email-protection#e89c81...` に書き換わっていることを実機確認。`/cdn-cgi/` を Google が index しないのは正常で、SEO への実害なし。
+
+### 判断と未対応の割り切り
+
+- **未対応の割り切り**: Obfuscation が ON のため、**JS 無効のユーザーが footer の「Contact」を押すと `/cdn-cgi/l/email-protection` で 404**（Googlebot が踏んだのと同じ経路）。JS-zero を是とする hub の方針とは噛み合わないが、今回は許容として保留。
+- **消したくなった時の最小手**: Cloudflare ダッシュボード `Scrape Shield → Email Address Obfuscation` を **OFF**。これで footer が素の `mailto:` のまま配信され、no-JS でも Contact が機能 ＋ GSC の 404 も消える。トレードオフはメールの平文化（スクレイピング微増）だが、`tipsytapstudio@gmail.com` は Phase 0 で「直掲載で確定」済みのため実害小。コード変更は不要、CF 操作＝要ユーザー確認。
+- **GSC の「修正を検証」は押さなくてよい**（リダイレクト/CF 内部 URL は仕様通り無視される行のため）。
+
+### 学び
+
+- **未登録 ≠ エラー**。GSC の「ページにリダイレクトがあります」「見つかりませんでした(404)」は、転送設計や CF の自動機能による正常な副産物のことが多い。3件すべて実ページの登録失敗ではなかった。
+- **`/cdn-cgi/l/email-protection` 404 の定番原因**は Cloudflare Email Address Obfuscation。本リポのように `mailto:` を HTML に置くと自動で書き換わる。SEO 無害だが no-JS でリンクが切れる副作用があるので、JS-zero 方針との兼ね合いは認識しておく。
+
+> 備考: 本エントリ時点で devlog は `ec69f0b`（SEO 第一弾）・SPV-2 計器 SVG（`d689c75`）・Spectrum 修正（`b5cc455`）・計測+CI 議論（2026-06-08、`.github/workflows/ci.yml` は未コミット）の各セッションが未記載。詳細はメモリ（`~/.claude/.../memory/MEMORY.md`）にあり、必要時に遡って追記する。
