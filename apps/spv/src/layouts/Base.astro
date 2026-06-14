@@ -42,6 +42,47 @@ const siteDescription =
 // en 単一なので hreflang は不要。現在パスを Astro.site で絶対 URL 化する
 // (Astro 標準の末尾スラッシュ処理に従う)。
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+
+// --- SEO: JSON-LD 構造化データ (SoftwareApplication) ---
+// en 単一なので spv Base に 1 ノードのみ。事実ベース:
+// - name は LP/拡張の正式表記 "SPV-2 — Side Panel Visualizer"(siteTitle と一致)。
+// - applicationCategory=MultimediaApplication(音声を可視化する計器=マルチメディア用途)。
+// - operatingSystem=Chrome(Chrome 拡張という事実に即す)。
+// - offers は無料(MIT)という事実: price 0 / USD。
+// - softwareVersion はリポの releases.json 先頭(最新)= 1.3.1。
+// - installUrl/downloadUrl は本物の Chrome Web Store 掲載 URL(CTA と同一)。
+// - author/publisher は hub の Organization(tipsytapstudio.com)を参照。
+// aggregateRating 類は付けない(レビュー数不足=捏造リスク回避)。
+const chromeWebStoreURL =
+  'https://chromewebstore.google.com/detail/spv-2-side-panel-visualiz/flkfiadmjmonooljmhhbapffoicdibdn';
+const hubOrigin = 'https://tipsytapstudio.com';
+const softwareApplicationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'SPV-2 — Side Panel Visualizer',
+  description: siteDescription,
+  url: new URL('/', Astro.site).href,
+  applicationCategory: 'MultimediaApplication',
+  operatingSystem: 'Chrome',
+  softwareVersion: '1.3.1',
+  installUrl: chromeWebStoreURL,
+  downloadUrl: chromeWebStoreURL,
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+  author: {
+    '@type': 'Organization',
+    name: 'Tipsy Tap Studio',
+    url: hubOrigin,
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Tipsy Tap Studio',
+    url: hubOrigin,
+  },
+};
 ---
 
 <!doctype html>
@@ -54,6 +95,10 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <meta name="description" content={siteDescription} />
     {/* SEO — canonical(en 単一のため self-referential のみ)。 */}
     <link rel="canonical" href={canonicalURL.href} />
+    {/* SEO — 構造化データ (SoftwareApplication)。
+        type=application/ld+json は実行されないため JS-zero 原則と矛盾しない。
+        set:html には JSON.stringify の結果を渡す(生 JSON は直書きしない)。 */}
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(softwareApplicationSchema)} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png" />
     <link rel="apple-touch-icon" sizes="128x128" href="/icon-128.png" />

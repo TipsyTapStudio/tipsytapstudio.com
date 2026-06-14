@@ -55,6 +55,36 @@ const enURL = new URL(localeSwapPath('en'), Astro.site);
 // x-default は defaultLocale(ja)版を指す。
 const xDefaultURL = jaURL;
 
+// --- SEO: JSON-LD 構造化データ (Organization + WebSite) ---
+// 小規模サイトのため Base 経由で全 hub ページ(index + lab)に sitewide 出力する。
+// (ページ固有の SoftwareApplication 等は持たないので 1 種類でよく、ページ間で矛盾しない)
+// 事実ベースのみ: sameAs は実在・稼働中のプロフィールのみ(GitHub org + YouTube)。
+// aggregateRating 類は付けない(レビュー数不足=捏造リスク回避)。
+const orgId = new URL('#organization', Astro.site).href;
+const websiteId = new URL('#website', Astro.site).href;
+const organizationSchema = {
+  '@type': 'Organization',
+  '@id': orgId,
+  name: 'Tipsy Tap Studio',
+  url: new URL('/', Astro.site).href,
+  logo: new URL('/favicon.svg', Astro.site).href,
+  description: siteDescription,
+  sameAs: ['https://github.com/TipsyTapStudio', 'https://www.youtube.com/@TipsyTapStudio'],
+};
+const websiteSchema = {
+  '@type': 'WebSite',
+  '@id': websiteId,
+  name: 'Tipsy Tap Studio',
+  url: new URL('/', Astro.site).href,
+  inLanguage: locale,
+  publisher: { '@id': orgId },
+};
+// 両ノードを 1 つの @graph にまとめて単一 <script> で出力(参照を @id で解決)。
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [organizationSchema, websiteSchema],
+};
+
 // --- Brew background enable/disable ---
 // Hub pages get the sticky Brew background; /lab/ pages already host their
 // own Lab #002 BrewCanvas inside an ExperimentFrame and must NOT stack a
@@ -80,6 +110,10 @@ const enableHeader = enableBrewBg;
     <link rel="alternate" hreflang="ja" href={jaURL.href} />
     <link rel="alternate" hreflang="en" href={enURL.href} />
     <link rel="alternate" hreflang="x-default" href={xDefaultURL.href} />
+    {/* SEO — 構造化データ (Organization + WebSite)。
+        type=application/ld+json は実行されないため JS-zero 原則と矛盾しない。
+        set:html には JSON.stringify の結果を渡す(生 JSON は直書きしない)。 */}
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     {/* Fraunces variable (+ Noto Serif JP) is bundled via @fontsource (imported in frontmatter).
         No external font requests — privacy-friendly and zero third-party DNS.
