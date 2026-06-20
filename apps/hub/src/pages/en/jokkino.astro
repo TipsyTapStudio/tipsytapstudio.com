@@ -38,28 +38,29 @@ const col = {
   mono: t('jokkino_ramp_col_mono', locale),
 };
 
-// Application specimens — PROVISIONAL placeholders (ruling F). Final artwork is
-// supplied by the jokkino_emoji toolchain in a later handoff; publication does
-// not wait on it. A generic, face-less mug glyph demonstrates the color spec
-// applied to a form (base + flat shadow step, white foam, near-black outline)
-// without standing in as final Jokkino character art. The single-color variant
-// uses the mono-derived grayscale (Pale Gold 40% → 60% L, Deep Gold 60% → 40% L).
-const specimens = [
-  {
-    caption: t('jokkino_app_caption_color', locale),
-    body: '#F5CA4F',
-    shadow: '#E4A93C',
-    foam: '#FFFFFF',
-    line: beer.line,
-  },
-  {
-    caption: t('jokkino_app_caption_mono', locale),
-    body: 'hsl(0, 0%, 60%)',
-    shadow: 'hsl(0, 0%, 40%)',
-    foam: '#FFFFFF',
-    line: beer.lineFallback,
-  },
+// §2 Application — the full-color specimen is the REAL production emoji
+// (public/jokkino/jokkino-kimochi-001.svg, the きもち set's "001"). A dedicated
+// single-color emoji asset does not exist yet, and §1.4 forbids auto-graying the
+// color art — so the single-color specimen is a schematic mug CONSTRUCTED from
+// the mono ladder (not an auto-gray): Pale Gold (mono 40) → 60% L body, Deep Gold
+// (mono 60) → 40% L shadow, outline at 100% = black, foam = 0% knock-out (white).
+// Deriving from `beer.ramp` keeps the schematic in step with the published mono %.
+const mono = {
+  body: `hsl(0, 0%, ${100 - beer.ramp[2].mono}%)`,
+  shadow: `hsl(0, 0%, ${100 - beer.ramp[3].mono}%)`,
+  foam: beer.foam[0].hex,
+  line: beer.lineFallback,
+};
+
+// Single-color band = the ramp's mono ladder PLUS an explicit 0% knock-out (white)
+// endpoint at the top — the lightest value is stated, not implied (司令塔 request).
+const monoSteps = [
+  { name: 'White / knock-out', mono: 0 },
+  ...beer.ramp.map((s) => ({ name: s.name, mono: s.mono })),
 ];
+
+// Outline value set = the ramp's Black step (line === ramp Black, same value).
+const outline = beer.ramp[6];
 
 // Revision history rows — data (not i18n), per PLAN §5.
 const revisions = [
@@ -113,9 +114,9 @@ const revisions = [
               {beer.ramp.map((s) => (
                 <tr>
                   <td class="cell-swatch">
-                    <span class="swatch swatch--ramp" style={`background:${s.hex}`} aria-hidden="true"></span>
+                    <span class="swatch swatch--cell" style={`background:${s.hex}`} aria-hidden="true"></span>
                   </td>
-                  <th scope="row" class="cell-name" data-label={col.name}>{s.name}</th>
+                  <th scope="row" class="cell-name">{s.name}</th>
                   <td class="cell-num" data-label={col.hex}>{s.hex}</td>
                   <td class="cell-num" data-label={col.rgb}>{s.rgb.join(', ')}</td>
                   <td class="cell-num" data-label={col.cmyk}>{s.cmyk.join(', ')}</td>
@@ -134,14 +135,30 @@ const revisions = [
         <p class="doc__intro">{t('jokkino_foam_intro', locale)}</p>
 
         <div class="spec-panel">
-          <ul class="foam-strip" role="list">
-            {beer.foam.map((hex) => (
-              <li class="foam-item">
-                <span class="swatch swatch--foam" style={`background:${hex}`} aria-hidden="true"></span>
-                <span class="foam-hex">{hex}</span>
-              </li>
-            ))}
-          </ul>
+          <table class="spec-table foam-table">
+            <thead>
+              <tr>
+                <th scope="col"><span class="vh">Swatch</span></th>
+                <th scope="col">{t('jokkino_foam_col_tone', locale)}</th>
+                <th scope="col">{col.hex}</th>
+                <th scope="col">{col.rgb}</th>
+                <th scope="col">{col.cmyk}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {beer.foam.map((f, i) => (
+                <tr>
+                  <td class="cell-swatch">
+                    <span class="swatch swatch--cell" style={`background:${f.hex}`} aria-hidden="true"></span>
+                  </td>
+                  <th scope="row" class="cell-tone" data-label={t('jokkino_foam_col_tone', locale)}>{i + 1}</th>
+                  <td class="cell-num" data-label={col.hex}>{f.hex}</td>
+                  <td class="cell-num" data-label={col.rgb}>{f.rgb.join(', ')}</td>
+                  <td class="cell-num" data-label={col.cmyk}>{f.cmyk.join(', ')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
         <p class="doc__note">{t('jokkino_foam_note', locale)}</p>
       </section>
@@ -154,10 +171,24 @@ const revisions = [
         <div class="spec-panel">
           <div class="outline-spec">
             <span class="swatch swatch--outline" style={`background:${beer.line}`} aria-hidden="true"></span>
-            <div class="outline-spec__values">
-              <span class="cell-num outline-spec__hex">{beer.line}</span>
-              <span class="foam-hex">fallback {beer.lineFallback}</span>
-            </div>
+            <dl class="outline-spec__values">
+              <div class="outline-spec__row">
+                <dt class="outline-spec__key">{col.hex}</dt>
+                <dd class="cell-num">{beer.line}</dd>
+              </div>
+              <div class="outline-spec__row">
+                <dt class="outline-spec__key">{col.rgb}</dt>
+                <dd class="cell-num">{outline.rgb.join(', ')}</dd>
+              </div>
+              <div class="outline-spec__row">
+                <dt class="outline-spec__key">{col.cmyk}</dt>
+                <dd class="cell-num">{outline.cmyk.join(', ')}</dd>
+              </div>
+              <div class="outline-spec__row">
+                <dt class="outline-spec__key">Fallback</dt>
+                <dd class="cell-num">{beer.lineFallback} · 0, 0, 0 · 0, 0, 0, 100</dd>
+              </div>
+            </dl>
           </div>
         </div>
         <p class="doc__note">{t('jokkino_line_note', locale)}</p>
@@ -170,7 +201,7 @@ const revisions = [
 
         <div class="spec-panel">
           <ul class="mono-band" role="list">
-            {beer.ramp.map((s) => (
+            {monoSteps.map((s) => (
               <li class="mono-item">
                 <span class="swatch swatch--mono" style={`background:hsl(0, 0%, ${100 - s.mono}%)`} aria-hidden="true"></span>
                 <span class="mono-pct">{s.mono}%</span>
@@ -200,19 +231,34 @@ const revisions = [
       <p class="doc__intro">{t('jokkino_app_intro', locale)}</p>
 
       <div class="specimens">
-        {specimens.map((sp) => (
-          <figure class="specimen">
-            <div class="specimen__media">
-              <svg class="specimen__art" viewBox="0 0 120 130" role="img" aria-label={`Provisional specimen — ${sp.caption}`}>
-                <path d="M84 64 C110 64 110 102 84 102" fill="none" stroke={sp.line} stroke-width="8" stroke-linecap="round" />
-                <rect x="24" y="52" width="60" height="62" rx="10" fill={sp.body} stroke={sp.line} stroke-width="6" />
-                <rect x="62" y="58" width="16" height="50" rx="6" fill={sp.shadow} />
-                <ellipse cx="54" cy="50" rx="36" ry="14" fill={sp.foam} stroke={sp.line} stroke-width="6" />
-              </svg>
-            </div>
-            <figcaption class="specimen__caption">{sp.caption}</figcaption>
-          </figure>
-        ))}
+        {/* Full-color = the real production emoji (きもち set, 001). */}
+        <figure class="specimen">
+          <div class="specimen__media">
+            <img
+              class="specimen__art"
+              src="/jokkino/jokkino-kimochi-001.svg"
+              width="200"
+              height="200"
+              alt="Jokkino — full-color production emoji (きもち set, 001)"
+              decoding="async"
+            />
+          </div>
+          <figcaption class="specimen__caption">{t('jokkino_app_caption_color', locale)}</figcaption>
+        </figure>
+
+        {/* Single-color = schematic constructed from the mono ladder (NOT an
+            auto-gray of the color art); a dedicated mono emoji asset is pending. */}
+        <figure class="specimen">
+          <div class="specimen__media">
+            <svg class="specimen__art" viewBox="0 0 120 130" role="img" aria-label="Single-color schematic specimen, constructed from the mono ladder">
+              <path d="M84 64 C110 64 110 102 84 102" fill="none" stroke={mono.line} stroke-width="8" stroke-linecap="round" />
+              <rect x="24" y="52" width="60" height="62" rx="10" fill={mono.body} stroke={mono.line} stroke-width="6" />
+              <rect x="62" y="58" width="16" height="50" rx="6" fill={mono.shadow} />
+              <ellipse cx="54" cy="50" rx="36" ry="14" fill={mono.foam} stroke={mono.line} stroke-width="6" />
+            </svg>
+          </div>
+          <figcaption class="specimen__caption">{t('jokkino_app_caption_mono', locale)}</figcaption>
+        </figure>
       </div>
       <p class="doc__note doc__note--provisional">{t('jokkino_app_placeholder_note', locale)}</p>
     </section>
@@ -241,7 +287,6 @@ const revisions = [
           </tbody>
         </table>
       </div>
-      <p class="doc__note">{t('jokkino_rev_note', locale)}</p>
     </section>
   </article>
 </Base>
@@ -397,11 +442,15 @@ const revisions = [
   .swatch {
     display: block;
     border-radius: 4px;
-    /* 1px hairline so pale swatches stay defined on the dark pedestal. */
-    border: 1px solid var(--card-border-onbrew);
+    /* Frame every swatch on the dark pedestal. The off-white border (raised
+       from --card-border-onbrew's .14 alpha) defines NEAR-BLACK swatches
+       (#2A1A12 ≈ the pedestal); the inset dark line defines NEAR-WHITE ones.
+       (Review fix B — dark-end swatches read at ~1.1:1 vs the pedestal.) */
+    border: 1px solid rgba(239, 231, 214, 0.32);
+    box-shadow: inset 0 0 0 1px rgba(8, 5, 0, 0.28);
   }
 
-  .swatch--ramp {
+  .swatch--cell {
     width: 3.5rem;
     height: 1.75rem;
   }
@@ -448,6 +497,13 @@ const revisions = [
     white-space: nowrap;
   }
 
+  .cell-tone {
+    color: var(--fg);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
   .cell-num {
     font-variant-numeric: tabular-nums;
     color: var(--fg);
@@ -462,28 +518,7 @@ const revisions = [
     white-space: normal;
   }
 
-  /* --- Foam strip --- */
-  .foam-strip {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-  }
-
-  .foam-item {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3xs);
-    align-items: flex-start;
-  }
-
-  .swatch--foam {
-    width: 3.5rem;
-    height: 3.5rem;
-  }
-
+  /* Small muted hex/label (outline fallback, mono step names). */
   .foam-hex {
     font-size: var(--fs-xs);
     font-variant-numeric: tabular-nums;
@@ -505,14 +540,29 @@ const revisions = [
   }
 
   .outline-spec__values {
+    margin: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--space-3xs);
+    gap: var(--space-2xs);
   }
 
-  .outline-spec__hex {
-    font-size: var(--fs-base);
-    color: var(--fg);
+  .outline-spec__row {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: baseline;
+  }
+
+  .outline-spec__row dd {
+    margin: 0;
+  }
+
+  .outline-spec__key {
+    flex-shrink: 0;
+    min-width: 4.5rem;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--track-badge);
   }
 
   /* --- Mono grayscale band --- */
@@ -564,8 +614,11 @@ const revisions = [
     text-shadow: var(--text-shadow-onbrew);
   }
 
-  .rule-list__neg {
+  /* The "forbidden" rule is de-emphasised. Specificity must beat `.rule-list li`
+     (class+type) or the muted color is overridden by --fg (review fix A). */
+  .rule-list li.rule-list__neg {
     color: var(--muted);
+    border-left-color: var(--rule);
   }
 
   /* --- Application specimens --- */
@@ -686,9 +739,18 @@ const revisions = [
       padding-bottom: var(--space-2xs) !important;
     }
 
-    .swatch--ramp {
+    .cell-swatch .swatch {
       width: 100%;
       height: 2.5rem;
+    }
+
+    /* Ramp name becomes the card's title row (no redundant data-label — fix D). */
+    .spec-table tbody th.cell-name {
+      display: block;
+      font-size: var(--fs-base);
+      padding-bottom: var(--space-2xs);
+      margin-bottom: var(--space-2xs);
+      border-bottom: 1px solid var(--card-border-onbrew);
     }
   }
 </style>

@@ -50,7 +50,19 @@ export const beer = {
     { name: 'Brown',      hex: '#7C4923', rgb: [124, 73, 35], cmyk: [0, 41, 72, 51], mono: 85 }, // = Binto Brown
     { name: 'Black',      hex: '#2A1A12', rgb: [42, 26, 18], cmyk: [0, 38, 57, 84], mono: 100 }, // line
   ],
-  foam: ['#FFFFFF', '#FEFCF6', '#FCF8EE', '#F8F1E1', '#F3EAD6', '#EEE2CB', '#E8DABF'],
+  // Foam palette (independent of the body, white→pale cream, 7 tones).
+  // rgb/cmyk added 2026-06-21 (司令塔 request) so foam is a full spec like the
+  // ramp. cmyk is the naive sRGB→CMYK conversion (same convention as the ramp).
+  // Tone 1 (#FFFFFF) = 0,0,0,0 = paper / knock-out (no ink) in single-color print.
+  foam: [
+    { hex: '#FFFFFF', rgb: [255, 255, 255], cmyk: [0, 0, 0, 0] },
+    { hex: '#FEFCF6', rgb: [254, 252, 246], cmyk: [0, 1, 3, 0] },
+    { hex: '#FCF8EE', rgb: [252, 248, 238], cmyk: [0, 2, 6, 1] },
+    { hex: '#F8F1E1', rgb: [248, 241, 225], cmyk: [0, 3, 9, 3] },
+    { hex: '#F3EAD6', rgb: [243, 234, 214], cmyk: [0, 4, 12, 5] },
+    { hex: '#EEE2CB', rgb: [238, 226, 203], cmyk: [0, 5, 15, 7] },
+    { hex: '#E8DABF', rgb: [232, 218, 191], cmyk: [0, 6, 18, 9] },
+  ],
   line: '#2A1A12',
   lineFallback: '#000000',
 } as const;
