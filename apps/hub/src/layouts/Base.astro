@@ -27,9 +27,19 @@ interface Props {
   locale: Locale;
   title?: string;
   description?: string;
+  // Per-product footer license scoping (forwarded to Footer, ruling A).
+  // Defaults keep the studio-wide "© 2026 … · Code: MIT · Assets: CC BY-NC".
+  footerCopyright?: string;
+  footerShowLicense?: boolean;
 }
 
-const { locale, title, description } = Astro.props;
+const {
+  locale,
+  title,
+  description,
+  footerCopyright,
+  footerShowLicense = true,
+} = Astro.props;
 
 const siteTitle = title ?? 'Tipsy Tap Studio';
 const siteDescription =
@@ -142,6 +152,8 @@ const enableHeader = enableBrewBg;
       switchHref={switchHref}
       switchLabel={switchLabel}
       otherLocale={otherLocale}
+      copyrightOverride={footerCopyright}
+      showLicense={footerShowLicense}
     />
   </body>
 </html>

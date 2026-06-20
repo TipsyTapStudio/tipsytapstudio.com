@@ -1,1 +1,5 @@
 /  /ja/  301
+
+# /ja/jokkino/ has no JA page yet — redirect to the EN spec sheet until the
+# Japanese Brand & Color Guide is authored (T-W1 ruling B). 302 = temporary.
+/ja/jokkino/  /en/jokkino/  302

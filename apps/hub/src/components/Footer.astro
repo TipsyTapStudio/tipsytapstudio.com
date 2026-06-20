@@ -16,9 +16,25 @@ interface Props {
   switchHref: string;
   switchLabel: string;
   otherLocale: Locale;
+  // --- Per-product license scoping (T-W1 ruling A) ---
+  // The studio-wide default footer states "Code: MIT · Assets: CC BY-NC".
+  // That blanket asset license does not apply to every product: brand IP such
+  // as Jokkino is "All rights reserved". A page may therefore override the
+  // copyright line (`copyrightOverride`) and suppress the license line
+  // (`showLicense={false}`) so its footer reflects its own terms. Defaults
+  // preserve the existing behaviour for home / lab / SPV.
+  copyrightOverride?: string;
+  showLicense?: boolean;
 }
 
-const { locale, switchHref, switchLabel, otherLocale } = Astro.props;
+const {
+  locale,
+  switchHref,
+  switchLabel,
+  otherLocale,
+  copyrightOverride,
+  showLicense = true,
+} = Astro.props;
 
 const contactHref = 'mailto:tipsytapstudio@gmail.com';
 const githubHref = 'https://github.com/TipsyTapStudio';
@@ -28,7 +44,7 @@ const githubLabel = t('common_footer_github', locale);
 const labLabel = t('hub_footer_lab_label', locale);
 const labHref = `/${locale}/lab/`;
 const license = t('hub_footer_license', locale);
-const copyright = t('hub_footer_copyright', locale);
+const copyright = copyrightOverride ?? t('hub_footer_copyright', locale);
 ---
 
 {/* Top fade band — soft transition from the Brew background into the
@@ -39,7 +55,7 @@ const copyright = t('hub_footer_copyright', locale);
     <FooterColumn>
       <p class="footer__brand">Tipsy Tap Studio</p>
       <p class="footer__meta">{copyright}</p>
-      <p class="footer__meta">{license}</p>
+      {showLicense && <p class="footer__meta">{license}</p>}
     </FooterColumn>
 
     <FooterColumn heading={contactLabel}>
