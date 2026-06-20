@@ -52,6 +52,7 @@
   "jokkino_doc_title": "Jokkino — Brand & Color Guide",
   "jokkino_doc_lede": "The designated color specification for Jokkino. Values are listed as Hex and RGB (the screen master), an approximate CMYK conversion for print, and a single-color mono percentage. Color is applied as flat, discrete steps.",
   "jokkino_doc_version": "Version 1.0 · 2026-06-19",
+  "jokkino_doc_scope": "These are Jokkino's designated colors and the reference all artwork returns to. A specific context may still call for a deliberate, appropriate deviation.",
 
   "jokkino_color_heading": "Color specification",
   "jokkino_ramp_heading": "Beer-color ramp",

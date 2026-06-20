@@ -85,6 +85,7 @@ const revisions = [
       <h1 class="doc__title">{title}</h1>
       <p class="doc__lede">{lede}</p>
       <p class="doc__version">{version}</p>
+      <p class="doc__scope">{t('jokkino_doc_scope', locale)}</p>
     </header>
 
     {/* --- §1 Color specification --- */}
@@ -344,6 +345,19 @@ const revisions = [
     font-size: var(--fs-sm);
     font-variant-numeric: tabular-nums;
     margin: 0;
+    text-shadow: var(--text-shadow-onbrew);
+  }
+
+  /* Scope caveat — the palette is the default; deliberate contextual
+     deviation is allowed (司令塔 2026-06-21). Set apart from the version line. */
+  .doc__scope {
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    max-width: 44rem;
+    margin: var(--space-sm) 0 0;
+    padding-left: var(--space-md);
+    border-left: 2px solid var(--rule);
     text-shadow: var(--text-shadow-onbrew);
   }
 
