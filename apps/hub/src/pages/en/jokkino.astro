@@ -38,19 +38,12 @@ const col = {
   mono: t('jokkino_ramp_col_mono', locale),
 };
 
-// §2 Application — the full-color specimen is the REAL production emoji
-// (public/jokkino/jokkino-kimochi-001.svg, the きもち set's "001"). A dedicated
-// single-color emoji asset does not exist yet, and §1.4 forbids auto-graying the
-// color art — so the single-color specimen is a schematic mug CONSTRUCTED from
-// the mono ladder (not an auto-gray): Pale Gold (mono 40) → 60% L body, Deep Gold
-// (mono 60) → 40% L shadow, outline at 100% = black, foam = 0% knock-out (white).
-// Deriving from `beer.ramp` keeps the schematic in step with the published mono %.
-const mono = {
-  body: `hsl(0, 0%, ${100 - beer.ramp[2].mono}%)`,
-  shadow: `hsl(0, 0%, ${100 - beer.ramp[3].mono}%)`,
-  foam: beer.foam[0].hex,
-  line: beer.lineFallback,
-};
+// §2 Application uses two hosted SVGs: the full-color production emoji
+// (jokkino-kimochi-001.svg) and its single-color twin (…-001-mono.svg), built
+// by remapping the SAME vector's flat fills to the mono ladder (body→mono 40,
+// foam→0% knock-out, outline→mono 100) — a vector value swap, NOT a raster
+// auto-gray, so it satisfies §1.4. A canonical mono asset from the jokkino_emoji
+// toolchain can replace …-001-mono.svg later.
 
 // Single-color band = the ramp's mono ladder PLUS an explicit 0% knock-out (white)
 // endpoint at the top — the lightest value is stated, not implied (司令塔 request).
@@ -247,16 +240,18 @@ const revisions = [
           <figcaption class="specimen__caption">{t('jokkino_app_caption_color', locale)}</figcaption>
         </figure>
 
-        {/* Single-color = schematic constructed from the mono ladder (NOT an
-            auto-gray of the color art); a dedicated mono emoji asset is pending. */}
+        {/* Single-color = the SAME Jokkino, fills remapped to the mono ladder
+            (vector value swap, not a raster auto-gray — satisfies §1.4). */}
         <figure class="specimen">
           <div class="specimen__media">
-            <svg class="specimen__art" viewBox="0 0 120 130" role="img" aria-label="Single-color schematic specimen, constructed from the mono ladder">
-              <path d="M84 64 C110 64 110 102 84 102" fill="none" stroke={mono.line} stroke-width="8" stroke-linecap="round" />
-              <rect x="24" y="52" width="60" height="62" rx="10" fill={mono.body} stroke={mono.line} stroke-width="6" />
-              <rect x="62" y="58" width="16" height="50" rx="6" fill={mono.shadow} />
-              <ellipse cx="54" cy="50" rx="36" ry="14" fill={mono.foam} stroke={mono.line} stroke-width="6" />
-            </svg>
+            <img
+              class="specimen__art"
+              src="/jokkino/jokkino-kimochi-001-mono.svg"
+              width="200"
+              height="200"
+              alt="Jokkino — single-color version (mono ladder), same pose as the full-color specimen"
+              decoding="async"
+            />
           </div>
           <figcaption class="specimen__caption">{t('jokkino_app_caption_mono', locale)}</figcaption>
         </figure>
@@ -657,8 +652,12 @@ const revisions = [
   }
 
   .specimen__media {
-    background: var(--card-media-bg);
-    border: 1px solid var(--card-border-onbrew);
+    /* §2 specimen tiles use a LIGHT neutral so the near-black #2A1A12 outline
+       separates from the tile, and the single-color knock-out white reads as
+       paper. Scoped to §2 ONLY — §1 swatch pedestals (.spec-panel) stay dark
+       for color fidelity. Final shade is the designer's (range #F6F2EA–#FFFFFF). */
+    background: #f6f2ea;
+    border: 1px solid rgba(42, 26, 18, 0.12);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-card);
     display: grid;
