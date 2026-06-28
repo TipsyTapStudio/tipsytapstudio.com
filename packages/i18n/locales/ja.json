@@ -14,6 +14,7 @@
   "hub_nav_lab": "Lab",
 
   "hub_works_heading": "Works",
+  "hub_works_category_characters": "Characters",
   "hub_works_category_extensions": "Extensions",
   "hub_works_category_clocks": "Clocks & Timers",
   "hub_works_category_games_visuals": "Games & Visuals",
@@ -39,6 +40,10 @@
   "hub_works_item_fractal_beat_desc": "拍に合わせてフラクタルが育つビジュアライザー。音楽の幾何をまだ手探りで描いている。",
   "hub_works_item_lp_stamps_title": "LINE Stamps",
   "hub_works_item_lp_stamps_desc": "LINE スタンプ枠、準備中。スタジオのキャラクターを別チャンネルに連れていく試み。",
+  "hub_works_item_jokkino_title": "Jokkino",
+  "hub_works_item_jokkino_desc": "スタジオのキャラクターIP — ブランド＆カラーガイド。",
+  "hub_works_item_jokkino_emoji_title": "Jokkino Emoji",
+  "hub_works_item_jokkino_emoji_desc": "LINE のリアクション絵文字。",
 
   "hub_lab_heading": "Lab",
   "hub_lab_body": "鳴らす前、光らせる前、刻む前。まだ削っている途中の試作を、触れる状態で置いている棚。",

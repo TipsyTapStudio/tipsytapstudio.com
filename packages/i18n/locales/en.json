@@ -14,6 +14,7 @@
   "hub_nav_lab": "Lab",
 
   "hub_works_heading": "Works",
+  "hub_works_category_characters": "Characters",
   "hub_works_category_extensions": "Extensions",
   "hub_works_category_clocks": "Clocks & Timers",
   "hub_works_category_games_visuals": "Games & Visuals",
@@ -39,6 +40,10 @@
   "hub_works_item_fractal_beat_desc": "A visualizer where fractals grow to the beat. Still feeling out the geometry of music.",
   "hub_works_item_lp_stamps_title": "LINE Stamps",
   "hub_works_item_lp_stamps_desc": "LINE sticker slot, in preparation. Taking the studio's characters out to another channel.",
+  "hub_works_item_jokkino_title": "Jokkino",
+  "hub_works_item_jokkino_desc": "The studio's character IP — brand & color guide.",
+  "hub_works_item_jokkino_emoji_title": "Jokkino Emoji",
+  "hub_works_item_jokkino_emoji_desc": "Reaction emoji on LINE.",
 
   "hub_lab_heading": "Lab",
   "hub_lab_body": "Before it taps, lights, or ticks — the shelf where unfinished sketches sit out, still warm, where you can touch them.",
@@ -83,7 +88,7 @@
   "jokkino_app_intro": "Two reference specimens: the full-color version and the single-color version. No callout lines.",
   "jokkino_app_caption_color": "Full-color",
   "jokkino_app_caption_mono": "Single-color",
-  "jokkino_app_placeholder_note": "The full-color specimen is the production emoji from the Jokkino toolchain (きもち set, 001). A dedicated single-color asset is pending; the single-color specimen shown is a schematic construction from the mono ladder.",
+  "jokkino_app_placeholder_note": "The full-color specimen is the production emoji from the Jokkino toolchain (きもち set, 001). The single-color specimen is a mono version of the same emoji, built by remapping its fills to the mono-ladder values (not an auto-grayed image). A dedicated single-color asset from the toolchain is still pending.",
 
   "jokkino_rev_heading": "Revision history",
   "jokkino_rev_col_date": "Date",
