@@ -13,11 +13,13 @@ export type Status = 'live' | 'beta' | 'tinkering' | 'sketch';
 // used for grouping — they overlap (e.g. galton_timer is both gadget+clock but
 // galton_tempo is gadget-only), so each work carries an explicit `category`.
 // This array is the single source of truth for category *order* on the page.
-export const CATEGORY_ORDER = ['extensions', 'clocks', 'games_visuals', 'stickers'] as const;
+// `characters` (Jokkino IP) leads as the studio's flagship; `stickers` was
+// retired 2026-06-21 when its sole item (lp_stamps) moved under `characters`.
+export const CATEGORY_ORDER = ['characters', 'extensions', 'clocks', 'games_visuals'] as const;
 export type Category = (typeof CATEGORY_ORDER)[number];
 
-// Card display size. Only SPV-2 is 'large' today; everything else is 'small'.
-// Optional in data — absence means 'small'.
+// Card display size. 'large' = flagship card (SPV-2 in extensions, jokkino in
+// characters); everything else is 'small'. Optional in data — absence = 'small'.
 export type Size = 'large' | 'small';
 
 export interface Work {

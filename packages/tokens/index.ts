@@ -27,6 +27,46 @@ export const colors = {
   },
 } as const;
 
+// --- Jokkino beer-color spec (CONTENT data, not chrome theme) ---
+// The designated color specification published at /en/jokkino/. Unlike the
+// `colors`/`overlay`/`cardOnBrew` groups above, these values do NOT drive the
+// monochrome hub chrome and are deliberately NOT mirrored as CSS vars in
+// Base.astro :root — they are content the Jokkino page renders (swatches +
+// printed Hex/RGB/CMYK/Mono), so the page imports `beer` and statically
+// renders it at build time (JS-zero). Single source of truth lives here to
+// avoid the manual CSS-var mirror drift that affects the chrome tokens.
+//
+// Source of record: ../binto-jokkino brand hub (T-W1 ruling H, 2026-06-19).
+// ramp = body fill, light→dark (7 steps); foam = independent light palette;
+// line = outline. CMYK is an approximate print conversion; Hex/RGB are master.
+// 最終トークン確定はデザイナー領分（暫定確定値）。
+export const beer = {
+  ramp: [
+    { name: 'Pale Straw', hex: '#F8E6A6', rgb: [248, 230, 166], cmyk: [0, 7, 33, 3], mono: 15 },
+    { name: 'Straw',      hex: '#F6D772', rgb: [246, 215, 114], cmyk: [0, 13, 54, 4], mono: 25 },
+    { name: 'Pale Gold',  hex: '#F5CA4F', rgb: [245, 202, 79], cmyk: [0, 18, 68, 4], mono: 40 }, // base (= Jokkino Gold)
+    { name: 'Deep Gold',  hex: '#E4A93C', rgb: [228, 169, 60], cmyk: [0, 26, 74, 11], mono: 60 },
+    { name: 'Amber',      hex: '#C5852C', rgb: [197, 133, 44], cmyk: [0, 32, 78, 23], mono: 75 },
+    { name: 'Brown',      hex: '#7C4923', rgb: [124, 73, 35], cmyk: [0, 41, 72, 51], mono: 85 }, // = Binto Brown
+    { name: 'Black',      hex: '#2A1A12', rgb: [42, 26, 18], cmyk: [0, 38, 57, 84], mono: 100 }, // line
+  ],
+  // Foam palette (independent of the body, white→pale cream, 7 tones).
+  // rgb/cmyk added 2026-06-21 (司令塔 request) so foam is a full spec like the
+  // ramp. cmyk is the naive sRGB→CMYK conversion (same convention as the ramp).
+  // Tone 1 (#FFFFFF) = 0,0,0,0 = paper / knock-out (no ink) in single-color print.
+  foam: [
+    { hex: '#FFFFFF', rgb: [255, 255, 255], cmyk: [0, 0, 0, 0] },
+    { hex: '#FEFCF6', rgb: [254, 252, 246], cmyk: [0, 1, 3, 0] },
+    { hex: '#FCF8EE', rgb: [252, 248, 238], cmyk: [0, 2, 6, 1] },
+    { hex: '#F8F1E1', rgb: [248, 241, 225], cmyk: [0, 3, 9, 3] },
+    { hex: '#F3EAD6', rgb: [243, 234, 214], cmyk: [0, 4, 12, 5] },
+    { hex: '#EEE2CB', rgb: [238, 226, 203], cmyk: [0, 5, 15, 7] },
+    { hex: '#E8DABF', rgb: [232, 218, 191], cmyk: [0, 6, 18, 9] },
+  ],
+  line: '#2A1A12',
+  lineFallback: '#000000',
+} as const;
+
 export const typography = {
   // Font Set C — 可変一本勝負 (PRD §4 "タイポグラフィ").
   // Fraunces variable (opsz/SOFT/wght 軸) が display + body 兼用。
@@ -174,6 +214,7 @@ export const lab = {
 
 export type Tokens = {
   colors: typeof colors;
+  beer: typeof beer;
   typography: typeof typography;
   spacing: typeof spacing;
   fontSize: typeof fontSize;

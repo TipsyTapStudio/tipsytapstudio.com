@@ -73,9 +73,34 @@
     "addedAt": "2026-02"
   },
   {
+    "slug": "jokkino",
+    "status": "live",
+    "category": "characters",
+    "size": "large",
+    "tags": ["character"],
+    "thumb": "/jokkino/jokkino-kimochi-001.svg",
+    "demoUrl": null,
+    "repoUrl": null,
+    "lpUrl": "/en/jokkino/",
+    "featured": true,
+    "addedAt": "2026-06"
+  },
+  {
+    "slug": "jokkino_emoji",
+    "status": "live",
+    "category": "characters",
+    "tags": ["emoji"],
+    "thumb": "/jokkino/jokkino-kimochi-001.svg",
+    "demoUrl": "https://store.line.me/emojishop/product/6a30f06d02e16a6dce5b444e/ja",
+    "repoUrl": null,
+    "lpUrl": null,
+    "featured": false,
+    "addedAt": "2026-06"
+  },
+  {
     "slug": "lp_stamps",
     "status": "sketch",
-    "category": "stickers",
+    "category": "characters",
     "tags": ["sticker"],
     "thumb": null,
     "demoUrl": "https://store.line.me/stickershop/author/5362208/",

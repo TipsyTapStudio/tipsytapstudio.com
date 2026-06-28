@@ -1,0 +1,769 @@
+---
+// Jokkino — Brand & Color Guide (/en/jokkino/).
+//
+// A JS-zero static "designated color specification" sheet. Jokkino is treated
+// as a known entity whose spec is published dryly — no hero, tagline, cast,
+// story, or marketing copy (発注書 §2). Source of record: ../binto-jokkino
+// brand hub, T-W1 PLAN/HANDOFF (2026-06-19), director rulings A–J.
+//
+// Design notes:
+// - Chrome stays monochrome (PRD §4). Swatches are the ONLY saturated element
+//   (content specimens), placed on opaque neutral pedestals (.spec-panel,
+//   --card-media-bg) so the sticky Brew background can't tint the color
+//   readings (rulings C/D). Prose floats over Brew with --text-shadow-onbrew.
+// - Color values come from `beer` in @ttsui/tokens (single source of truth,
+//   ruling H). NOT mirrored as CSS vars — imported and statically rendered.
+// - ja: no page here; /ja/jokkino/ 302-redirects to this page (public/_redirects,
+//   ruling B). jokkino_* ja values are parity stubs only.
+// - Footer: ruling A — this page shows "© Tipsy Tap Studio. All rights
+//   reserved." only, with the studio-wide "Code: MIT · Assets: CC BY-NC"
+//   line suppressed (footerShowLicense={false}).
+
+import Base from '../../layouts/Base.astro';
+import { t } from '@ttsui/i18n';
+import { beer } from '@ttsui/tokens';
+
+const locale = 'en';
+
+const title = t('jokkino_doc_title', locale);
+const lede = t('jokkino_doc_lede', locale);
+const version = t('jokkino_doc_version', locale);
+
+// Ramp column headers (i18n); the values themselves are data (`beer`).
+const col = {
+  name: t('jokkino_ramp_col_name', locale),
+  hex: t('jokkino_ramp_col_hex', locale),
+  rgb: t('jokkino_ramp_col_rgb', locale),
+  cmyk: t('jokkino_ramp_col_cmyk', locale),
+  mono: t('jokkino_ramp_col_mono', locale),
+};
+
+// §2 Application uses two hosted SVGs: the full-color production emoji
+// (jokkino-kimochi-001.svg) and its single-color twin (…-001-mono.svg), built
+// by remapping the SAME vector's flat fills to the mono ladder (body→mono 40,
+// foam→0% knock-out, outline→mono 100) — a vector value swap, NOT a raster
+// auto-gray, so it satisfies §1.4. A canonical mono asset from the jokkino_emoji
+// toolchain can replace …-001-mono.svg later.
+
+// Single-color band = the ramp's mono ladder PLUS an explicit 0% knock-out (white)
+// endpoint at the top — the lightest value is stated, not implied (司令塔 request).
+const monoSteps = [
+  { name: 'White / knock-out', mono: 0 },
+  ...beer.ramp.map((s) => ({ name: s.name, mono: s.mono })),
+];
+
+// Outline value set = the ramp's Black step (line === ramp Black, same value).
+const outline = beer.ramp[6];
+
+// Revision history rows — data (not i18n), per PLAN §5.
+const revisions = [
+  {
+    date: '2026-06-19',
+    version: '1.0',
+    change: 'Initial color specification (ramp, foam, outline, single-color, fill).',
+  },
+];
+---
+
+<Base
+  locale={locale}
+  title={title}
+  description={lede}
+  footerCopyright={t('jokkino_doc_copyright', locale)}
+  footerShowLicense={false}
+>
+  <article class="doc">
+    {/* --- Document header (minimal, dry) --- */}
+    <header class="doc__header">
+      <h1 class="doc__title">{title}</h1>
+      <p class="doc__lede">{lede}</p>
+      <p class="doc__version">{version}</p>
+      <p class="doc__scope">{t('jokkino_doc_scope', locale)}</p>
+    </header>
+
+    {/* --- §1 Color specification --- */}
+    <section class="doc__section" aria-labelledby="sec-color">
+      <h2 id="sec-color" class="doc__h2">
+        <span class="doc__num">1.</span> {t('jokkino_color_heading', locale)}
+      </h2>
+
+      {/* 1.1 Beer-color ramp */}
+      <section class="doc__sub" aria-labelledby="sub-ramp">
+        <h3 id="sub-ramp" class="doc__h3"><span class="doc__num">1.1</span> {t('jokkino_ramp_heading', locale)}</h3>
+        <p class="doc__intro">{t('jokkino_ramp_intro', locale)}</p>
+
+        <div class="spec-panel">
+          <table class="spec-table ramp-table">
+            <thead>
+              <tr>
+                <th scope="col"><span class="vh">Swatch</span></th>
+                <th scope="col">{col.name}</th>
+                <th scope="col">{col.hex}</th>
+                <th scope="col">{col.rgb}</th>
+                <th scope="col">{col.cmyk}</th>
+                <th scope="col">{col.mono}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {beer.ramp.map((s) => (
+                <tr>
+                  <td class="cell-swatch">
+                    <span class="swatch swatch--cell" style={`background:${s.hex}`} aria-hidden="true"></span>
+                  </td>
+                  <th scope="row" class="cell-name">{s.name}</th>
+                  <td class="cell-num" data-label={col.hex}>{s.hex}</td>
+                  <td class="cell-num" data-label={col.rgb}>{s.rgb.join(', ')}</td>
+                  <td class="cell-num" data-label={col.cmyk}>{s.cmyk.join(', ')}</td>
+                  <td class="cell-num" data-label={col.mono}>{s.mono}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p class="doc__note">{t('jokkino_ramp_rule_base', locale)}</p>
+      </section>
+
+      {/* 1.2 Foam palette */}
+      <section class="doc__sub" aria-labelledby="sub-foam">
+        <h3 id="sub-foam" class="doc__h3"><span class="doc__num">1.2</span> {t('jokkino_foam_heading', locale)}</h3>
+        <p class="doc__intro">{t('jokkino_foam_intro', locale)}</p>
+
+        <div class="spec-panel">
+          <table class="spec-table foam-table">
+            <thead>
+              <tr>
+                <th scope="col"><span class="vh">Swatch</span></th>
+                <th scope="col">{t('jokkino_foam_col_tone', locale)}</th>
+                <th scope="col">{col.hex}</th>
+                <th scope="col">{col.rgb}</th>
+                <th scope="col">{col.cmyk}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {beer.foam.map((f, i) => (
+                <tr>
+                  <td class="cell-swatch">
+                    <span class="swatch swatch--cell" style={`background:${f.hex}`} aria-hidden="true"></span>
+                  </td>
+                  <th scope="row" class="cell-tone" data-label={t('jokkino_foam_col_tone', locale)}>{i + 1}</th>
+                  <td class="cell-num" data-label={col.hex}>{f.hex}</td>
+                  <td class="cell-num" data-label={col.rgb}>{f.rgb.join(', ')}</td>
+                  <td class="cell-num" data-label={col.cmyk}>{f.cmyk.join(', ')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p class="doc__note">{t('jokkino_foam_note', locale)}</p>
+      </section>
+
+      {/* 1.3 Outline */}
+      <section class="doc__sub" aria-labelledby="sub-line">
+        <h3 id="sub-line" class="doc__h3"><span class="doc__num">1.3</span> {t('jokkino_line_heading', locale)}</h3>
+        <p class="doc__intro">{t('jokkino_line_intro', locale)}</p>
+
+        <div class="spec-panel">
+          <div class="outline-spec">
+            <span class="swatch swatch--outline" style={`background:${beer.line}`} aria-hidden="true"></span>
+            <dl class="outline-spec__values">
+              <div class="outline-spec__row">
+                <dt class="outline-spec__key">{col.hex}</dt>
+                <dd class="cell-num">{beer.line}</dd>
+              </div>
+              <div class="outline-spec__row">
+                <dt class="outline-spec__key">{col.rgb}</dt>
+                <dd class="cell-num">{outline.rgb.join(', ')}</dd>
+              </div>
+              <div class="outline-spec__row">
+                <dt class="outline-spec__key">{col.cmyk}</dt>
+                <dd class="cell-num">{outline.cmyk.join(', ')}</dd>
+              </div>
+              <div class="outline-spec__row">
+                <dt class="outline-spec__key">Fallback</dt>
+                <dd class="cell-num">{beer.lineFallback} · 0, 0, 0 · 0, 0, 0, 100</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+        <p class="doc__note">{t('jokkino_line_note', locale)}</p>
+      </section>
+
+      {/* 1.4 Single-color version */}
+      <section class="doc__sub" aria-labelledby="sub-mono">
+        <h3 id="sub-mono" class="doc__h3"><span class="doc__num">1.4</span> {t('jokkino_mono_heading', locale)}</h3>
+        <p class="doc__intro">{t('jokkino_mono_intro', locale)}</p>
+
+        <div class="spec-panel">
+          <ul class="mono-band" role="list">
+            {monoSteps.map((s) => (
+              <li class="mono-item">
+                <span class="swatch swatch--mono" style={`background:hsl(0, 0%, ${100 - s.mono}%)`} aria-hidden="true"></span>
+                <span class="mono-pct">{s.mono}%</span>
+                <span class="foam-hex">{s.name}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p class="doc__rationale">{t('jokkino_mono_rationale', locale)}</p>
+        <p class="doc__callout">{t('jokkino_mono_rule', locale)}</p>
+      </section>
+
+      {/* 1.5 Fill & shading */}
+      <section class="doc__sub" aria-labelledby="sub-fill">
+        <h3 id="sub-fill" class="doc__h3"><span class="doc__num">1.5</span> {t('jokkino_fill_heading', locale)}</h3>
+        <ul class="rule-list" role="list">
+          <li>{t('jokkino_fill_rule_flat', locale)}</li>
+          <li>{t('jokkino_fill_rule_shadow', locale)}</li>
+          <li class="rule-list__neg">{t('jokkino_fill_rule_forbidden', locale)}</li>
+        </ul>
+      </section>
+    </section>
+
+    {/* --- §2 Application --- */}
+    <section class="doc__section" aria-labelledby="sec-app">
+      <h2 id="sec-app" class="doc__h2"><span class="doc__num">2.</span> {t('jokkino_app_heading', locale)}</h2>
+      <p class="doc__intro">{t('jokkino_app_intro', locale)}</p>
+
+      <div class="specimens">
+        {/* Full-color = the real production emoji (きもち set, 001). */}
+        <figure class="specimen">
+          <div class="specimen__media">
+            <img
+              class="specimen__art"
+              src="/jokkino/jokkino-kimochi-001.svg"
+              width="200"
+              height="200"
+              alt="Jokkino — full-color production emoji (きもち set, 001)"
+              decoding="async"
+            />
+          </div>
+          <figcaption class="specimen__caption">{t('jokkino_app_caption_color', locale)}</figcaption>
+        </figure>
+
+        {/* Single-color = the SAME Jokkino, fills remapped to the mono ladder
+            (vector value swap, not a raster auto-gray — satisfies §1.4). */}
+        <figure class="specimen">
+          <div class="specimen__media">
+            <img
+              class="specimen__art"
+              src="/jokkino/jokkino-kimochi-001-mono.svg"
+              width="200"
+              height="200"
+              alt="Jokkino — single-color version (mono ladder), same pose as the full-color specimen"
+              decoding="async"
+            />
+          </div>
+          <figcaption class="specimen__caption">{t('jokkino_app_caption_mono', locale)}</figcaption>
+        </figure>
+      </div>
+      <p class="doc__note doc__note--provisional">{t('jokkino_app_placeholder_note', locale)}</p>
+    </section>
+
+    {/* --- §3 Revision history --- */}
+    <section class="doc__section" aria-labelledby="sec-rev">
+      <h2 id="sec-rev" class="doc__h2"><span class="doc__num">3.</span> {t('jokkino_rev_heading', locale)}</h2>
+
+      <div class="spec-panel spec-panel--plain">
+        <table class="spec-table rev-table">
+          <thead>
+            <tr>
+              <th scope="col">{t('jokkino_rev_col_date', locale)}</th>
+              <th scope="col">{t('jokkino_rev_col_version', locale)}</th>
+              <th scope="col">{t('jokkino_rev_col_change', locale)}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {revisions.map((r) => (
+              <tr>
+                <td class="cell-num" data-label={t('jokkino_rev_col_date', locale)}>{r.date}</td>
+                <td class="cell-num" data-label={t('jokkino_rev_col_version', locale)}>{r.version}</td>
+                <td data-label={t('jokkino_rev_col_change', locale)}>{r.change}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </article>
+</Base>
+
+<style>
+  /* ====================================================================
+     Jokkino — Brand & Color Guide. Document/spec-sheet layout.
+     Chrome is monochrome (--fg / --muted); swatches carry the only color.
+     ==================================================================== */
+  .doc {
+    max-width: var(--max-content);
+    margin: 0 auto;
+    padding-inline: var(--space-md);
+    /* Clear the fixed Header (~3rem) and give the document a calm top. */
+    padding-top: clamp(5.5rem, 4rem + 6vw, 9rem);
+    padding-bottom: var(--space-2xl);
+  }
+
+  @media (min-width: 640px) {
+    .doc {
+      padding-inline: var(--space-xl);
+    }
+  }
+
+  /* --- Document header --- */
+  .doc__header {
+    border-bottom: 1px solid var(--border-hairline);
+    padding-bottom: var(--space-lg);
+    margin-bottom: var(--space-2xl);
+  }
+
+  .doc__title {
+    font-family: var(--font-display);
+    font-variation-settings: 'opsz' 96, 'SOFT' 40;
+    font-size: var(--fs-2xl);
+    font-weight: 500;
+    line-height: var(--lh-tight);
+    letter-spacing: var(--track-display);
+    margin: 0 0 var(--space-md);
+    color: var(--fg);
+    text-shadow: var(--text-shadow-onbrew);
+  }
+
+  .doc__lede {
+    color: var(--fg);
+    font-size: var(--fs-base);
+    line-height: var(--lh-normal);
+    max-width: 44rem;
+    margin: 0 0 var(--space-md);
+    text-shadow: var(--text-shadow-onbrew);
+  }
+
+  .doc__version {
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    font-variant-numeric: tabular-nums;
+    margin: 0;
+    text-shadow: var(--text-shadow-onbrew);
+  }
+
+  /* Scope caveat — the palette is the default; deliberate contextual
+     deviation is allowed (司令塔 2026-06-21). Set apart from the version line. */
+  .doc__scope {
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    max-width: 44rem;
+    margin: var(--space-sm) 0 0;
+    padding-left: var(--space-md);
+    border-left: 2px solid var(--rule);
+    text-shadow: var(--text-shadow-onbrew);
+  }
+
+  /* --- Sections & headings --- */
+  .doc__section {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .doc__sub {
+    margin-bottom: var(--space-xl);
+  }
+
+  .doc__h2 {
+    font-family: var(--font-display);
+    font-variation-settings: 'opsz' 72, 'SOFT' 40;
+    font-size: var(--fs-xl);
+    font-weight: 500;
+    line-height: var(--lh-tight);
+    letter-spacing: var(--track-display);
+    color: var(--fg);
+    margin: 0 0 var(--space-md);
+    text-shadow: var(--text-shadow-onbrew);
+  }
+
+  .doc__h3 {
+    font-family: var(--font-display);
+    font-variation-settings: 'opsz' 40, 'SOFT' 30;
+    font-size: var(--fs-lg);
+    font-weight: 500;
+    line-height: var(--lh-tight);
+    color: var(--fg);
+    margin: 0 0 var(--space-sm);
+    text-shadow: var(--text-shadow-onbrew);
+  }
+
+  .doc__num {
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    margin-right: 0.15em;
+  }
+
+  .doc__intro,
+  .doc__rationale {
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    max-width: 44rem;
+    margin: 0 0 var(--space-md);
+    text-shadow: var(--text-shadow-onbrew);
+  }
+
+  .doc__note {
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    max-width: 44rem;
+    margin: var(--space-md) 0 0;
+    text-shadow: var(--text-shadow-onbrew);
+  }
+
+  .doc__note--provisional {
+    font-style: italic;
+  }
+
+  /* Emphasis callout — the "do not auto-convert" rule (金沢港 type). */
+  .doc__callout {
+    color: var(--fg);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    max-width: 44rem;
+    margin: var(--space-md) 0 0;
+    padding: var(--space-sm) var(--space-md);
+    border-left: 3px solid var(--muted);
+    background: var(--card-bg-onbrew);
+    border-radius: 0 var(--radius-card) var(--radius-card) 0;
+  }
+
+  /* --- Opaque spec pedestal: keeps the Brew background from tinting the
+     color readings (rulings C/D). --- */
+  .spec-panel {
+    background: var(--card-media-bg);
+    border: 1px solid var(--card-border-onbrew);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    padding: var(--space-md);
+    overflow: hidden;
+  }
+
+  @media (min-width: 640px) {
+    .spec-panel {
+      padding: var(--space-lg);
+    }
+  }
+
+  /* --- Swatches (the only saturated elements) --- */
+  .swatch {
+    display: block;
+    border-radius: 4px;
+    /* Frame every swatch on the dark pedestal. The off-white border (raised
+       from --card-border-onbrew's .14 alpha) defines NEAR-BLACK swatches
+       (#2A1A12 ≈ the pedestal); the inset dark line defines NEAR-WHITE ones.
+       (Review fix B — dark-end swatches read at ~1.1:1 vs the pedestal.) */
+    border: 1px solid rgba(239, 231, 214, 0.32);
+    box-shadow: inset 0 0 0 1px rgba(8, 5, 0, 0.28);
+  }
+
+  .swatch--cell {
+    width: 3.5rem;
+    height: 1.75rem;
+  }
+
+  /* --- Spec tables (ramp + revision) --- */
+  .spec-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+    color: var(--fg);
+  }
+
+  .spec-table thead th {
+    text-align: left;
+    font-weight: 500;
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--track-badge);
+    color: var(--muted);
+    padding: 0 var(--space-xs) var(--space-2xs);
+    border-bottom: 1px solid var(--border-hairline);
+    /* Headers may wrap (e.g. "CMYK (approx.)") so they don't force the column
+       wider than its numeric data. */
+    vertical-align: bottom;
+  }
+
+  .spec-table tbody td,
+  .spec-table tbody th {
+    text-align: left;
+    font-weight: 400;
+    padding: var(--space-2xs) var(--space-xs);
+    border-bottom: 1px solid var(--border-hairline);
+    vertical-align: middle;
+  }
+
+  .spec-table tbody tr:last-child td,
+  .spec-table tbody tr:last-child th {
+    border-bottom: none;
+  }
+
+  .cell-name {
+    color: var(--fg);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .cell-tone {
+    color: var(--fg);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .cell-num {
+    font-variant-numeric: tabular-nums;
+    color: var(--fg);
+    white-space: nowrap;
+  }
+
+  .cell-swatch {
+    width: 3.5rem;
+  }
+
+  .rev-table td:last-child {
+    white-space: normal;
+  }
+
+  /* Small muted hex/label (outline fallback, mono step names). */
+  .foam-hex {
+    font-size: var(--fs-xs);
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* --- Outline single swatch --- */
+  .outline-spec {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .swatch--outline {
+    width: 3.5rem;
+    height: 3.5rem;
+    flex-shrink: 0;
+  }
+
+  .outline-spec__values {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+  }
+
+  .outline-spec__row {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: baseline;
+  }
+
+  .outline-spec__row dd {
+    margin: 0;
+  }
+
+  .outline-spec__key {
+    flex-shrink: 0;
+    min-width: 4.5rem;
+    color: var(--muted);
+    font-size: var(--fs-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--track-badge);
+  }
+
+  /* --- Mono grayscale band --- */
+  .mono-band {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .mono-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3xs);
+    align-items: flex-start;
+  }
+
+  .swatch--mono {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  .mono-pct {
+    font-size: var(--fs-sm);
+    font-variant-numeric: tabular-nums;
+    color: var(--fg);
+    font-weight: 500;
+  }
+
+  /* --- Fill rules (do/don't text) --- */
+  .rule-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    max-width: 44rem;
+  }
+
+  .rule-list li {
+    color: var(--fg);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-normal);
+    padding-left: var(--space-md);
+    border-left: 2px solid var(--muted);
+    text-shadow: var(--text-shadow-onbrew);
+  }
+
+  /* The "forbidden" rule is de-emphasised. Specificity must beat `.rule-list li`
+     (class+type) or the muted color is overridden by --fg (review fix A). */
+  .rule-list li.rule-list__neg {
+    color: var(--muted);
+    border-left-color: var(--rule);
+  }
+
+  /* --- Application specimens --- */
+  .specimens {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+    max-width: 32rem;
+  }
+
+  @media (min-width: 480px) {
+    .specimens {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .specimen {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .specimen__media {
+    /* §2 specimen tiles use a LIGHT neutral so the near-black #2A1A12 outline
+       separates from the tile, and the single-color knock-out white reads as
+       paper. Scoped to §2 ONLY — §1 swatch pedestals (.spec-panel) stay dark
+       for color fidelity. Final shade is the designer's (range #F6F2EA–#FFFFFF). */
+    background: #f6f2ea;
+    border: 1px solid rgba(42, 26, 18, 0.12);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    display: grid;
+    place-items: center;
+    padding: var(--space-lg);
+    aspect-ratio: 1 / 1;
+  }
+
+  .specimen__art {
+    width: 60%;
+    height: auto;
+    max-width: 8rem;
+  }
+
+  .specimen__caption {
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    text-shadow: var(--text-shadow-onbrew);
+  }
+
+  /* --- Visually hidden (a11y) --- */
+  .vh {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ====================================================================
+     Narrow: ramp/rev tables reflow to stacked cards to avoid horizontal
+     scroll (PLAN §8). Breakpoint is 768px, not 640px — a 6-column spec
+     table needs ~600px and cannot fit the centered content column below
+     ~768px without clipping. Each row becomes a labeled card.
+     ==================================================================== */
+  @media (max-width: 767px) {
+    .spec-table thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+    }
+
+    .spec-table,
+    .spec-table tbody,
+    .spec-table tbody tr,
+    .spec-table tbody td,
+    .spec-table tbody th {
+      display: block;
+    }
+
+    .spec-table tbody tr {
+      border: 1px solid var(--card-border-onbrew);
+      border-radius: var(--radius-card);
+      padding: var(--space-sm);
+      margin-bottom: var(--space-sm);
+    }
+
+    .spec-table tbody tr:last-child {
+      margin-bottom: 0;
+    }
+
+    .spec-table tbody td,
+    .spec-table tbody th {
+      border-bottom: none;
+      padding: var(--space-3xs) 0;
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-md);
+      white-space: normal;
+    }
+
+    .spec-table tbody td[data-label]::before,
+    .spec-table tbody th[data-label]::before {
+      content: attr(data-label);
+      color: var(--muted);
+      font-size: var(--fs-xs);
+      text-transform: uppercase;
+      letter-spacing: var(--track-badge);
+      flex-shrink: 0;
+    }
+
+    .cell-swatch {
+      width: auto;
+      padding-bottom: var(--space-2xs) !important;
+    }
+
+    .cell-swatch .swatch {
+      width: 100%;
+      height: 2.5rem;
+    }
+
+    /* Ramp name becomes the card's title row (no redundant data-label — fix D). */
+    .spec-table tbody th.cell-name {
+      display: block;
+      font-size: var(--fs-base);
+      padding-bottom: var(--space-2xs);
+      margin-bottom: var(--space-2xs);
+      border-bottom: 1px solid var(--card-border-onbrew);
+    }
+  }
+</style>
