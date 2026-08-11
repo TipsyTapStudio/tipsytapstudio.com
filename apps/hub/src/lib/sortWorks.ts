@@ -15,7 +15,8 @@ export type Status = 'live' | 'beta' | 'tinkering' | 'sketch';
 // This array is the single source of truth for category *order* on the page.
 // `characters` (Jokkino IP) leads as the studio's flagship; `stickers` was
 // retired 2026-06-21 when its sole item (lp_stamps) moved under `characters`.
-export const CATEGORY_ORDER = ['characters', 'extensions', 'clocks', 'games_visuals'] as const;
+// `tools` (browser-based creation tools) added 2026-08.
+export const CATEGORY_ORDER = ['characters', 'extensions', 'tools', 'clocks', 'games_visuals'] as const;
 export type Category = (typeof CATEGORY_ORDER)[number];
 
 // Card display size. 'large' = flagship card (SPV-2 in extensions, jokkino in
