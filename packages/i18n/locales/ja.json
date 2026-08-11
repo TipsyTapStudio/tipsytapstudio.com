@@ -30,7 +30,7 @@
   "hub_works_item_spv2_title": "SPV-2",
   "hub_works_item_spv2_desc": "YouTube の音を拾って描く Chrome 拡張のビジュアライザー。Web Store 公開中。",
   "hub_works_item_spot_difference_editor_title": "Spot the Difference Editor",
-  "hub_works_item_spot_difference_editor_desc": "2枚の画像を読み込むと違いを自動検出。当たり判定を調整して、ゲーム用アセット一式を書き出せます。すべてブラウザ内で完結し、画像は送信されません。",
+  "hub_works_item_spot_difference_editor_desc": "2枚の画像から違いを自動検出し、ゲーム用アセットを書き出す。画像はブラウザの外に出ない。",
   "hub_works_item_galton_timer_title": "Galton Timer",
   "hub_works_item_galton_timer_desc": "球が落ちて山ができる、ガルトンボード式のタイマー。時間の経過を物理で見る。",
   "hub_works_item_wall_clock_title": "Wall Clock",
