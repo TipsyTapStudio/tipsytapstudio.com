@@ -13,6 +13,18 @@
     "addedAt": "2026-03"
   },
   {
+    "slug": "spot_difference_editor",
+    "status": "live",
+    "category": "tools",
+    "tags": ["tool"],
+    "thumb": "/tools/spot-difference-editor/icon.svg",
+    "demoUrl": "/tools/spot-difference-editor/",
+    "repoUrl": null,
+    "lpUrl": null,
+    "featured": false,
+    "addedAt": "2026-08"
+  },
+  {
     "slug": "galton_timer",
     "status": "live",
     "category": "clocks",

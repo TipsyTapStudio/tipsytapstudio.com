@@ -16,6 +16,7 @@
   "hub_works_heading": "Works",
   "hub_works_category_characters": "Characters",
   "hub_works_category_extensions": "Extensions",
+  "hub_works_category_tools": "Tools",
   "hub_works_category_clocks": "Clocks & Timers",
   "hub_works_category_games_visuals": "Games & Visuals",
   "hub_works_category_stickers": "Stickers",
@@ -28,6 +29,8 @@
 
   "hub_works_item_spv2_title": "SPV-2",
   "hub_works_item_spv2_desc": "A Chrome extension that listens to YouTube and draws what it hears. Live on the Web Store.",
+  "hub_works_item_spot_difference_editor_title": "Spot the Difference Editor",
+  "hub_works_item_spot_difference_editor_desc": "Make spot-the-difference puzzles in your browser.",
   "hub_works_item_galton_timer_title": "Galton Timer",
   "hub_works_item_galton_timer_desc": "A Galton-board timer where balls fall into a bell curve. Watch time pile up as physics.",
   "hub_works_item_wall_clock_title": "Wall Clock",

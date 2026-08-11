@@ -1,0 +1,2063 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Spot the Difference Editor</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", "Meiryo", sans-serif; background: #263238; color: #ECEFF1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  #ghead { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #1C262B; border-bottom: 1px solid #37474F; }
+  #brand { font-size: 16px; font-weight: bold; }
+  #ghead .ver { font-size: 11px; color: #78909C; }
+  #credit { margin-left: auto; font-size: 11px; color: #78909C; text-decoration: none; }
+  #credit:hover { color: #90CAF9; text-decoration: underline; }
+  #cols { flex: 1; display: flex; min-height: 0; }
+  #sidebar { width: 210px; flex: none; background: #1C262B; display: flex; flex-direction: column; overflow-y: auto; }
+  #sidebar.closed { display: none; }
+  #sbResizer { width: 5px; flex: none; cursor: col-resize; background: #1C262B; border-right: 1px solid #37474F; }
+  #sbResizer:hover { background: #546E7A; }
+  #sidebar.closed + #sbResizer { display: none; }
+  #appmain { flex: 1; min-width: 0; overflow-y: auto; }
+  #mainhead { display: flex; align-items: center; gap: 6px; padding: 12px 16px 0; }
+  #paneTitle { font-size: 15px; font-weight: bold; margin-right: 8px; }
+  #sbTitle { padding: 12px 14px 6px; font-size: 12px; color: #90CAF9; font-weight: bold; }
+  #stageList { flex: 1; }
+  .stageItem { padding: 7px 8px 7px 14px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .stageItem:hover { background: #263238; }
+  .stageItem.active { background: #37474F; }
+  .stageItem .sname, .folderItem .sname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .stageItem button, .folderItem button { visibility: hidden; }
+  .stageItem:hover button, .folderItem:hover button { visibility: visible; }
+  .folderItem { padding: 7px 8px 7px 12px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #90CAF9; }
+  .folderItem:hover { background: #263238; }
+  .dropTarget { background: #2E4A5A !important; }
+  #sbBtns { display: flex; gap: 6px; margin: 10px 14px 14px; }
+  #ctxMenu { display: none; position: fixed; z-index: 200; background: #263238; border: 1px solid #546E7A; border-radius: 4px; min-width: 120px; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+  #ctxMenu .mi { padding: 7px 14px; font-size: 12px; cursor: pointer; }
+  #ctxMenu .mi:hover { background: #37474F; }
+  main { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; align-items: flex-start; }
+  #stagewrap { flex: 1 1 640px; min-width: 320px; }
+  #canvases { display: flex; gap: 12px; flex-wrap: wrap; }
+  .cvbox { flex: 1 1 300px; min-width: 240px; }
+  .cvlabel { font-size: 12px; color: #90CAF9; margin-bottom: 4px; }
+  canvas { background: #455A64; max-width: 100%; height: auto; display: block; border: 1px solid #607D8B; }
+  #cv { cursor: crosshair; }
+  #status, #statusA { margin-top: 6px; font-size: 13px; color: #B0BEC5; min-height: 18px; }
+  aside { width: 360px; flex: none; display: flex; flex-direction: column; gap: 12px; }
+  section { background: #37474F; border-radius: 6px; padding: 10px 12px; }
+  section h2 { margin: 0 0 8px; font-size: 13px; color: #90CAF9; }
+  #spotsec, #memosec, #stocksec { margin-top: 12px; }
+  #memosec, #stocksec { margin-right: 16px; }
+  #stockGrid { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0; }
+  .stockTile { width: 110px; height: 62px; border: 1px solid #607D8B; background: #455A64; cursor: pointer; display: block; }
+  #stockAdd { width: 110px; height: 62px; border: 1px dashed #607D8B; color: #90A4AE; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; }
+  #stockAdd:hover { border-color: #90CAF9; color: #90CAF9; }
+  label { font-size: 12px; color: #B0BEC5; }
+  input[type=text], input[type=number], textarea, select {
+    background: #263238; color: #ECEFF1; border: 1px solid #546E7A;
+    border-radius: 4px; padding: 4px 6px; font-family: Consolas, monospace; font-size: 12px;
+  }
+  input[type=text], textarea { width: 100%; }
+  input[type=number] { width: 64px; }
+  button { background: #1976D2; color: #fff; border: 0; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; }
+  button:hover { background: #1E88E5; }
+  button.del { background: #B03A2E; padding: 2px 8px; }
+  button.mini { background: #546E7A; padding: 2px 5px; font-size: 10px; }
+  button.mini:disabled { opacity: 0.3; cursor: default; }
+  .row { display: flex; gap: 6px; align-items: center; margin: 4px 0; flex-wrap: wrap; }
+  .modes label { margin-right: 10px; font-size: 13px; color: #ECEFF1; cursor: pointer; }
+  table { border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 3px 6px; text-align: center; }
+  th { color: #90CAF9; font-weight: normal; }
+  tr.sel td { background: #455A64; }
+  #spotTable input[type=number] { width: 60px; padding: 4px 3px; }
+  #spotTable select { padding: 4px 3px; }
+  textarea { height: 190px; resize: vertical; }
+  #msg { font-size: 12px; color: #FFCC80; min-height: 16px; }
+  ul.help { margin: 4px 0 0; padding-left: 18px; font-size: 12px; color: #B0BEC5; line-height: 1.7; }
+</style>
+</head>
+<body>
+<header id="ghead">
+  <button id="sbToggle" class="mini" title="Toggle sidebar" style="font-size:15px;padding:4px 11px">≡</button>
+  <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true" style="flex:none"><rect x="0" y="0" width="32" height="32" rx="7" fill="#263238"/><rect x="6" y="6" width="20" height="20" rx="2" fill="#455A64"/><path d="M9 22.5 L14 16 L18.5 22.5 Z" fill="#B0BEC5"/><circle cx="20" cy="12.5" r="4" fill="none" stroke="#FF3B30" stroke-width="2.4"/></svg>
+  <span id="brand">Spot the Difference Editor</span>
+  <span class="ver">v1.16.2 (2026-08-12)</span>
+  <a id="credit" href="https://tipsytapstudio.com/" target="_blank" rel="noopener">© 2026 Tipsy Tap Studio</a>
+</header>
+<div id="cols">
+  <div id="sidebar">
+    <div id="sbTitle">Stages</div>
+    <div id="stageList"></div>
+    <div id="sbBtns"><button id="newStageBtn">+ Stage</button><button id="newFolderBtn">+ Folder</button></div>
+  </div>
+  <div id="sbResizer"></div>
+  <div id="appmain">
+  <div id="mainhead">
+    <span id="paneTitle"></span>
+    <button id="undoBtn" class="mini" title="Undo (Ctrl+Z)" style="font-size:14px;padding:3px 10px" disabled>←</button>
+    <button id="redoBtn" class="mini" title="Redo (Ctrl+Y)" style="font-size:14px;padding:3px 10px" disabled>→</button>
+  </div>
+<main>
+  <div id="stagewrap">
+    <div id="canvases">
+      <div class="cvbox">
+        <div class="cvlabel">A - Original</div>
+        <canvas id="cvA" width="600" height="600"></canvas>
+        <div id="statusA"></div>
+        <section id="memosec">
+          <h2>Notes (optional, saved to JSON)</h2>
+          <textarea id="stMemo" maxlength="1024" style="height:120px" placeholder="Intended differences, generation notes, TODO... (max 1024 chars)"></textarea>
+        </section>
+        <section id="stocksec">
+          <h2>Image Stock <span style="color:#78909C;font-weight:normal">(rewards &amp; more, max 10)</span></h2>
+          <div id="stockGrid"></div>
+          <div class="row">
+            <input type="number" id="rewW" value="1280" min="16"> ×
+            <input type="number" id="rewH" value="720" min="16">
+            <span style="font-size:11px;color:#B0BEC5">download size</span>
+          </div>
+          <input type="file" id="fileStock" accept="image/*" multiple style="display:none">
+        </section>
+      </div>
+      <div class="cvbox">
+        <div class="cvlabel">B - Modified (edit here)</div>
+        <canvas id="cv" width="600" height="600"></canvas>
+        <div id="status">Load images to start</div>
+        <section id="spotsec">
+          <h2 style="display:flex;align-items:center;gap:10px">Spots <button id="sortAreaBtn" style="font-size:11px;padding:3px 8px">Sort by area</button></h2>
+          <table id="spotTable"><thead><tr><th></th><th>#</th><th>Shape</th><th>x</th><th>y</th><th>W/r</th><th>H</th><th>Deg</th><th>Area</th><th></th><th></th></tr></thead><tbody></tbody></table>
+          <div id="overlapWarn" style="font-size:12px;color:#FF8A65;margin-top:6px;min-height:16px"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+  <aside>
+    <section>
+      <h2>Load Images</h2>
+      <div class="row"><label style="width:80px">A original</label><input type="file" id="fileA" accept="image/*" style="font-size:11px"></div>
+      <div class="row"><label style="width:80px">B modified</label><input type="file" id="fileB" accept="image/*" style="font-size:11px"></div>
+      <div class="row"><button id="resetBtn" style="background:#B03A2E">Clear this stage</button></div>
+      <div id="msg"></div>
+    </section>
+    <section>
+      <h2>Output Size</h2>
+      <div class="row">
+        <input type="number" id="outW" value="600" min="16"> ×
+        <input type="number" id="outH" value="600" min="16">
+        <button id="resizeBtn">Resize</button>
+      </div>
+      <div class="row">
+        <button id="dlA">Download A</button>
+        <button id="dlB">Download B</button>
+      </div>
+    </section>
+    <section class="modes">
+      <h2>View Mode (right canvas)</h2>
+      <label><input type="radio" name="mode" value="B" checked> B (modified)</label>
+      <label><input type="radio" name="mode" value="blink"> Blink A/B</label>
+      <label><input type="radio" name="mode" value="overlay"> Overlay 50%</label>
+    </section>
+    <section>
+      <h2>Auto Detect</h2>
+      <div class="row">
+        <label>Threshold</label>
+        <input type="range" id="thr" min="8" max="80" value="30" style="flex:1">
+        <span id="thrVal" style="width:24px;text-align:right">30</span>
+      </div>
+      <div class="row">
+        <label># of diffs</label>
+        <input type="number" id="numDiffs" min="1" max="30" placeholder="auto" style="width:70px">
+        <button id="detectBtn">Detect (replace spots)</button>
+      </div>
+    </section>
+    <section>
+      <h2>JSON Output (paste into hitbox.json "stages")</h2>
+      <div class="row">
+        <label>id</label><input type="number" id="stId" value="1" min="1">
+        <label>base</label><input type="text" id="stBase" value="s01_a.png" style="flex:1;width:auto">
+      </div>
+      <div class="row"><label style="width:14px">diff</label><input type="text" id="stDiff" value="s01_b.png" style="flex:1;width:auto"></div>
+      <textarea id="jsonOut" readonly></textarea>
+      <div class="row">
+        <button id="copyBtn">Copy</button>
+        <button id="zipBtn">Download ZIP (all assets)</button>
+        <span id="copyMsg" style="font-size:12px;color:#A5D6A7"></span>
+      </div>
+      <details style="margin-top:6px">
+        <summary style="font-size:12px;cursor:pointer">Load an existing entry to edit</summary>
+        <textarea id="jsonIn" style="height:100px;margin-top:6px" placeholder='{ "id": 1, ... } or paste the whole hitbox.json'></textarea>
+        <div class="row"><button id="importBtn">Import</button></div>
+      </details>
+    </section>
+    <section>
+      <h2>Controls</h2>
+      <ul class="help">
+        <li>Click an empty canvas to load its image</li>
+        <li>Click on B canvas: add spot / drag: move</li>
+        <li>Blue handles: resize (grabbed point moves, opposite side stays)</li>
+        <li>Green round handle: rotate (Shift = 15° steps)</li>
+        <li>Wheel: scale / Arrow keys: move 1px (Shift = 10px)</li>
+        <li>Right-click or Delete key: remove</li>
+        <li>← → buttons or Ctrl+Z / Ctrl+Y: undo / redo</li>
+        <li>Drag rows by ⠿ (or use ▲▼) to reorder spots</li>
+      </ul>
+    </section>
+  </aside>
+</main>
+  </div>
+</div>
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:10px">
+  <img id="modalImg" alt="" style="max-width:92vw;max-height:78vh;border:1px solid #607D8B;background:#455A64">
+  <div class="row" style="justify-content:center">
+    <button id="modalPrev" class="mini" style="font-size:14px;padding:4px 10px">‹</button>
+    <input type="text" id="modalName" style="width:220px">
+    <button id="modalNext" class="mini" style="font-size:14px;padding:4px 10px">›</button>
+    <button id="modalDL">Download</button>
+    <button id="modalDel" class="del" style="padding:5px 10px">Remove</button>
+    <button id="modalClose">Close</button>
+  </div>
+  <div id="modalInfo" style="font-size:12px;color:#B0BEC5"></div>
+</div>
+<div id="ctxMenu"></div>
+<script>
+(function () {
+  "use strict";
+  var cv = document.getElementById("cv");
+  var ctx = cv.getContext("2d");
+  var cvA = document.getElementById("cvA");
+  var ctxA = cvA.getContext("2d");
+  var origA = null, origB = null; // 読み込んだ元画像(リサイズはここから再計算)
+  var imgA = null, imgB = null;   // 現在の作業画像(Image または canvas)
+  var spots = [];                 // {type:"circle",x,y,r} | {type:"ellipse",x,y,rx,ry[,angle]} | {type:"rect",x,y,w,h[,angle]}
+  var sel = -1;
+  var mode = "B";
+  var blinkOn = true;
+  var drag = null;                // {mode:"move"|"handle", index, dx, dy, handle}
+  var rowDragIndex = null;        // テーブル行のドラッグ&ドロップ用
+  var MAX_SPOTS = 30;
+
+  function $(id) { return document.getElementById(id); }
+  function msg(text, warn) {
+    var el = $("msg");
+    el.textContent = text || "";
+    el.style.color = warn ? "#FF8A65" : "#FFCC80";
+  }
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function iw(img) { return img.naturalWidth || img.width; }
+  function ih(img) { return img.naturalHeight || img.height; }
+  function curW() { var b = imgB || imgA; return b ? iw(b) : cv.width; }
+  function curH() { var b = imgB || imgA; return b ? ih(b) : cv.height; }
+  function viewScaleFor(c) {
+    var r = c.getBoundingClientRect();
+    return r.width > 0 ? c.width / r.width : 1;
+  }
+  function viewScale() { return viewScaleFor(cv); }
+
+  /* ---------- 形状ヘルパー ---------- */
+  function halfW(s) { return s.type === "rect" ? s.w / 2 : (s.type === "ellipse" ? s.rx : s.r); }
+  function halfH(s) { return s.type === "rect" ? s.h / 2 : (s.type === "ellipse" ? s.ry : s.r); }
+  function angleOf(s) { return s.angle || 0; }
+  function toLocalFrame(s, px, py) {
+    // 中心基準・回転を打ち消したローカル座標へ変換
+    var a = -angleOf(s) * Math.PI / 180;
+    var dx = px - s.x, dy = py - s.y;
+    return { x: dx * Math.cos(a) - dy * Math.sin(a), y: dx * Math.sin(a) + dy * Math.cos(a) };
+  }
+  function toWorldFrame(s, lx, ly) {
+    var a = angleOf(s) * Math.PI / 180;
+    return { x: s.x + lx * Math.cos(a) - ly * Math.sin(a), y: s.y + lx * Math.sin(a) + ly * Math.cos(a) };
+  }
+  function hitShape(s, px, py) {
+    var p = toLocalFrame(s, px, py);
+    if (s.type === "rect") return Math.abs(p.x) <= s.w / 2 && Math.abs(p.y) <= s.h / 2;
+    var rx = halfW(s), ry = halfH(s);
+    if (rx <= 0 || ry <= 0) return false;
+    var dx = p.x / rx, dy = p.y / ry;
+    return dx * dx + dy * dy <= 1;
+  }
+  function convertType(s, t) {
+    if (s.type === t) return;
+    var hw = halfW(s), hh = halfH(s);
+    delete s.r; delete s.rx; delete s.ry; delete s.w; delete s.h;
+    if (t === "circle") { s.r = Math.round(Math.max(hw, hh)); delete s.angle; }
+    else if (t === "ellipse") { s.rx = Math.round(hw); s.ry = Math.round(hh); }
+    else { s.w = Math.round(hw * 2); s.h = Math.round(hh * 2); }
+    s.type = t;
+  }
+  function spotFromJSON(o) {
+    var s;
+    if (o.w != null && o.h != null) s = { type: "rect", x: o.x, y: o.y, w: o.w, h: o.h };
+    else if (o.rx != null && o.ry != null) s = { type: "ellipse", x: o.x, y: o.y, rx: o.rx, ry: o.ry };
+    else return { type: "circle", x: o.x, y: o.y, r: o.r != null ? o.r : 40 };
+    if (o.angle) s.angle = o.angle;
+    return s;
+  }
+  function spotJSONLine(s) {
+    var x = Math.round(s.x), y = Math.round(s.y);
+    var ang = angleOf(s) ? ', "angle": ' + Math.round(angleOf(s)) : "";
+    if (s.type === "rect") return '{ "x": ' + x + ', "y": ' + y + ', "w": ' + Math.round(s.w) + ', "h": ' + Math.round(s.h) + ang + ' }';
+    if (s.type === "ellipse") return '{ "x": ' + x + ', "y": ' + y + ', "rx": ' + Math.round(s.rx) + ', "ry": ' + Math.round(s.ry) + ang + ' }';
+    return '{ "x": ' + x + ', "y": ' + y + ', "r": ' + Math.round(s.r) + ' }';
+  }
+  function defaultR() { return Math.max(24, Math.round(Math.max(curW(), curH()) * 0.08)); }
+  function spotArea(s) {
+    if (s.type === "rect") return s.w * s.h;
+    if (s.type === "ellipse") return Math.PI * s.rx * s.ry;
+    return Math.PI * s.r * s.r;
+  }
+  function areaPct(s) {
+    var pct = spotArea(s) / (curW() * curH()) * 100;
+    if (pct >= 10) return Math.round(pct) + "%";
+    if (pct >= 1) return pct.toFixed(1) + "%";
+    return pct.toFixed(2) + "%";
+  }
+
+  /* ---------- 重なり判定 ----------
+   * 厳密な交差計算の代わりに、小さい方のシェイプをサンプリングして
+   * 両方に属する点の割合(重なり率)を求める。hitShape を流用。 */
+  function shapeBBox(s) {
+    var hw = halfW(s), hh = halfH(s);
+    var a = angleOf(s) * Math.PI / 180;
+    var c = Math.abs(Math.cos(a)), n = Math.abs(Math.sin(a));
+    var ex = hw * c + hh * n;
+    var ey = hw * n + hh * c;
+    return { x0: s.x - ex, x1: s.x + ex, y0: s.y - ey, y1: s.y + ey };
+  }
+  function overlapRatio(s1, s2) {
+    var small = spotArea(s1) <= spotArea(s2) ? s1 : s2;
+    var other = small === s1 ? s2 : s1;
+    var b1 = shapeBBox(small), b2 = shapeBBox(other);
+    if (b1.x1 < b2.x0 || b2.x1 < b1.x0 || b1.y1 < b2.y0 || b2.y1 < b1.y0) return 0;
+    var step = Math.max(1, Math.ceil(Math.max(b1.x1 - b1.x0, b1.y1 - b1.y0) / 30));
+    var inSmall = 0, inBoth = 0;
+    for (var y = b1.y0; y <= b1.y1; y += step) {
+      for (var x = b1.x0; x <= b1.x1; x += step) {
+        if (!hitShape(small, x, y)) continue;
+        inSmall++;
+        if (hitShape(other, x, y)) inBoth++;
+      }
+    }
+    return inSmall ? inBoth / inSmall : 0;
+  }
+  /* ---------- Undo / Redo ----------
+   * スポット配列と作業サイズをスナップショットして履歴管理する。
+   * 変更を伴う操作の「直前」に pushHistory() を呼ぶ。
+   * ホイール・矢印キーの連打は tag + 600ms で1操作にまとめる。 */
+  var undoStack = [];
+  var redoStack = [];
+  var HISTORY_MAX = 50;
+  var lastPushTag = null;
+  var lastPushTime = 0;
+  function historySnapshot() {
+    return JSON.stringify({ s: spots, w: curW(), h: curH() });
+  }
+  function pushHistory(tag) {
+    var now = Date.now();
+    if (tag && tag === lastPushTag && now - lastPushTime < 600) {
+      lastPushTime = now;
+      return;
+    }
+    var snap = historySnapshot();
+    lastPushTag = tag || null;
+    lastPushTime = now;
+    if (undoStack.length && undoStack[undoStack.length - 1] === snap) return;
+    undoStack.push(snap);
+    if (undoStack.length > HISTORY_MAX) undoStack.shift();
+    redoStack.length = 0;
+    updateHistoryButtons();
+  }
+  function applySnapshot(snap) {
+    var o = JSON.parse(snap);
+    if (o.w && o.h && (o.w !== curW() || o.h !== curH()) && (origA || origB)) {
+      if (origA) imgA = scaledCanvas(origA, o.w, o.h);
+      if (origB) imgB = scaledCanvas(origB, o.w, o.h);
+      fitCanvas();
+    }
+    spots = (o.s || []).map(spotFromJSON);
+    sel = -1;
+    updateAll();
+  }
+  function undo() {
+    var cur = historySnapshot();
+    while (undoStack.length) {
+      var snap = undoStack.pop();
+      if (snap !== cur) {
+        redoStack.push(cur);
+        applySnapshot(snap);
+        break;
+      }
+    }
+    lastPushTag = null;
+    updateHistoryButtons();
+  }
+  function redo() {
+    var cur = historySnapshot();
+    while (redoStack.length) {
+      var snap = redoStack.pop();
+      if (snap !== cur) {
+        undoStack.push(cur);
+        applySnapshot(snap);
+        break;
+      }
+    }
+    lastPushTag = null;
+    updateHistoryButtons();
+  }
+  function updateHistoryButtons() {
+    $("undoBtn").disabled = undoStack.length === 0;
+    $("redoBtn").disabled = redoStack.length === 0;
+  }
+  $("undoBtn").addEventListener("click", undo);
+  $("redoBtn").addEventListener("click", redo);
+
+  var overlapTimer = null;
+  function scheduleOverlapCheck() {
+    clearTimeout(overlapTimer);
+    overlapTimer = setTimeout(renderOverlaps, 150);
+  }
+  function renderOverlaps() {
+    var lines = [];
+    for (var i = 0; i < spots.length; i++) {
+      for (var j = i + 1; j < spots.length; j++) {
+        var r = overlapRatio(spots[i], spots[j]);
+        if (r >= 0.01) {
+          lines.push("⚠ Spot " + (i + 1) + " & " + (j + 1) + " overlap (" + Math.round(r * 100) + "%)");
+        }
+      }
+    }
+    $("overlapWarn").textContent = lines.join("  /  ");
+  }
+
+  /* ---------- セッション永続化 (IndexedDB) ----------
+   * リロードしても画像・スポット・設定が消えないよう自動保存する。
+   * 画像は dataURL 文字列で保存(localStorage では容量不足のため IndexedDB)。 */
+  var DB_NAME = "machigai_spot_editor";
+  var DB_STORE = "session";
+  function dbOpen(cb) {
+    if (typeof indexedDB === "undefined") { cb(null); return; }
+    try {
+      var req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = function () { req.result.createObjectStore(DB_STORE); };
+      req.onsuccess = function () { cb(req.result); };
+      req.onerror = function () { cb(null); };
+    } catch (e) { cb(null); }
+  }
+  function dbPut(key, val) {
+    dbOpen(function (db) {
+      if (!db) return;
+      try { db.transaction(DB_STORE, "readwrite").objectStore(DB_STORE).put(val, key); } catch (e) {}
+    });
+  }
+  function dbGet(key, cb) {
+    dbOpen(function (db) {
+      if (!db) { cb(undefined); return; }
+      try {
+        var req = db.transaction(DB_STORE, "readonly").objectStore(DB_STORE).get(key);
+        req.onsuccess = function () { cb(req.result); };
+        req.onerror = function () { cb(undefined); };
+      } catch (e) { cb(undefined); }
+    });
+  }
+  function dbClear(cb) {
+    dbOpen(function (db) {
+      if (!db) { if (cb) cb(); return; }
+      try {
+        var tx = db.transaction(DB_STORE, "readwrite");
+        tx.objectStore(DB_STORE).clear();
+        tx.oncomplete = function () { if (cb) cb(); };
+      } catch (e) { if (cb) cb(); }
+    });
+  }
+
+  /* ---------- ステージ管理(サイドバー) ----------
+   * 各ステージは独立したセッション(画像・スポット・設定・Stock)を持つ。
+   * キーは "state:<sid>" のようにステージIDで名前空間を分ける。 */
+  var stages = [];        // [{id, name(自動), customName?, folderId, createdAt}]
+  var folders = [];       // [{id, name, createdAt, collapsed}]
+  var curStageId = null;
+  var stageSeq = 0;
+  var dragStageId = null; // サイドバー内ドラッグ中のステージ
+  function sKey(base, sid) { return base + ":" + (sid || curStageId); }
+  function newStageId() { return "sg" + Date.now() + "_" + (stageSeq++); }
+  function findStage(sid) { return stages.filter(function (s) { return s.id === sid; })[0]; }
+  function displayName(st) { return st.customName || st.name || "(untitled)"; }
+  function stageCreatedAt(s) { return s.createdAt || parseInt((s.id || "").replace(/^sg/, "")) || 0; }
+  function syncStageName() {
+    if (restoring) return;
+    var st = findStage(curStageId);
+    if (!st) return;
+    var n = stagePrefix();
+    if (st.name !== n) {
+      st.name = n;
+      dbPut("stages", stages);
+      renderStageList();
+    }
+    $("paneTitle").textContent = displayName(st);
+  }
+
+  /* ---------- コンテキストメニュー(⋮) ---------- */
+  function openCtx(x, y, items) {
+    var m = $("ctxMenu");
+    m.innerHTML = "";
+    items.forEach(function (it) {
+      var d = document.createElement("div");
+      d.className = "mi";
+      d.textContent = it[0];
+      d.addEventListener("click", function (e) {
+        e.stopPropagation();
+        m.style.display = "none";
+        it[1]();
+      });
+      m.appendChild(d);
+    });
+    m.style.left = Math.min(x, window.innerWidth - 140) + "px";
+    m.style.top = Math.min(y, window.innerHeight - 40 * items.length - 10) + "px";
+    m.style.display = "block";
+  }
+  window.addEventListener("click", function () { $("ctxMenu").style.display = "none"; });
+
+  /* ---------- ステージ/フォルダ操作 ---------- */
+  function renameStage(sid) {
+    var st = findStage(sid);
+    if (!st) return;
+    var v = window.prompt("Stage name (empty = auto from base file name):", displayName(st));
+    if (v === null) return;
+    v = v.trim();
+    if (v) st.customName = v;
+    else delete st.customName;
+    dbPut("stages", stages);
+    renderStageList();
+  }
+  function duplicateStage(sid) {
+    var src = findStage(sid);
+    if (!src) return;
+    if (sid === curStageId) { clearTimeout(saveTimer); saveState(); }
+    var nid = newStageId();
+    var entry = { id: nid, name: src.name, folderId: src.folderId || null, createdAt: Date.now() };
+    if (src.customName) entry.customName = src.customName + " copy";
+    var pending = 4;
+    function done() {
+      if (--pending) return;
+      stages.push(entry);
+      dbPut("stages", stages);
+      renderStageList();
+      msg("Stage duplicated: " + displayName(entry));
+    }
+    ["state", "imgA", "imgB"].forEach(function (k) {
+      dbGet(sKey(k, sid), function (v) {
+        if (v) dbPut(sKey(k, nid), v);
+        done();
+      });
+    });
+    dbGet(sKey("stockIndex", sid), function (idx) {
+      var metas = idx || [];
+      if (!metas.length) { dbPut(sKey("stockIndex", nid), []); done(); return; }
+      // Stock画像は共有せず複製する(片方の削除でもう片方が壊れないように)
+      var newIdx = [];
+      var p2 = metas.length;
+      metas.forEach(function (m) {
+        var nimg = "st" + Date.now() + "_" + (stockSeq++);
+        dbGet("img_" + m.id, function (rec) {
+          if (rec) dbPut("img_" + nimg, rec);
+          newIdx.push({ id: nimg, name: m.name });
+          if (!--p2) { dbPut(sKey("stockIndex", nid), newIdx); done(); }
+        });
+      });
+    });
+  }
+  function newFolder() {
+    var v = window.prompt("Folder name:", "Project");
+    if (v === null) return;
+    v = v.trim() || "Folder";
+    folders.push({ id: "fd" + Date.now() + "_" + (stageSeq++), name: v, createdAt: Date.now(), collapsed: false });
+    dbPut("folders", folders);
+    renderStageList();
+  }
+  function renameFolder(fid) {
+    var f = folders.filter(function (x) { return x.id === fid; })[0];
+    if (!f) return;
+    var v = window.prompt("Folder name:", f.name);
+    if (v === null) return;
+    f.name = v.trim() || f.name;
+    dbPut("folders", folders);
+    renderStageList();
+  }
+  function deleteFolder(fid) {
+    var f = folders.filter(function (x) { return x.id === fid; })[0];
+    if (!f) return;
+    if (!window.confirm("Delete folder \"" + f.name + "\"? Stages inside will move to the root.")) return;
+    stages.forEach(function (s) { if (s.folderId === fid) s.folderId = null; });
+    folders = folders.filter(function (x) { return x.id !== fid; });
+    dbPut("folders", folders);
+    dbPut("stages", stages);
+    renderStageList();
+  }
+  function moveStageToFolder(sid, fid) {
+    var st = findStage(sid);
+    if (!st || st.folderId === fid) return;
+    st.folderId = fid;
+    dbPut("stages", stages);
+    renderStageList();
+  }
+
+  function renderStageList() {
+    var list = $("stageList");
+    list.innerHTML = "";
+    function stageRow(st, indent) {
+      var row = document.createElement("div");
+      row.className = "stageItem" + (st.id === curStageId ? " active" : "");
+      row.style.paddingLeft = (14 + indent) + "px";
+      row.draggable = true;
+      row.addEventListener("dragstart", function (e) {
+        dragStageId = st.id;
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+      });
+      var label = document.createElement("span");
+      label.className = "sname";
+      label.textContent = displayName(st);
+      label.title = displayName(st);
+      row.appendChild(label);
+      var kb = document.createElement("button");
+      kb.className = "mini";
+      kb.textContent = "⋮";
+      kb.addEventListener("click", function (e) {
+        e.stopPropagation();
+        openCtx(e.clientX, e.clientY, [
+          ["Rename", function () { renameStage(st.id); }],
+          ["Duplicate", function () { duplicateStage(st.id); }],
+          ["Delete", function () { deleteStage(st.id); }]
+        ]);
+      });
+      row.appendChild(kb);
+      row.addEventListener("click", function () { switchStage(st.id); });
+      list.appendChild(row);
+    }
+    var byNewest = function (a, b) { return stageCreatedAt(b) - stageCreatedAt(a); };
+    folders.slice().sort(function (a, b) { return b.createdAt - a.createdAt; }).forEach(function (f) {
+      var frow = document.createElement("div");
+      frow.className = "folderItem";
+      var tri = document.createElement("span");
+      tri.textContent = f.collapsed ? "▸" : "▾";
+      frow.appendChild(tri);
+      var fl = document.createElement("span");
+      fl.className = "sname";
+      fl.textContent = f.name;
+      fl.title = f.name;
+      frow.appendChild(fl);
+      var kb = document.createElement("button");
+      kb.className = "mini";
+      kb.textContent = "⋮";
+      kb.addEventListener("click", function (e) {
+        e.stopPropagation();
+        openCtx(e.clientX, e.clientY, [
+          ["Rename", function () { renameFolder(f.id); }],
+          ["Delete folder", function () { deleteFolder(f.id); }]
+        ]);
+      });
+      frow.appendChild(kb);
+      frow.addEventListener("click", function () {
+        f.collapsed = !f.collapsed;
+        dbPut("folders", folders);
+        renderStageList();
+      });
+      frow.addEventListener("dragover", function (e) { e.preventDefault(); frow.classList.add("dropTarget"); });
+      frow.addEventListener("dragleave", function () { frow.classList.remove("dropTarget"); });
+      frow.addEventListener("drop", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        frow.classList.remove("dropTarget");
+        if (dragStageId) moveStageToFolder(dragStageId, f.id);
+        dragStageId = null;
+      });
+      list.appendChild(frow);
+      if (!f.collapsed) {
+        stages.filter(function (s) { return s.folderId === f.id; }).sort(byNewest).forEach(function (s) { stageRow(s, 18); });
+      }
+    });
+    stages.filter(function (s) { return !s.folderId; }).sort(byNewest).forEach(function (s) { stageRow(s, 0); });
+    var cur = findStage(curStageId);
+    $("paneTitle").textContent = cur ? displayName(cur) : "";
+  }
+  function clearWorkspace() {
+    origA = origB = imgA = imgB = null;
+    spots = [];
+    sel = -1;
+    stock = [];
+    undoStack.length = 0;
+    redoStack.length = 0;
+    updateHistoryButtons();
+    cv.width = cvA.width = 600;
+    cv.height = cvA.height = 600;
+    $("stId").value = 1;
+    $("stBase").value = "s01_a.png";
+    $("stDiff").value = "s01_b.png";
+    $("stMemo").value = "";
+    $("outW").value = 600;
+    $("outH").value = 600;
+    $("rewW").value = 1280;
+    $("rewH").value = 720;
+    $("thr").value = 30;
+    $("thrVal").textContent = "30";
+    $("numDiffs").value = "";
+    renderStock();
+    updateAll();
+  }
+  function switchStage(sid) {
+    if (sid === curStageId) return;
+    clearTimeout(saveTimer);
+    saveState(); // 現在のステージを確実に書き出してから切り替える
+    restoring = true;
+    curStageId = sid;
+    dbPut("curStage", sid);
+    clearWorkspace();
+    renderStageList();
+    loadStage(sid);
+  }
+  function newStage() {
+    clearTimeout(saveTimer);
+    saveState();
+    var sid = newStageId();
+    stages.push({ id: sid, name: "", folderId: null, createdAt: Date.now() });
+    curStageId = sid;
+    dbPut("stages", stages);
+    dbPut("curStage", sid);
+    restoring = true;
+    clearWorkspace();
+    restoring = false;
+    syncStageName();
+    renderStageList();
+    saveState();
+    msg("New stage created");
+  }
+  function deleteStage(sid) {
+    var st = stages.filter(function (s) { return s.id === sid; })[0];
+    if (!st) return;
+    if (!window.confirm("Delete stage \"" + displayName(st) + "\"? This cannot be undone.")) return;
+    // ステージ配下のStock画像も削除する
+    dbGet(sKey("stockIndex", sid), function (idx) {
+      (idx || []).forEach(function (m) { dbPut("img_" + m.id, null); });
+      ["state", "imgA", "imgB", "stockIndex"].forEach(function (k) { dbPut(sKey(k, sid), null); });
+    });
+    stages = stages.filter(function (s) { return s.id !== sid; });
+    if (!stages.length) {
+      var nid = newStageId();
+      stages.push({ id: nid, name: "", folderId: null, createdAt: Date.now() });
+      curStageId = nid;
+      dbPut("stages", stages);
+      dbPut("curStage", nid);
+      restoring = true;
+      clearWorkspace();
+      restoring = false;
+      renderStageList();
+      return;
+    }
+    dbPut("stages", stages);
+    if (sid === curStageId) {
+      curStageId = stages[0].id;
+      dbPut("curStage", curStageId);
+      restoring = true;
+      clearWorkspace();
+      renderStageList();
+      loadStage(curStageId);
+    } else {
+      renderStageList();
+    }
+  }
+  $("newStageBtn").addEventListener("click", newStage);
+  $("newFolderBtn").addEventListener("click", newFolder);
+  $("sbToggle").addEventListener("click", function () {
+    var closed = $("sidebar").classList.toggle("closed");
+    dbPut("sbClosed", closed);
+  });
+  // ルート(フォルダ外)へのドロップ: 一覧の余白 or "Stages" 見出し
+  ["sbTitle", "stageList"].forEach(function (id) {
+    var el = $(id);
+    el.addEventListener("dragover", function (e) { e.preventDefault(); });
+    el.addEventListener("drop", function (e) {
+      if (id === "stageList" && e.target !== el) return; // 行やフォルダ上のdropは各自が処理
+      e.preventDefault();
+      if (dragStageId) moveStageToFolder(dragStageId, null);
+      dragStageId = null;
+    });
+  });
+  // サイドバー幅のドラッグ調整
+  (function () {
+    var resizing = false;
+    $("sbResizer").addEventListener("mousedown", function (e) {
+      resizing = true;
+      e.preventDefault();
+    });
+    window.addEventListener("mousemove", function (e) {
+      if (!resizing) return;
+      $("sidebar").style.width = clamp(e.clientX, 140, 420) + "px";
+    });
+    window.addEventListener("mouseup", function () {
+      if (!resizing) return;
+      resizing = false;
+      dbPut("sbWidth", parseInt($("sidebar").style.width, 10) || 210);
+    });
+  })();
+
+  var saveTimer = null;
+  var restoring = true; // 起動直後の初期値で保存が走らないよう、ロード完了までは true
+  function saveState() {
+    if (restoring || !curStageId) return;
+    dbPut(sKey("state"), {
+      spots: JSON.parse(JSON.stringify(spots)),
+      id: $("stId").value,
+      base: $("stBase").value,
+      diff: $("stDiff").value,
+      memo: $("stMemo").value,
+      outW: $("outW").value,
+      outH: $("outH").value,
+      rewW: $("rewW").value,
+      rewH: $("rewH").value,
+      thr: $("thr").value,
+      numDiffs: $("numDiffs").value,
+      mode: mode,
+      curW: (imgA || imgB) ? curW() : null,
+      curH: (imgA || imgB) ? curH() : null
+    });
+  }
+  function saveStateDebounced() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveState, 300);
+  }
+
+  function applyState(st) {
+    $("stId").value = st.id || 1;
+    if (st.base) $("stBase").value = st.base;
+    if (st.diff) $("stDiff").value = st.diff;
+    $("stMemo").value = st.memo || "";
+    $("outW").value = st.outW || 600;
+    $("outH").value = st.outH || 600;
+    $("rewW").value = st.rewW || 1280;
+    $("rewH").value = st.rewH || 720;
+    $("thr").value = st.thr || 30;
+    $("thrVal").textContent = $("thr").value;
+    $("numDiffs").value = st.numDiffs || "";
+    if (st.mode) {
+      mode = st.mode;
+      var r = document.querySelector('input[name=mode][value="' + mode + '"]');
+      if (r) r.checked = true;
+    }
+    spots = (st.spots || []).map(spotFromJSON);
+    sel = -1;
+    restoring = false;
+    updateAll();
+    msg("Previous session restored");
+  }
+
+  function loadStage(sid) {
+    restoring = true;
+    restoreStock(sid);
+    dbGet(sKey("state", sid), function (st) {
+      if (sid !== curStageId) return; // 読み込み中に別ステージへ切り替わった
+      if (!st) { restoring = false; syncStageName(); return; }
+      dbGet(sKey("imgA", sid), function (a) {
+        dbGet(sKey("imgB", sid), function (b) {
+          if (sid !== curStageId) return;
+          var need = (a ? 1 : 0) + (b ? 1 : 0);
+          if (!need) { applyState(st); return; }
+          var done = 0;
+          function finalize() {
+            if (sid !== curStageId) return;
+            // リサイズ済みだった場合は元画像から作業サイズを再現(スポットは保存値のまま)
+            var o = origB || origA;
+            if (st.curW && st.curH && o && (iw(o) !== st.curW || ih(o) !== st.curH)) {
+              if (origA) imgA = scaledCanvas(origA, st.curW, st.curH);
+              if (origB) imgB = scaledCanvas(origB, st.curW, st.curH);
+            }
+            fitCanvas();
+            applyState(st);
+          }
+          function one(which, rec) {
+            if (!rec) return;
+            var img = new Image();
+            img.onload = function () {
+              if (sid !== curStageId) return;
+              if (which === "A") { origA = img; imgA = img; }
+              else { origB = img; imgB = img; }
+              if (++done === need) finalize();
+            };
+            img.onerror = function () { if (++done === need) finalize(); };
+            img.src = rec.src;
+          }
+          one("A", a);
+          one("B", b);
+        });
+      });
+    });
+  }
+
+  /* v1.14以前の単一セッション形式(キーに:sidが無い)を最初のステージへ移行する */
+  function initStages() {
+    dbGet("sbClosed", function (closed) {
+      if (closed) $("sidebar").classList.add("closed");
+    });
+    dbGet("sbWidth", function (w) {
+      if (w) $("sidebar").style.width = w + "px";
+    });
+    dbGet("folders", function (fs) {
+      if (fs && fs.length) {
+        folders = fs;
+        renderStageList();
+      }
+    });
+    dbGet("stages", function (list) {
+      if (list && list.length) {
+        stages = list;
+        // v1.15以前のエントリに createdAt / folderId を補完
+        stages.forEach(function (s) {
+          if (!s.createdAt) s.createdAt = stageCreatedAt(s) || Date.now();
+          if (s.folderId === undefined) s.folderId = null;
+        });
+        dbGet("curStage", function (cs) {
+          var found = stages.filter(function (s) { return s.id === cs; })[0];
+          curStageId = found ? cs : stages[0].id;
+          renderStageList();
+          loadStage(curStageId);
+        });
+        return;
+      }
+      var sid = newStageId();
+      stages = [{ id: sid, name: "", folderId: null, createdAt: Date.now() }];
+      curStageId = sid;
+      dbGet("state", function (old) {
+        if (!old) {
+          dbPut("stages", stages);
+          dbPut("curStage", sid);
+          renderStageList();
+          restoring = false;
+          syncStageName();
+          return;
+        }
+        var pending = 4;
+        function step() {
+          if (--pending) return;
+          dbPut("stages", stages);
+          dbPut("curStage", sid);
+          renderStageList();
+          loadStage(sid);
+        }
+        [["state", old]].forEach(function (p) { dbPut(sKey(p[0], sid), p[1]); step(); });
+        ["imgA", "imgB", "stockIndex"].forEach(function (k) {
+          dbGet(k, function (v) {
+            if (v) dbPut(sKey(k, sid), v);
+            dbPut(k, null);
+            step();
+          });
+        });
+        dbPut("state", null);
+      });
+    });
+  }
+
+  /* ---------- 画像読み込み ---------- */
+  function setImage(which, img, filename) {
+    if (which === "A") {
+      origA = img;
+      imgA = img;
+      if (filename) $("stBase").value = filename;
+    } else {
+      origB = img;
+      imgB = img;
+      if (filename) $("stDiff").value = filename;
+    }
+    fitCanvas();
+    updateAll();
+  }
+  function loadFromSrc(which, src, name) {
+    var img = new Image();
+    img.onload = function () {
+      setImage(which, img, name);
+      msg(which + ": loaded " + name);
+      // dataURL で読み込まれた画像はセッションに保存(リロード復元用)
+      if (!restoring && src.substring(0, 5) === "data:") {
+        dbPut(sKey("img" + which), { src: src, name: name });
+      }
+    };
+    img.onerror = function () { msg(which + ": failed to load " + name, true); };
+    img.src = src;
+  }
+  function loadFromFile(which, file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () { loadFromSrc(which, reader.result, file.name); };
+    reader.readAsDataURL(file);
+  }
+  $("fileA").addEventListener("change", function () { loadFromFile("A", this.files[0]); });
+  $("fileB").addEventListener("change", function () { loadFromFile("B", this.files[0]); });
+
+  function fitCanvas() {
+    var base = imgB || imgA;
+    if (!base) return;
+    if (cv.width !== iw(base) || cv.height !== ih(base)) {
+      cv.width = iw(base);
+      cv.height = ih(base);
+    }
+    if (cvA.width !== cv.width || cvA.height !== cv.height) {
+      cvA.width = cv.width;
+      cvA.height = cv.height;
+    }
+  }
+
+  /* ---------- リサイズ・ダウンロード ---------- */
+  function scaledCanvas(src, tw, th) {
+    var cur = src;
+    var cw = iw(src), ch = ih(src);
+    while (cw > tw * 2 && ch > th * 2) {
+      var half = document.createElement("canvas");
+      half.width = Math.round(cw / 2);
+      half.height = Math.round(ch / 2);
+      half.getContext("2d").drawImage(cur, 0, 0, half.width, half.height);
+      cur = half; cw = half.width; ch = half.height;
+    }
+    var c = document.createElement("canvas");
+    c.width = tw; c.height = th;
+    c.getContext("2d").drawImage(cur, 0, 0, tw, th);
+    return c;
+  }
+  function resizeTo(tw, th) {
+    if (!origA && !origB) { msg("Load images first", true); return; }
+    if (!(tw >= 16 && th >= 16)) { msg("Invalid output size", true); return; }
+    var prevW = curW(), prevH = curH();
+    var o = origB || origA;
+    if (Math.abs(iw(o) / ih(o) - tw / th) > 0.01) {
+      msg("Warning: aspect ratio differs from the source; images will be stretched", true);
+    }
+    pushHistory();
+    if (origA) imgA = scaledCanvas(origA, tw, th);
+    if (origB) imgB = scaledCanvas(origB, tw, th);
+    var fx = tw / prevW, fy = th / prevH;
+    spots.forEach(function (s) {
+      s.x = Math.round(s.x * fx);
+      s.y = Math.round(s.y * fy);
+      if (s.type === "circle") s.r = Math.max(4, Math.round(s.r * (fx + fy) / 2));
+      else if (s.type === "ellipse") { s.rx = Math.max(4, Math.round(s.rx * fx)); s.ry = Math.max(4, Math.round(s.ry * fy)); }
+      else { s.w = Math.max(8, Math.round(s.w * fx)); s.h = Math.max(8, Math.round(s.h * fy)); }
+    });
+    fitCanvas();
+    updateAll();
+    msg("Resized to " + tw + "x" + th + " (spot coordinates converted)");
+  }
+  $("resizeBtn").addEventListener("click", function () {
+    resizeTo(Number($("outW").value), Number($("outH").value));
+  });
+  function imageDataURL(which) {
+    var img = which === "A" ? imgA : imgB;
+    if (!img) return null;
+    var c = document.createElement("canvas");
+    c.width = iw(img); c.height = ih(img);
+    c.getContext("2d").drawImage(img, 0, 0);
+    return c.toDataURL("image/png");
+  }
+  function downloadImage(which) {
+    try {
+      var url = imageDataURL(which);
+      if (!url) { msg("Image " + which + " is not loaded", true); return; }
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = (which === "A" ? $("stBase").value : $("stDiff").value) || (which.toLowerCase() + ".png");
+      a.click();
+      msg("Downloaded " + which + " (" + curW() + "x" + curH() + ")");
+    } catch (err) {
+      msg("Cannot export the image (source restriction)", true);
+    }
+  }
+  $("dlA").addEventListener("click", function () { downloadImage("A"); });
+  $("dlB").addEventListener("click", function () { downloadImage("B"); });
+
+  /* ---------- Image Stock(クリア画像・失敗画像・ボツ案・イメージボード等の自由用途) ----------
+   * 最大10枚。役割は固定しない。名前はモーダルで編集でき、DL時のファイル名になる。
+   * IndexedDB: "stockIndex" = [{id,name}] の順序リスト、画像本体は "img_"+id。 */
+  var MAX_STOCK = 10;
+  var stock = []; // {id, name, src, img}
+  var stockSeq = 0;
+  var modalIndex = -1;
+  function stockSaveIndex() {
+    dbPut(sKey("stockIndex"), stock.map(function (s) { return { id: s.id, name: s.name }; }));
+  }
+  function addStockImage(src, name) {
+    if (stock.length >= MAX_STOCK) { msg("Image stock is full (max " + MAX_STOCK + ")", true); return; }
+    var id = "st" + Date.now() + "_" + (stockSeq++);
+    var img = new Image();
+    img.onload = function () {
+      // 複数同時追加の競合対策: ロード完了時にも上限を再チェック
+      if (stock.length >= MAX_STOCK) { msg("Image stock is full (max " + MAX_STOCK + ")", true); return; }
+      stock.push({ id: id, name: name, src: src, img: img });
+      if (src.substring(0, 5) === "data:") {
+        dbPut("img_" + id, { src: src, name: name });
+        stockSaveIndex();
+      }
+      renderStock();
+      msg("Added " + name + " (" + stock.length + "/" + MAX_STOCK + ")");
+    };
+    img.onerror = function () { msg("Failed to load " + name, true); };
+    img.src = src;
+  }
+  function removeStockAt(i) {
+    var item = stock[i];
+    if (!item) return;
+    dbPut("img_" + item.id, null);
+    stock.splice(i, 1);
+    stockSaveIndex();
+    renderStock();
+  }
+  function renderStock() {
+    var grid = $("stockGrid");
+    grid.innerHTML = "";
+    stock.forEach(function (item, i) {
+      var c = document.createElement("canvas");
+      c.width = 110;
+      c.height = 62;
+      c.className = "stockTile";
+      c.title = item.name;
+      var g = c.getContext("2d");
+      g.fillStyle = "#455A64";
+      g.fillRect(0, 0, c.width, c.height);
+      if (item.img) {
+        var sc = Math.min(c.width / iw(item.img), c.height / ih(item.img));
+        var w = iw(item.img) * sc, h = ih(item.img) * sc;
+        g.drawImage(item.img, (c.width - w) / 2, (c.height - h) / 2, w, h);
+      }
+      c.addEventListener("click", function () { openModal(i); });
+      grid.appendChild(c);
+    });
+    if (stock.length < MAX_STOCK) {
+      var add = document.createElement("div");
+      add.id = "stockAdd";
+      add.textContent = "+";
+      add.title = "Add images";
+      add.addEventListener("click", function () { $("fileStock").click(); });
+      grid.appendChild(add);
+    }
+  }
+  $("fileStock").addEventListener("change", function () {
+    var files = Array.prototype.slice.call(this.files || []);
+    this.value = "";
+    var room = MAX_STOCK - stock.length;
+    files.slice(0, room).forEach(function (file) {
+      var reader = new FileReader();
+      reader.onload = function () { addStockImage(reader.result, file.name); };
+      reader.readAsDataURL(file);
+    });
+    if (files.length > room) msg("Image stock is full (max " + MAX_STOCK + ")", true);
+  });
+  ["rewW", "rewH"].forEach(function (id) { $(id).addEventListener("change", saveStateDebounced); });
+
+  /* ---------- 拡大モーダル ---------- */
+  function openModal(i) {
+    var item = stock[i];
+    if (!item || !item.src) return;
+    modalIndex = i;
+    $("modalImg").src = item.src;
+    $("modalName").value = item.name;
+    $("modalInfo").textContent = (item.img ? iw(item.img) + "x" + ih(item.img) : "") + "  (" + (i + 1) + "/" + stock.length + ")";
+    $("modal").style.display = "flex";
+  }
+  function closeModal() {
+    $("modal").style.display = "none";
+    modalIndex = -1;
+  }
+  function modalStep(d) {
+    if (!stock.length) { closeModal(); return; }
+    openModal((modalIndex + d + stock.length) % stock.length);
+  }
+  $("modal").addEventListener("click", function (e) { if (e.target === this) closeModal(); });
+  $("modalClose").addEventListener("click", closeModal);
+  $("modalPrev").addEventListener("click", function () { modalStep(-1); });
+  $("modalNext").addEventListener("click", function () { modalStep(1); });
+  $("modalName").addEventListener("change", function () {
+    var item = stock[modalIndex];
+    if (item) {
+      item.name = this.value || "image.png";
+      stockSaveIndex();
+      renderStock();
+    }
+  });
+  $("modalDel").addEventListener("click", function () {
+    removeStockAt(modalIndex);
+    if (stock.length) openModal(Math.min(modalIndex, stock.length - 1));
+    else closeModal();
+  });
+  $("modalDL").addEventListener("click", function () {
+    var item = stock[modalIndex];
+    if (!item || !item.img) return;
+    try {
+      var tw = Number($("rewW").value), th = Number($("rewH").value);
+      if (!(tw >= 16 && th >= 16)) { msg("Invalid download size", true); return; }
+      var a = document.createElement("a");
+      a.href = scaledCanvas(item.img, tw, th).toDataURL("image/png");
+      a.download = item.name.replace(/\.[a-zA-Z0-9]+$/, "") + ".png";
+      a.click();
+      msg("Downloaded " + a.download + " (" + tw + "x" + th + ")");
+    } catch (err) {
+      msg("Cannot export the image (source restriction)", true);
+    }
+  });
+
+  /* ---------- ZIP一括出力(無圧縮STORE格納・依存ライブラリなし) ----------
+   * s01.zip └ s01/ ├ s01_a.png ├ s01_b.png ├ s01.json └ images/(Stock全画像を元バイト列のまま)
+   * PNGは圧縮済みなので無圧縮で十分。UTF-8ファイル名フラグ対応。 */
+  var CRC_TABLE = (function () {
+    var t = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      t[n] = c >>> 0;
+    }
+    return t;
+  })();
+  function crc32(data) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < data.length; i++) c = CRC_TABLE[(c ^ data[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  function dataURLBytes(url) {
+    var bin = atob(url.substring(url.indexOf(",") + 1));
+    var arr = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return arr;
+  }
+  function zipStore(files) {
+    var enc = new TextEncoder();
+    var parts = [], central = [], offset = 0, centralSize = 0;
+    files.forEach(function (f) {
+      var nameBytes = enc.encode(f.name);
+      var crc = crc32(f.data);
+      var lf = new Uint8Array(30 + nameBytes.length);
+      var dv = new DataView(lf.buffer);
+      dv.setUint32(0, 0x04034b50, true);
+      dv.setUint16(4, 20, true);
+      dv.setUint16(6, 0x0800, true); // UTF-8ファイル名
+      dv.setUint16(8, 0, true);      // 無圧縮(STORE)
+      dv.setUint32(14, crc, true);
+      dv.setUint32(18, f.data.length, true);
+      dv.setUint32(22, f.data.length, true);
+      dv.setUint16(26, nameBytes.length, true);
+      lf.set(nameBytes, 30);
+      parts.push(lf, f.data);
+      var cf = new Uint8Array(46 + nameBytes.length);
+      var cv2 = new DataView(cf.buffer);
+      cv2.setUint32(0, 0x02014b50, true);
+      cv2.setUint16(4, 20, true);
+      cv2.setUint16(6, 20, true);
+      cv2.setUint16(8, 0x0800, true);
+      cv2.setUint16(10, 0, true);
+      cv2.setUint32(16, crc, true);
+      cv2.setUint32(20, f.data.length, true);
+      cv2.setUint32(24, f.data.length, true);
+      cv2.setUint16(28, nameBytes.length, true);
+      cv2.setUint32(42, offset, true);
+      cf.set(nameBytes, 46);
+      central.push(cf);
+      centralSize += cf.length;
+      offset += lf.length + f.data.length;
+    });
+    var eocd = new Uint8Array(22);
+    var ev = new DataView(eocd.buffer);
+    ev.setUint32(0, 0x06054b50, true);
+    ev.setUint16(8, files.length, true);
+    ev.setUint16(10, files.length, true);
+    ev.setUint32(12, centralSize, true);
+    ev.setUint32(16, offset, true);
+    return new Blob(parts.concat(central, [eocd]), { type: "application/zip" });
+  }
+  function stagePrefix() {
+    var base = $("stBase").value || "stage_a.png";
+    var m = base.match(/^(.*)_a\.[a-zA-Z0-9]+$/);
+    return m ? m[1] : base.replace(/\.[a-zA-Z0-9]+$/, "");
+  }
+  function buildZip() {
+    var prefix = stagePrefix();
+    var dir = prefix + "/";
+    var files = [];
+    var used = {};
+    function uniqueName(name) {
+      if (!used[name]) { used[name] = 1; return name; }
+      used[name]++;
+      return name.replace(/(\.[a-zA-Z0-9]+)$/, "(" + used[name] + ")$1");
+    }
+    if (imgA) files.push({ name: dir + uniqueName($("stBase").value || "a.png"), data: dataURLBytes(imageDataURL("A")) });
+    if (imgB) files.push({ name: dir + uniqueName($("stDiff").value || "b.png"), data: dataURLBytes(imageDataURL("B")) });
+    files.push({ name: dir + prefix + ".json", data: new TextEncoder().encode(entryJSON() + "\n") });
+    stock.forEach(function (item) {
+      if (item.src) {
+        files.push({ name: dir + "images/" + uniqueName(item.name), data: dataURLBytes(item.src) });
+      }
+    });
+    return { blob: zipStore(files), name: prefix + ".zip", count: files.length };
+  }
+  $("zipBtn").addEventListener("click", function () {
+    try {
+      var z = buildZip();
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(z.blob);
+      a.download = z.name;
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+      msg("Downloaded " + z.name + " (" + z.count + " files, " + Math.round(z.blob.size / 1024) + " KB)");
+    } catch (err) {
+      msg("Cannot export zip (source restriction?)", true);
+    }
+  });
+
+  function restoreStock(sid) {
+    dbGet(sKey("stockIndex", sid), function (idx) {
+      if (sid !== curStageId) return;
+      var metas = (idx || []).slice(0, MAX_STOCK);
+      metas.forEach(function (m) {
+        // 順序を保つため先にプレースホルダを置き、ロード完了時に埋める
+        var item = { id: m.id, name: m.name || "image.png", src: null, img: null };
+        stock.push(item);
+        dbGet("img_" + m.id, function (rec) {
+          if (rec && rec.src && sid === curStageId) {
+            var img = new Image();
+            img.onload = function () {
+              if (sid !== curStageId) return;
+              item.src = rec.src;
+              item.img = img;
+              renderStock();
+            };
+            img.src = rec.src;
+          }
+        });
+      });
+      renderStock();
+    });
+  }
+
+  /* ---------- 描画 ---------- */
+  function handleLocalPoints(s, vs) {
+    // 中心基準のローカル座標。描画・判定時に toWorldFrame で回転を反映する
+    var hw = halfW(s), hh = halfH(s);
+    var pts = [
+      { id: "e", x: hw, y: 0 },
+      { id: "w", x: -hw, y: 0 },
+      { id: "n", x: 0, y: -hh },
+      { id: "s", x: 0, y: hh }
+    ];
+    if (s.type === "rect") {
+      pts.push(
+        { id: "ne", x: hw, y: -hh },
+        { id: "nw", x: -hw, y: -hh },
+        { id: "se", x: hw, y: hh },
+        { id: "sw", x: -hw, y: hh }
+      );
+    }
+    if (s.type !== "circle") {
+      pts.push({ id: "rot", x: 0, y: -hh - 24 * (vs || 1) });
+    }
+    return pts;
+  }
+  function drawSpots(g, showHandles, vs) {
+    for (var i = 0; i < spots.length; i++) {
+      var s = spots[i];
+      var rad = angleOf(s) * Math.PI / 180;
+      g.save();
+      g.translate(s.x, s.y);
+      g.rotate(rad);
+      g.beginPath();
+      if (s.type === "rect") g.rect(-s.w / 2, -s.h / 2, s.w, s.h);
+      else g.ellipse(0, 0, Math.max(1, halfW(s)), Math.max(1, halfH(s)), 0, 0, Math.PI * 2);
+      g.fillStyle = i === sel ? "rgba(0,160,255,0.18)" : "rgba(255,59,48,0.15)";
+      g.fill();
+      g.lineWidth = 3 * vs;
+      g.strokeStyle = i === sel ? "#00A0FF" : "#FF3B30";
+      g.stroke();
+      g.restore();
+      g.fillStyle = i === sel ? "#00A0FF" : "#FF3B30";
+      g.font = "bold " + Math.round(15 * vs) + "px sans-serif";
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      g.fillText(String(i + 1), s.x, s.y);
+      if (showHandles && i === sel) {
+        var pts = handleLocalPoints(s, vs);
+        var hsz = 4.5 * vs;
+        for (var p = 0; p < pts.length; p++) {
+          var wp = toWorldFrame(s, pts[p].x, pts[p].y);
+          if (pts[p].id === "rot") {
+            var np = toWorldFrame(s, 0, -halfH(s));
+            g.beginPath();
+            g.moveTo(np.x, np.y);
+            g.lineTo(wp.x, wp.y);
+            g.lineWidth = 1.5 * vs;
+            g.strokeStyle = "#00A0FF";
+            g.stroke();
+            g.beginPath();
+            g.arc(wp.x, wp.y, hsz * 1.2, 0, Math.PI * 2);
+            g.fillStyle = "#00E5A0";
+            g.fill();
+          } else {
+            g.fillStyle = "#00A0FF";
+            g.fillRect(wp.x - hsz, wp.y - hsz, hsz * 2, hsz * 2);
+          }
+        }
+      }
+    }
+  }
+  function draw() {
+    // 右: 編集キャンバス(B / 点滅 / 重ね)
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = "#455A64";
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    if (mode === "overlay") {
+      if (imgA) ctx.drawImage(imgA, 0, 0);
+      if (imgB) { ctx.globalAlpha = 0.5; ctx.drawImage(imgB, 0, 0); ctx.globalAlpha = 1; }
+    } else {
+      var shown = mode === "blink" ? (blinkOn ? imgB : imgA) : imgB;
+      if (shown) ctx.drawImage(shown, 0, 0);
+    }
+    if (!imgB) drawLoadHint(ctx, cv, "Click to load B (modified)");
+    drawSpots(ctx, true, viewScale());
+    // 左: A 固定表示(スポットの写し込みのみ、ハンドルなし)
+    ctxA.clearRect(0, 0, cvA.width, cvA.height);
+    ctxA.fillStyle = "#455A64";
+    ctxA.fillRect(0, 0, cvA.width, cvA.height);
+    if (imgA) ctxA.drawImage(imgA, 0, 0);
+    if (!imgA) drawLoadHint(ctxA, cvA, "Click to load A (original)");
+    drawSpots(ctxA, false, viewScaleFor(cvA));
+    // 空キャンバスはクリックでファイル選択を開けることをカーソルでも示す
+    cv.style.cursor = imgB ? "crosshair" : "pointer";
+    cvA.style.cursor = imgA ? "" : "pointer";
+  }
+  function drawLoadHint(g, c, text) {
+    g.fillStyle = "#90A4AE";
+    g.font = Math.round(18 * viewScaleFor(c)) + "px sans-serif";
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.fillText(text, c.width / 2, c.height / 2);
+  }
+
+  setInterval(function () {
+    blinkOn = !blinkOn;
+    if (mode === "blink") draw();
+  }, 400);
+
+  /* ---------- 座標変換・ヒットテスト ---------- */
+  function toLocal(e) {
+    var rect = cv.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) / rect.width * cv.width,
+      y: (e.clientY - rect.top) / rect.height * cv.height
+    };
+  }
+  function hitSpotIndex(p) {
+    for (var i = spots.length - 1; i >= 0; i--) {
+      if (hitShape(spots[i], p.x, p.y)) return i;
+    }
+    return -1;
+  }
+  function findHandle(p) {
+    if (sel < 0) return null;
+    var vs = viewScale();
+    var tol = 9 * vs;
+    var s = spots[sel];
+    var pts = handleLocalPoints(s, vs);
+    for (var i = 0; i < pts.length; i++) {
+      var wp = toWorldFrame(s, pts[i].x, pts[i].y);
+      if (Math.abs(p.x - wp.x) <= tol && Math.abs(p.y - wp.y) <= tol) return pts[i].id;
+    }
+    return null;
+  }
+  function applyHandle(s, id, px, py, snap) {
+    if (id === "rot") {
+      // 回転ハンドルは中心の真上方向が基準。snap(Shift)で15°刻み
+      var deg = Math.atan2(py - s.y, px - s.x) * 180 / Math.PI + 90;
+      if (snap) deg = Math.round(deg / 15) * 15;
+      deg = Math.round(deg) % 360;
+      if (deg < 0) deg += 360;
+      if (deg === 0) delete s.angle;
+      else s.angle = deg;
+      return;
+    }
+    // 掴んだ点だけを動かし、反対側の辺(角)は固定する(一般的な画像編集ソフトの挙動)
+    // 回転している場合はローカル座標系で処理し、新しい中心を世界座標へ戻す
+    var lp = toLocalFrame(s, px, py);
+    var hw = halfW(s), hh = halfH(s);
+    var left = -hw, right = hw, top = -hh, bottom = hh;
+    var eAxis = id.indexOf("e") >= 0;
+    var wAxis = id.indexOf("w") >= 0;
+    var nAxis = id.indexOf("n") >= 0;
+    var sAxis = id.indexOf("s") >= 0;
+    if (eAxis) right = Math.max(left + 12, lp.x);
+    if (wAxis) left = Math.min(right - 12, lp.x);
+    if (nAxis) top = Math.min(bottom - 12, lp.y);
+    if (sAxis) bottom = Math.max(top + 12, lp.y);
+    var ncx = (left + right) / 2, ncy = (top + bottom) / 2;
+    var nhw = (right - left) / 2, nhh = (bottom - top) / 2;
+    var wc;
+    if (s.type === "circle") {
+      if (eAxis || wAxis) { wc = toWorldFrame(s, ncx, 0); s.r = Math.max(8, Math.round(nhw)); }
+      else { wc = toWorldFrame(s, 0, ncy); s.r = Math.max(8, Math.round(nhh)); }
+    } else {
+      wc = toWorldFrame(s, ncx, ncy);
+      if (s.type === "ellipse") {
+        s.rx = Math.max(6, Math.round(nhw));
+        s.ry = Math.max(6, Math.round(nhh));
+      } else {
+        s.w = Math.max(12, Math.round(nhw * 2));
+        s.h = Math.max(12, Math.round(nhh * 2));
+      }
+    }
+    s.x = Math.round(wc.x);
+    s.y = Math.round(wc.y);
+  }
+
+  /* ---------- マウス操作 ---------- */
+  cv.addEventListener("mousedown", function (e) {
+    if (e.button !== 0) return;
+    if (!imgB) { $("fileB").click(); return; }
+    var p = toLocal(e);
+    var handle = findHandle(p);
+    if (handle) {
+      pushHistory();
+      drag = { mode: "handle", index: sel, handle: handle };
+      return;
+    }
+    var i = hitSpotIndex(p);
+    if (i < 0) {
+      if (spots.length >= MAX_SPOTS) { msg("Max " + MAX_SPOTS + " spots reached", true); return; }
+      pushHistory();
+      spots.push({ type: "circle", x: Math.round(p.x), y: Math.round(p.y), r: defaultR() });
+      i = spots.length - 1;
+    } else {
+      pushHistory(); // 移動ドラッグ開始(実際に動かなければ履歴には残らない)
+    }
+    sel = i;
+    drag = { mode: "move", index: i, dx: spots[i].x - p.x, dy: spots[i].y - p.y };
+    updateAll();
+  });
+  window.addEventListener("mousemove", function (e) {
+    var rect = cv.getBoundingClientRect();
+    if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+      var p = toLocal(e);
+      $("status").textContent = "Cursor: (" + Math.round(p.x) + ", " + Math.round(p.y) + ")" + sizeNote();
+    }
+    if (!drag) return;
+    var q = toLocal(e);
+    var s = spots[drag.index];
+    if (!s) { drag = null; return; }
+    if (drag.mode === "move") {
+      s.x = Math.round(clamp(q.x + drag.dx, 0, cv.width));
+      s.y = Math.round(clamp(q.y + drag.dy, 0, cv.height));
+    } else {
+      applyHandle(s, drag.handle, q.x, q.y, e.shiftKey);
+    }
+    updateAll();
+  });
+  window.addEventListener("mouseup", function () { drag = null; });
+  cvA.addEventListener("click", function () {
+    if (!imgA) $("fileA").click();
+  });
+  cv.addEventListener("wheel", function (e) {
+    var p = toLocal(e);
+    var i = hitSpotIndex(p);
+    if (i < 0) i = sel;
+    if (i < 0) return;
+    e.preventDefault();
+    pushHistory("wheel");
+    var s = spots[i];
+    var d = e.deltaY < 0 ? 1 : -1;
+    if (s.type === "circle") s.r = clamp(s.r + d * 2, 8, Math.max(cv.width, cv.height));
+    else if (s.type === "ellipse") {
+      s.rx = clamp(s.rx + d * 2, 6, cv.width);
+      s.ry = clamp(s.ry + d * 2, 6, cv.height);
+    } else {
+      s.w = clamp(s.w + d * 4, 12, cv.width * 2);
+      s.h = clamp(s.h + d * 4, 12, cv.height * 2);
+    }
+    updateAll();
+  }, { passive: false });
+  cv.addEventListener("contextmenu", function (e) {
+    e.preventDefault();
+    var i = hitSpotIndex(toLocal(e));
+    if (i >= 0) {
+      pushHistory();
+      spots.splice(i, 1);
+      if (sel >= spots.length) sel = spots.length - 1;
+      updateAll();
+    }
+  });
+  window.addEventListener("keydown", function (e) {
+    var tag = (document.activeElement && document.activeElement.tagName) || "";
+    // モーダル表示中は Esc / ← → だけを処理し、スポット系ショートカットは無効化
+    if ($("modal").style.display !== "none") {
+      if (e.key === "Escape") closeModal();
+      else if (e.key === "ArrowLeft" && tag !== "INPUT") modalStep(-1);
+      else if (e.key === "ArrowRight" && tag !== "INPUT") modalStep(1);
+      return;
+    }
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z")) {
+      e.preventDefault();
+      if (e.shiftKey) redo(); else undo();
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && (e.key === "y" || e.key === "Y")) {
+      e.preventDefault();
+      redo();
+      return;
+    }
+    if ((e.key === "Delete" || e.key === "Backspace") && sel >= 0) {
+      pushHistory();
+      spots.splice(sel, 1);
+      sel = -1;
+      updateAll();
+      return;
+    }
+    if (sel >= 0 && e.key.indexOf("Arrow") === 0) {
+      e.preventDefault();
+      pushHistory("arrow");
+      var step = e.shiftKey ? 10 : 1;
+      var s = spots[sel];
+      if (e.key === "ArrowLeft") s.x = clamp(s.x - step, 0, cv.width);
+      if (e.key === "ArrowRight") s.x = clamp(s.x + step, 0, cv.width);
+      if (e.key === "ArrowUp") s.y = clamp(s.y - step, 0, cv.height);
+      if (e.key === "ArrowDown") s.y = clamp(s.y + step, 0, cv.height);
+      updateAll();
+    }
+  });
+
+  function sizeNote() {
+    var base = imgB || imgA;
+    if (!base) return "";
+    var note = " / image: " + iw(base) + "x" + ih(base);
+    var o = origB || origA;
+    if (o && (iw(o) !== iw(base) || ih(o) !== ih(base))) {
+      note += " (source: " + iw(o) + "x" + ih(o) + ")";
+    }
+    return note;
+  }
+
+  /* ---------- 自動検出 ---------- */
+  var WORK_MAX = 512;         // 差分計算の作業解像度(長辺)。縮小平均が線ズレノイズの除去を兼ねる
+  var MAX_AUTO_CLUSTERS = 30; // 「間違いの数」未指定時、候補がこれを超えたら中断
+  var SPOT_PAD_RATIO = 0.02;  // 余白 = 画像長辺 × この比率(最低12px)
+  var ELLIPSE_ASPECT = 1.4;   // 外接矩形の縦横比がこれ以上なら楕円で置く
+
+  function workData(img, ww, wh) {
+    var src = img;
+    var cw = iw(img), ch = ih(img);
+    while (cw > ww * 2 && ch > wh * 2) {
+      var half = document.createElement("canvas");
+      half.width = Math.round(cw / 2);
+      half.height = Math.round(ch / 2);
+      half.getContext("2d").drawImage(src, 0, 0, half.width, half.height);
+      src = half; cw = half.width; ch = half.height;
+    }
+    var c = document.createElement("canvas");
+    c.width = ww; c.height = wh;
+    var g = c.getContext("2d");
+    g.drawImage(src, 0, 0, ww, wh);
+    return g.getImageData(0, 0, ww, wh).data;
+  }
+
+  function boxBlur(src, w, h) {
+    var tmp = new Uint8Array(w * h);
+    var dst = new Uint8Array(w * h);
+    var x, y, i;
+    for (y = 0; y < h; y++) {
+      var row = y * w;
+      for (x = 0; x < w; x++) {
+        var l = x > 0 ? src[row + x - 1] : src[row + x];
+        var r = x < w - 1 ? src[row + x + 1] : src[row + x];
+        tmp[row + x] = (l + src[row + x] + r) / 3;
+      }
+    }
+    for (x = 0; x < w; x++) {
+      for (y = 0; y < h; y++) {
+        i = y * w + x;
+        var u = y > 0 ? tmp[i - w] : tmp[i];
+        var d = y < h - 1 ? tmp[i + w] : tmp[i];
+        dst[i] = (u + tmp[i] + d) / 3;
+      }
+    }
+    return dst;
+  }
+
+  function findClusters(mask, adj, w, h, minArea) {
+    var visited = new Uint8Array(w * h);
+    var clusters = [];
+    var stack = [];
+    for (var start = 0; start < w * h; start++) {
+      if (!mask[start] || visited[start]) continue;
+      var minx = w, maxx = 0, miny = h, maxy = 0, count = 0, score = 0;
+      stack.push(start);
+      visited[start] = 1;
+      while (stack.length) {
+        var idx = stack.pop();
+        var x = idx % w, y = (idx / w) | 0;
+        count++;
+        score += adj[idx];
+        if (x < minx) minx = x;
+        if (x > maxx) maxx = x;
+        if (y < miny) miny = y;
+        if (y > maxy) maxy = y;
+        for (var dy = -1; dy <= 1; dy++) {
+          for (var dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy) continue;
+            var nx = x + dx, ny = y + dy;
+            if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+            var ni = ny * w + nx;
+            if (mask[ni] && !visited[ni]) { visited[ni] = 1; stack.push(ni); }
+          }
+        }
+      }
+      if (count >= minArea) {
+        clusters.push({ minx: minx, maxx: maxx, miny: miny, maxy: maxy, score: score });
+      }
+    }
+    return clusters;
+  }
+
+  function autoDetect() {
+    if (!imgA || !imgB) { msg("Load both A and B images", true); return; }
+    if (iw(imgA) !== iw(imgB) || ih(imgA) !== ih(imgB)) {
+      msg("A and B image sizes do not match", true);
+      return;
+    }
+    var nw = iw(imgB), nh = ih(imgB);
+    var scale = Math.min(1, WORK_MAX / Math.max(nw, nh));
+    var ww = Math.max(1, Math.round(nw * scale));
+    var wh = Math.max(1, Math.round(nh * scale));
+    var da, db;
+    try {
+      da = workData(imgA, ww, wh);
+      db = workData(imgB, ww, wh);
+    } catch (err) {
+      msg("Cannot read pixels. Load the images via the file pickers", true);
+      return;
+    }
+    var size = ww * wh;
+    var diff = new Uint8Array(size);
+    var i, j;
+    for (i = 0; i < size; i++) {
+      j = i * 4;
+      diff[i] = Math.max(
+        Math.abs(da[j] - db[j]),
+        Math.abs(da[j + 1] - db[j + 1]),
+        Math.abs(da[j + 2] - db[j + 2])
+      );
+    }
+    diff = boxBlur(diff, ww, wh);
+    // 差分の中央値をノイズフロアとして差し引き、AI生成ペア特有の全体的な色ドリフトを吸収
+    var hist = new Uint32Array(256);
+    for (i = 0; i < size; i++) hist[diff[i]]++;
+    var acc = 0, floor = 0;
+    for (var v = 0; v < 256; v++) {
+      acc += hist[v];
+      if (acc >= size / 2) { floor = v; break; }
+    }
+    var thr = Number($("thr").value);
+    var adj = new Uint8Array(size);
+    var mask = new Uint8Array(size);
+    for (i = 0; i < size; i++) {
+      var d = diff[i] - floor;
+      if (d > 0) adj[i] = d;
+      if (d > thr) mask[i] = 1;
+    }
+    var minArea = Math.max(12, Math.round(size * 0.00015));
+    var clusters = findClusters(mask, adj, ww, wh, minArea);
+    clusters.sort(function (a, b) { return b.score - a.score; });
+    var total = clusters.length;
+    var n = parseInt($("numDiffs").value, 10);
+    if (n > 0) {
+      clusters = clusters.slice(0, n);
+    } else if (total > MAX_AUTO_CLUSTERS) {
+      msg("Found " + total + " diff clusters. Set \"# of diffs\" or raise the threshold", true);
+      return;
+    }
+    var pad = Math.round(Math.max(12, Math.max(nw, nh) * SPOT_PAD_RATIO));
+    pushHistory();
+    spots = clusters.map(function (c) {
+      var bw = Math.round((c.maxx - c.minx + 1) / scale);
+      var bh = Math.round((c.maxy - c.miny + 1) / scale);
+      var cx = Math.round((c.minx + c.maxx) / 2 / scale);
+      var cy = Math.round((c.miny + c.maxy) / 2 / scale);
+      if (Math.max(bw, bh) >= ELLIPSE_ASPECT * Math.min(bw, bh)) {
+        return { type: "ellipse", x: cx, y: cy, rx: clamp(Math.round(bw / 2) + pad, 12, nw), ry: clamp(Math.round(bh / 2) + pad, 12, nh) };
+      }
+      return { type: "circle", x: cx, y: cy, r: clamp(Math.round(Math.max(bw, bh) / 2) + pad, 24, Math.round(Math.max(nw, nh) / 2)) };
+    });
+    sel = -1;
+    updateAll();
+    if (spots.length === 0) {
+      msg("No differences found. Try lowering the threshold");
+    } else if (n > 0 && total < n) {
+      msg("Detected only " + spots.length + " of " + n + ". Try lowering the threshold", true);
+    } else {
+      msg("Detected " + spots.length + " spots (numbered by diff strength" + (n > 0 ? ", " + total + " candidates" : "") + ")");
+    }
+  }
+
+  $("detectBtn").addEventListener("click", autoDetect);
+  $("thr").addEventListener("input", function () {
+    $("thrVal").textContent = this.value;
+    saveStateDebounced();
+  });
+  ["numDiffs", "outW", "outH"].forEach(function (id) {
+    $(id).addEventListener("change", saveStateDebounced);
+  });
+  $("resetBtn").addEventListener("click", function () {
+    if (!window.confirm("Clear images, spots and stock of THIS stage?")) return;
+    restoring = true;
+    stock.forEach(function (item) { dbPut("img_" + item.id, null); });
+    ["state", "imgA", "imgB", "stockIndex"].forEach(function (k) { dbPut(sKey(k), null); });
+    clearWorkspace();
+    restoring = false;
+    syncStageName();
+    saveState();
+    msg("Stage cleared");
+  });
+
+  /* ---------- 表示モード ---------- */
+  var radios = document.querySelectorAll("input[name=mode]");
+  for (var ri = 0; ri < radios.length; ri++) {
+    radios[ri].addEventListener("change", function () {
+      mode = this.value;
+      draw();
+      saveStateDebounced();
+    });
+  }
+
+  /* ---------- スポット一覧テーブル ---------- */
+  var TYPE_LABELS = [["circle", "Circle"], ["ellipse", "Ellipse"], ["rect", "Rect"]];
+  function fieldDefs(s) {
+    if (s.type === "ellipse") return ["x", "y", "rx", "ry", "angle"];
+    if (s.type === "rect") return ["x", "y", "w", "h", "angle"];
+    return ["x", "y", "r", null, null];
+  }
+  function rebuildTable() {
+    var tb = $("spotTable").getElementsByTagName("tbody")[0];
+    tb.innerHTML = "";
+    spots.forEach(function (s, i) {
+      var tr = document.createElement("tr");
+      if (i === sel) tr.className = "sel";
+      // ドラッグハンドル(行のドラッグ&ドロップ並べ替え)
+      var tdGrip = document.createElement("td");
+      tdGrip.textContent = "⠿";
+      tdGrip.style.cursor = "grab";
+      tdGrip.style.color = "#78909C";
+      tdGrip.draggable = true;
+      tdGrip.addEventListener("dragstart", function (e) {
+        rowDragIndex = i;
+        if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+      });
+      tr.appendChild(tdGrip);
+      tr.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        tr.style.outline = "1px solid #00A0FF";
+      });
+      tr.addEventListener("dragleave", function () { tr.style.outline = ""; });
+      tr.addEventListener("drop", function (e) {
+        e.preventDefault();
+        tr.style.outline = "";
+        if (rowDragIndex === null || rowDragIndex === i) { rowDragIndex = null; return; }
+        pushHistory();
+        var moved = spots.splice(rowDragIndex, 1)[0];
+        spots.splice(i, 0, moved);
+        sel = i;
+        rowDragIndex = null;
+        updateAll();
+      });
+      var td0 = document.createElement("td");
+      td0.textContent = i + 1;
+      tr.appendChild(td0);
+      var tdType = document.createElement("td");
+      var selEl = document.createElement("select");
+      TYPE_LABELS.forEach(function (tl) {
+        var op = document.createElement("option");
+        op.value = tl[0];
+        op.textContent = tl[1];
+        selEl.appendChild(op);
+      });
+      selEl.value = s.type;
+      selEl.addEventListener("change", function () {
+        pushHistory();
+        convertType(s, selEl.value);
+        updateAll();
+      });
+      tdType.appendChild(selEl);
+      tr.appendChild(tdType);
+      fieldDefs(s).forEach(function (key) {
+        var td = document.createElement("td");
+        if (key) {
+          var inp = document.createElement("input");
+          inp.type = "number";
+          inp.value = key === "angle" ? angleOf(s) : s[key];
+          inp.addEventListener("change", function () {
+            pushHistory();
+            var v = Number(inp.value) || 0;
+            if (key === "angle") {
+              v = ((Math.round(v) % 360) + 360) % 360;
+              if (v === 0) delete s.angle;
+              else s.angle = v;
+            } else {
+              s[key] = v;
+            }
+            updateAll();
+          });
+          td.appendChild(inp);
+        } else {
+          td.textContent = "-";
+        }
+        tr.appendChild(td);
+      });
+      var tdArea = document.createElement("td");
+      tdArea.textContent = areaPct(s);
+      tdArea.style.color = "#B0BEC5";
+      tr.appendChild(tdArea);
+      var tdMove = document.createElement("td");
+      [["▲", -1], ["▼", 1]].forEach(function (mv) {
+        var mb = document.createElement("button");
+        mb.className = "mini";
+        mb.textContent = mv[0];
+        mb.disabled = (i + mv[1] < 0 || i + mv[1] >= spots.length);
+        mb.addEventListener("click", function () {
+          pushHistory();
+          var j = i + mv[1];
+          var t = spots[i];
+          spots[i] = spots[j];
+          spots[j] = t;
+          if (sel === i) sel = j;
+          else if (sel === j) sel = i;
+          updateAll();
+        });
+        tdMove.appendChild(mb);
+      });
+      tr.appendChild(tdMove);
+      var tdDel = document.createElement("td");
+      var btn = document.createElement("button");
+      btn.className = "del";
+      btn.textContent = "✕";
+      btn.addEventListener("click", function () {
+        pushHistory();
+        spots.splice(i, 1);
+        if (sel === i) sel = -1;
+        updateAll();
+      });
+      tdDel.appendChild(btn);
+      tr.appendChild(tdDel);
+      tr.addEventListener("click", function (e) {
+        if (e.target.tagName === "INPUT" || e.target.tagName === "BUTTON" || e.target.tagName === "SELECT") return;
+        sel = i;
+        updateAll();
+      });
+      tb.appendChild(tr);
+    });
+  }
+
+  /* ---------- JSON 入出力 ---------- */
+  function entryJSON() {
+    var lines = spots.map(function (s) { return "      " + spotJSONLine(s); });
+    var memo = $("stMemo").value.trim();
+    return '{\n' +
+      '  "id": ' + (Number($("stId").value) || 1) + ',\n' +
+      '  "base": "' + $("stBase").value + '",\n' +
+      '  "diff": "' + $("stDiff").value + '",\n' +
+      (memo ? '  "memo": ' + JSON.stringify(memo) + ',\n' : '') +
+      '  "spots": [\n' + lines.join(",\n") + '\n  ]\n' +
+      '}';
+  }
+  function updateJSON() {
+    $("jsonOut").value = entryJSON();
+    syncStageName();
+    saveStateDebounced();
+  }
+
+  ["stId", "stBase", "stDiff"].forEach(function (id) {
+    $(id).addEventListener("change", updateJSON);
+  });
+  $("stMemo").addEventListener("input", updateJSON);
+
+  $("copyBtn").addEventListener("click", function () {
+    var ta = $("jsonOut");
+    var done = function () {
+      $("copyMsg").textContent = "Copied";
+      setTimeout(function () { $("copyMsg").textContent = ""; }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(ta.value).then(done, function () { fallback(); });
+    } else { fallback(); }
+    function fallback() {
+      ta.removeAttribute("readonly");
+      ta.select();
+      document.execCommand("copy");
+      ta.setAttribute("readonly", "");
+      done();
+    }
+  });
+
+  $("importBtn").addEventListener("click", function () {
+    var text = $("jsonIn").value.trim();
+    if (!text) return;
+    try {
+      var obj = JSON.parse(text);
+      if (obj.stages && obj.stages.length) obj = obj.stages[0];
+      if (obj.id != null) $("stId").value = obj.id;
+      if (obj.base) $("stBase").value = obj.base;
+      if (obj.diff) $("stDiff").value = obj.diff;
+      $("stMemo").value = obj.memo || obj.description || "";
+      pushHistory();
+      spots = (obj.spots || []).map(spotFromJSON);
+      sel = -1;
+      updateAll();
+      msg("Entry loaded (" + spots.length + " spots)" + (spots.length > MAX_SPOTS ? " — exceeds max " + MAX_SPOTS : ""), spots.length > MAX_SPOTS);
+    } catch (err) {
+      msg("JSON parse error: " + err.message, true);
+    }
+  });
+
+  var areaSortAsc = true; // 初回クリックで false(大きい順)から始める
+  $("sortAreaBtn").addEventListener("click", function () {
+    pushHistory();
+    areaSortAsc = !areaSortAsc;
+    spots.sort(function (a, b) {
+      return areaSortAsc ? spotArea(a) - spotArea(b) : spotArea(b) - spotArea(a);
+    });
+    sel = -1;
+    updateAll();
+    msg(areaSortAsc ? "Sorted by area (smallest first)" : "Sorted by area (largest first)");
+  });
+
+  function updateAll() {
+    draw();
+    rebuildTable();
+    updateJSON();
+    scheduleOverlapCheck();
+  }
+  updateAll();
+  renderStock();
+  initStages();
+
+  // 自動テスト・外部スクリプト用の最小API
+  window.SpotEditor = {
+    loadFromSrc: loadFromSrc,
+    autoDetect: autoDetect,
+    resizeTo: resizeTo,
+    getSpots: function () { return JSON.parse(JSON.stringify(spots)); },
+    setSpots: function (arr) { pushHistory(); spots = arr.map(spotFromJSON); sel = -1; updateAll(); },
+    undo: undo,
+    redo: redo,
+    _imageDataURL: imageDataURL,
+    _saveNow: saveState,
+    _restore: function () { loadStage(curStageId); },
+    _addStock: addStockImage,
+    _buildZip: buildZip,
+    _stages: function () { return { list: stages.map(function (s) { return { id: s.id, name: s.name, customName: s.customName, folderId: s.folderId }; }), cur: curStageId }; },
+    _folders: function () { return folders.map(function (f) { return { id: f.id, name: f.name }; }); },
+    _newStage: newStage,
+    _switchStage: switchStage,
+    _duplicateStage: duplicateStage,
+    _moveStageToFolder: moveStageToFolder,
+    _stock: function () { return stock.map(function (s) { return { id: s.id, name: s.name, loaded: !!s.img }; }); },
+    _openModal: openModal
+  };
+})();
+</script>
+</body>
+</html>
