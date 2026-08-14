@@ -83,7 +83,7 @@
   <button id="sbToggle" class="mini" title="Toggle sidebar" style="font-size:15px;padding:4px 11px">≡</button>
   <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true" style="flex:none"><rect x="0" y="0" width="32" height="32" rx="7" fill="#263238"/><rect x="6" y="6" width="20" height="20" rx="2" fill="#455A64"/><path d="M9 22.5 L14 16 L18.5 22.5 Z" fill="#B0BEC5"/><circle cx="20" cy="12.5" r="4" fill="none" stroke="#FF3B30" stroke-width="2.4"/></svg>
   <span id="brand">Spot the Difference Editor</span>
-  <span class="ver">v1.16.2 (2026-08-12)</span>
+  <span class="ver">v1.17 (2026-08-14)</span>
   <a id="credit" href="https://tipsytapstudio.com/" target="_blank" rel="noopener">© 2026 Tipsy Tap Studio</a>
 </header>
 <div id="cols">
@@ -182,7 +182,8 @@
       <textarea id="jsonOut" readonly></textarea>
       <div class="row">
         <button id="copyBtn">Copy</button>
-        <button id="zipBtn">Download ZIP (all assets)</button>
+        <button id="zipBtn" title="Resized + WebP. For dropping into the game.">ZIP for game</button>
+        <button id="zipFullBtn" title="Original files, untouched. For archiving." style="background:#546E7A">ZIP full-size</button>
         <span id="copyMsg" style="font-size:12px;color:#A5D6A7"></span>
       </div>
       <details style="margin-top:6px">
@@ -229,6 +230,7 @@
   var cvA = document.getElementById("cvA");
   var ctxA = cvA.getContext("2d");
   var origA = null, origB = null; // 読み込んだ元画像(リサイズはここから再計算)
+  var origSrcA = null, origSrcB = null; // 元画像のdataURL(アーカイブzipで無劣化格納する用)
   var imgA = null, imgB = null;   // 現在の作業画像(Image または canvas)
   var spots = [];                 // {type:"circle",x,y,r} | {type:"ellipse",x,y,rx,ry[,angle]} | {type:"rect",x,y,w,h[,angle]}
   var sel = -1;
@@ -682,6 +684,7 @@
   }
   function clearWorkspace() {
     origA = origB = imgA = imgB = null;
+    origSrcA = origSrcB = null;
     spots = [];
     sel = -1;
     stock = [];
@@ -878,8 +881,8 @@
             var img = new Image();
             img.onload = function () {
               if (sid !== curStageId) return;
-              if (which === "A") { origA = img; imgA = img; }
-              else { origB = img; imgB = img; }
+              if (which === "A") { origA = img; imgA = img; origSrcA = rec.src; }
+              else { origB = img; imgB = img; origSrcB = rec.src; }
               if (++done === need) finalize();
             };
             img.onerror = function () { if (++done === need) finalize(); };
@@ -956,14 +959,16 @@
   }
 
   /* ---------- 画像読み込み ---------- */
-  function setImage(which, img, filename) {
+  function setImage(which, img, filename, src) {
     if (which === "A") {
       origA = img;
       imgA = img;
+      origSrcA = src || null; // アーカイブzip用に元バイト列(dataURL)を保持
       if (filename) $("stBase").value = filename;
     } else {
       origB = img;
       imgB = img;
+      origSrcB = src || null;
       if (filename) $("stDiff").value = filename;
     }
     fitCanvas();
@@ -972,7 +977,7 @@
   function loadFromSrc(which, src, name) {
     var img = new Image();
     img.onload = function () {
-      setImage(which, img, name);
+      setImage(which, img, name, src);
       msg(which + ": loaded " + name);
       // dataURL で読み込まれた画像はセッションに保存(リロード復元用)
       if (!restoring && src.substring(0, 5) === "data:") {
@@ -1271,7 +1276,21 @@
     var m = base.match(/^(.*)_a\.[a-zA-Z0-9]+$/);
     return m ? m[1] : base.replace(/\.[a-zA-Z0-9]+$/, "");
   }
-  function buildZip() {
+  function withExt(name, ext) {
+    return name.replace(/\.[a-zA-Z0-9]+$/, "") + "." + ext;
+  }
+  // WebP エンコード可否の判定(非対応ブラウザは PNG が返るので検出できる)
+  function canWebp() {
+    var c = document.createElement("canvas");
+    c.width = c.height = 1;
+    return c.toDataURL("image/webp").indexOf("data:image/webp") === 0;
+  }
+  /* mode "submit"  : ゲーム入稿用。A/Bは作業サイズ、Stockはダウンロードサイズへ縮小し、全てWebP化
+     mode "archive" : 保存用。読み込んだ元画像・Stock原本をバイト列のまま無劣化格納 */
+  function buildZip(mode) {
+    var submit = (mode === "submit");
+    var webp = submit && canWebp();
+    var ext = webp ? "webp" : "png";
     var prefix = stagePrefix();
     var dir = prefix + "/";
     var files = [];
@@ -1281,29 +1300,48 @@
       used[name]++;
       return name.replace(/(\.[a-zA-Z0-9]+)$/, "(" + used[name] + ")$1");
     }
-    if (imgA) files.push({ name: dir + uniqueName($("stBase").value || "a.png"), data: dataURLBytes(imageDataURL("A")) });
-    if (imgB) files.push({ name: dir + uniqueName($("stDiff").value || "b.png"), data: dataURLBytes(imageDataURL("B")) });
-    files.push({ name: dir + prefix + ".json", data: new TextEncoder().encode(entryJSON() + "\n") });
+    function encoded(img, tw, th) {
+      var c = (tw && th) ? scaledCanvas(img, tw, th) : scaledCanvas(img, iw(img), ih(img));
+      return c.toDataURL(webp ? "image/webp" : "image/png", webp ? 0.85 : undefined);
+    }
+    var aName = $("stBase").value || "a.png";
+    var bName = $("stDiff").value || "b.png";
+    if (submit) {
+      if (imgA) files.push({ name: dir + uniqueName(withExt(aName, ext)), data: dataURLBytes(encoded(imgA)) });
+      if (imgB) files.push({ name: dir + uniqueName(withExt(bName, ext)), data: dataURLBytes(encoded(imgB)) });
+    } else {
+      // 原本があればそのまま、無ければ現在の作業画像をPNGで
+      if (origSrcA || imgA) files.push({ name: dir + uniqueName(aName), data: dataURLBytes(origSrcA || imageDataURL("A")) });
+      if (origSrcB || imgB) files.push({ name: dir + uniqueName(bName), data: dataURLBytes(origSrcB || imageDataURL("B")) });
+    }
+    files.push({ name: dir + prefix + ".json", data: new TextEncoder().encode(entryJSON(submit ? ext : null) + "\n") });
+    var tw = Number($("rewW").value), th = Number($("rewH").value);
     stock.forEach(function (item) {
-      if (item.src) {
+      if (!item.src) return;
+      if (submit && item.img && tw >= 16 && th >= 16) {
+        files.push({ name: dir + "images/" + uniqueName(withExt(item.name, ext)), data: dataURLBytes(encoded(item.img, tw, th)) });
+      } else {
         files.push({ name: dir + "images/" + uniqueName(item.name), data: dataURLBytes(item.src) });
       }
     });
-    return { blob: zipStore(files), name: prefix + ".zip", count: files.length };
+    return { blob: zipStore(files), name: prefix + (submit ? "" : "_full") + ".zip", count: files.length, webp: webp };
   }
-  $("zipBtn").addEventListener("click", function () {
+  function downloadZip(mode) {
     try {
-      var z = buildZip();
+      var z = buildZip(mode);
       var a = document.createElement("a");
       a.href = URL.createObjectURL(z.blob);
       a.download = z.name;
       a.click();
       setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
-      msg("Downloaded " + z.name + " (" + z.count + " files, " + Math.round(z.blob.size / 1024) + " KB)");
+      var note = (mode === "submit" && !z.webp) ? " — WebP unsupported, saved as PNG" : "";
+      msg("Downloaded " + z.name + " (" + z.count + " files, " + Math.round(z.blob.size / 1024) + " KB)" + note, mode === "submit" && !z.webp);
     } catch (err) {
       msg("Cannot export zip (source restriction?)", true);
     }
-  });
+  }
+  $("zipBtn").addEventListener("click", function () { downloadZip("submit"); });
+  $("zipFullBtn").addEventListener("click", function () { downloadZip("archive"); });
 
   function restoreStock(sid) {
     dbGet(sKey("stockIndex", sid), function (idx) {
@@ -1952,13 +1990,16 @@
   }
 
   /* ---------- JSON 入出力 ---------- */
-  function entryJSON() {
+  // extOverride: 入稿zipで画像を変換したとき、base/diff の拡張子を合わせるために使う
+  function entryJSON(extOverride) {
     var lines = spots.map(function (s) { return "      " + spotJSONLine(s); });
     var memo = $("stMemo").value.trim();
+    var bn = $("stBase").value, dn = $("stDiff").value;
+    if (extOverride) { bn = withExt(bn, extOverride); dn = withExt(dn, extOverride); }
     return '{\n' +
       '  "id": ' + (Number($("stId").value) || 1) + ',\n' +
-      '  "base": "' + $("stBase").value + '",\n' +
-      '  "diff": "' + $("stDiff").value + '",\n' +
+      '  "base": "' + bn + '",\n' +
+      '  "diff": "' + dn + '",\n' +
       (memo ? '  "memo": ' + JSON.stringify(memo) + ',\n' : '') +
       '  "spots": [\n' + lines.join(",\n") + '\n  ]\n' +
       '}';
