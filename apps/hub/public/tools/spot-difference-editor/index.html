@@ -71,7 +71,15 @@
   th, td { padding: 3px 6px; text-align: center; }
   th { color: #90CAF9; font-weight: normal; }
   tr.sel td { background: #455A64; }
-  #spotTable input[type=number] { width: 60px; padding: 4px 3px; }
+  /* 数値欄は右寄せ+細身にして、右の設定カラムに被らないようにする */
+  #spotTable input[type=number] { width: 44px; padding: 4px 3px; text-align: right; }
+  /* スピナーは幅を食ううえ誤操作の元なので隠す(ホイール・矢印キーで代替できる) */
+  #spotTable input[type=number]::-webkit-outer-spin-button,
+  #spotTable input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  #spotTable input[type=number] { -moz-appearance: textfield; }
+  #spotTable th, #spotTable td { padding: 3px 2px; }
+  /* それでも収まらない解像度では、表だけ横スクロールさせて他を押し出さない */
+  #spotsec { overflow-x: auto; }
   #spotTable select { padding: 4px 3px; }
   textarea { height: 190px; resize: vertical; }
   #msg { font-size: 12px; color: #FFCC80; min-height: 16px; }
@@ -83,7 +91,7 @@
   <button id="sbToggle" class="mini" title="Toggle sidebar" style="font-size:15px;padding:4px 11px">≡</button>
   <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true" style="flex:none"><rect x="0" y="0" width="32" height="32" rx="7" fill="#263238"/><rect x="6" y="6" width="20" height="20" rx="2" fill="#455A64"/><path d="M9 22.5 L14 16 L18.5 22.5 Z" fill="#B0BEC5"/><circle cx="20" cy="12.5" r="4" fill="none" stroke="#FF3B30" stroke-width="2.4"/></svg>
   <span id="brand">Spot the Difference Editor</span>
-  <span class="ver">v1.17 (2026-08-14)</span>
+  <span class="ver">v1.18 (2026-08-18)</span>
   <a id="credit" href="https://tipsytapstudio.com/" target="_blank" rel="noopener">© 2026 Tipsy Tap Studio</a>
 </header>
 <div id="cols">
@@ -158,6 +166,12 @@
       <label><input type="radio" name="mode" value="B" checked> B (modified)</label>
       <label><input type="radio" name="mode" value="blink"> Blink A/B</label>
       <label><input type="radio" name="mode" value="overlay"> Overlay 50%</label>
+      <div class="row" style="margin-top:8px;border-top:1px solid #546E7A;padding-top:8px">
+        <label style="color:#ECEFF1;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="showSpots" checked> Show spots
+        </label>
+        <span style="font-size:11px;color:#B0BEC5">(off = view the artwork; editing is paused)</span>
+      </div>
     </section>
     <section>
       <h2>Auto Detect</h2>
@@ -175,7 +189,9 @@
     <section>
       <h2>JSON Output (paste into hitbox.json "stages")</h2>
       <div class="row">
-        <label>id</label><input type="number" id="stId" value="1" min="1">
+        <label>id</label><input type="number" id="stId" value="1" min="1" readonly
+          title="Follows the stage order in the sidebar. Drag stages there to change it."
+          style="width:48px;color:#90A4AE;background:#1C262B;cursor:not-allowed">
         <label>base</label><input type="text" id="stBase" value="s01_a.png" style="flex:1;width:auto">
       </div>
       <div class="row"><label style="width:14px">diff</label><input type="text" id="stDiff" value="s01_b.png" style="flex:1;width:auto"></div>
@@ -235,6 +251,7 @@
   var spots = [];                 // {type:"circle",x,y,r} | {type:"ellipse",x,y,rx,ry[,angle]} | {type:"rect",x,y,w,h[,angle]}
   var sel = -1;
   var mode = "B";
+  var showSpots = true; // false のときは絵の確認モード(スポット非表示+編集停止)
   var blinkOn = true;
   var drag = null;                // {mode:"move"|"handle", index, dx, dy, handle}
   var rowDragIndex = null;        // テーブル行のドラッグ&ドロップ用
@@ -544,7 +561,7 @@
       if (--pending) return;
       stages.push(entry);
       dbPut("stages", stages);
-      renderStageList();
+      renumberStages();
       msg("Stage duplicated: " + displayName(entry));
     }
     ["state", "imgA", "imgB"].forEach(function (k) {
@@ -575,7 +592,7 @@
     v = v.trim() || "Folder";
     folders.push({ id: "fd" + Date.now() + "_" + (stageSeq++), name: v, createdAt: Date.now(), collapsed: false });
     dbPut("folders", folders);
-    renderStageList();
+    renumberStages();
   }
   function renameFolder(fid) {
     var f = folders.filter(function (x) { return x.id === fid; })[0];
@@ -594,13 +611,51 @@
     folders = folders.filter(function (x) { return x.id !== fid; });
     dbPut("folders", folders);
     dbPut("stages", stages);
-    renderStageList();
+    renumberStages();
   }
   function moveStageToFolder(sid, fid) {
     var st = findStage(sid);
     if (!st || st.folderId === fid) return;
     st.folderId = fid;
     dbPut("stages", stages);
+    renumberStages();
+  }
+  function indexOfStage(sid) {
+    for (var i = 0; i < stages.length; i++) if (stages[i].id === sid) return i;
+    return -1;
+  }
+  // ドロップ先の直前に差し込み、所属フォルダもドロップ先に合わせる
+  function reorderStage(srcId, dstId) {
+    var si = indexOfStage(srcId);
+    if (si < 0 || srcId === dstId) return;
+    var moved = stages.splice(si, 1)[0];
+    var di = indexOfStage(dstId);
+    if (di < 0) { stages.splice(si, 0, moved); return; }
+    moved.folderId = stages[di].folderId || null;
+    stages.splice(di, 0, moved);
+    dbPut("stages", stages);
+    renumberStages();
+  }
+  /* ---- ステージ番号の自動採番 ----
+   * サイドバーの見た目の並び(フォルダ順→その中のステージ→ルートのステージ)を
+   * そのまま 1..N の番号にする。id 欄は読み取り専用でこれに追従する。 */
+  function visualOrder() {
+    var out = [];
+    folders.forEach(function (f) {
+      stages.forEach(function (s) { if (s.folderId === f.id) out.push(s); });
+    });
+    stages.forEach(function (s) { if (!s.folderId) out.push(s); });
+    return out;
+  }
+  function renumberStages() {
+    var list = visualOrder();
+    list.forEach(function (s, i) { s.num = i + 1; });
+    dbPut("stages", stages);
+    var cur = findStage(curStageId);
+    if (cur && String($("stId").value) !== String(cur.num)) {
+      $("stId").value = cur.num;
+      updateJSON();
+    }
     renderStageList();
   }
 
@@ -616,6 +671,23 @@
         dragStageId = st.id;
         if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
       });
+      // ステージ行同士のドロップで並べ替え(ドロップ先の直前に入る)
+      row.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        if (dragStageId && dragStageId !== st.id) row.classList.add("dropTarget");
+      });
+      row.addEventListener("dragleave", function () { row.classList.remove("dropTarget"); });
+      row.addEventListener("drop", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        row.classList.remove("dropTarget");
+        if (dragStageId) reorderStage(dragStageId, st.id);
+        dragStageId = null;
+      });
+      var numEl = document.createElement("span");
+      numEl.textContent = st.num || "";
+      numEl.style.cssText = "min-width:16px;text-align:right;color:#78909C;font-size:11px";
+      row.appendChild(numEl);
       var label = document.createElement("span");
       label.className = "sname";
       label.textContent = displayName(st);
@@ -636,8 +708,8 @@
       row.addEventListener("click", function () { switchStage(st.id); });
       list.appendChild(row);
     }
-    var byNewest = function (a, b) { return stageCreatedAt(b) - stageCreatedAt(a); };
-    folders.slice().sort(function (a, b) { return b.createdAt - a.createdAt; }).forEach(function (f) {
+    // 並び順は stages / folders 配列の順そのもの(ドラッグで自由に入れ替えられる)
+    folders.forEach(function (f) {
       var frow = document.createElement("div");
       frow.className = "folderItem";
       var tri = document.createElement("span");
@@ -675,10 +747,10 @@
       });
       list.appendChild(frow);
       if (!f.collapsed) {
-        stages.filter(function (s) { return s.folderId === f.id; }).sort(byNewest).forEach(function (s) { stageRow(s, 18); });
+        stages.filter(function (s) { return s.folderId === f.id; }).forEach(function (s) { stageRow(s, 18); });
       }
     });
-    stages.filter(function (s) { return !s.folderId; }).sort(byNewest).forEach(function (s) { stageRow(s, 0); });
+    stages.filter(function (s) { return !s.folderId; }).forEach(function (s) { stageRow(s, 0); });
     var cur = findStage(curStageId);
     $("paneTitle").textContent = cur ? displayName(cur) : "";
   }
@@ -703,6 +775,8 @@
     $("rewH").value = 720;
     $("thr").value = 30;
     $("thrVal").textContent = "30";
+    showSpots = true;
+    $("showSpots").checked = true;
     $("numDiffs").value = "";
     renderStock();
     updateAll();
@@ -730,7 +804,7 @@
     clearWorkspace();
     restoring = false;
     syncStageName();
-    renderStageList();
+    renumberStages();
     saveState();
     msg("New stage created");
   }
@@ -753,7 +827,7 @@
       restoring = true;
       clearWorkspace();
       restoring = false;
-      renderStageList();
+      renumberStages();
       return;
     }
     dbPut("stages", stages);
@@ -762,10 +836,10 @@
       dbPut("curStage", curStageId);
       restoring = true;
       clearWorkspace();
-      renderStageList();
+      renumberStages();
       loadStage(curStageId);
     } else {
-      renderStageList();
+      renumberStages();
     }
   }
   $("newStageBtn").addEventListener("click", newStage);
@@ -817,6 +891,7 @@
       outH: $("outH").value,
       rewW: $("rewW").value,
       rewH: $("rewH").value,
+      showSpots: showSpots,
       thr: $("thr").value,
       numDiffs: $("numDiffs").value,
       mode: mode,
@@ -830,7 +905,9 @@
   }
 
   function applyState(st) {
-    $("stId").value = st.id || 1;
+    // id はサイドバーの並び順から導出する(保存値ではなくメタ情報を正とする)
+    var meta = findStage(curStageId);
+    $("stId").value = (meta && meta.num) || st.id || 1;
     if (st.base) $("stBase").value = st.base;
     if (st.diff) $("stDiff").value = st.diff;
     $("stMemo").value = st.memo || "";
@@ -838,6 +915,8 @@
     $("outH").value = st.outH || 600;
     $("rewW").value = st.rewW || 1280;
     $("rewH").value = st.rewH || 720;
+    showSpots = (st.showSpots !== false);
+    $("showSpots").checked = showSpots;
     $("thr").value = st.thr || 30;
     $("thrVal").textContent = $("thr").value;
     $("numDiffs").value = st.numDiffs || "";
@@ -903,12 +982,22 @@
     dbGet("sbWidth", function (w) {
       if (w) $("sidebar").style.width = w + "px";
     });
+    // フォルダ順も番号に影響するので、フォルダを読んでからステージを読む
     dbGet("folders", function (fs) {
       if (fs && fs.length) {
         folders = fs;
-        renderStageList();
+        // v1.17以前は「新しい順」で表示していた。並びを配列順に一本化するため、
+        // 初回だけ作成順(古い順)に整えてから配列順を正とする
+        if (folders.some(function (f) { return f.ordered !== true; })) {
+          folders.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+          folders.forEach(function (f) { f.ordered = true; });
+          dbPut("folders", folders);
+        }
       }
+      loadStages();
     });
+
+    function loadStages() {
     dbGet("stages", function (list) {
       if (list && list.length) {
         stages = list;
@@ -917,10 +1006,15 @@
           if (!s.createdAt) s.createdAt = stageCreatedAt(s) || Date.now();
           if (s.folderId === undefined) s.folderId = null;
         });
+        // 未採番(v1.18以前)なら作成順に並べ直してから 1..N を振る。
+        // これで「サイドバーの一番上 = ステージ1」になる
+        if (stages.some(function (s) { return !s.num; })) {
+          stages.sort(function (a, b) { return stageCreatedAt(a) - stageCreatedAt(b); });
+        }
         dbGet("curStage", function (cs) {
           var found = stages.filter(function (s) { return s.id === cs; })[0];
           curStageId = found ? cs : stages[0].id;
-          renderStageList();
+          renumberStages();
           loadStage(curStageId);
         });
         return;
@@ -932,9 +1026,9 @@
         if (!old) {
           dbPut("stages", stages);
           dbPut("curStage", sid);
-          renderStageList();
           restoring = false;
           syncStageName();
+          renumberStages();
           return;
         }
         var pending = 4;
@@ -942,7 +1036,7 @@
           if (--pending) return;
           dbPut("stages", stages);
           dbPut("curStage", sid);
-          renderStageList();
+          renumberStages();
           loadStage(sid);
         }
         [["state", old]].forEach(function (p) { dbPut(sKey(p[0], sid), p[1]); step(); });
@@ -956,6 +1050,7 @@
         dbPut("state", null);
       });
     });
+    }
   }
 
   /* ---------- 画像読み込み ---------- */
@@ -1306,15 +1401,29 @@
     }
     var aName = $("stBase").value || "a.png";
     var bName = $("stDiff").value || "b.png";
+    var sx = 1, sy = 1, autoResized = false;
     if (submit) {
-      if (imgA) files.push({ name: dir + uniqueName(withExt(aName, ext)), data: dataURLBytes(encoded(imgA)) });
-      if (imgB) files.push({ name: dir + uniqueName(withExt(bName, ext)), data: dataURLBytes(encoded(imgB)) });
+      // Resize を押し忘れていても、入稿zipは必ず Output Size で書き出す。
+      // 画像だけ縮めるとスポットがズレるので、JSONの座標も同率で変換する
+      var aw = Number($("outW").value), ah = Number($("outH").value);
+      if (aw >= 16 && ah >= 16 && (imgA || imgB) && (aw !== curW() || ah !== curH())) {
+        sx = aw / curW();
+        sy = ah / curH();
+        autoResized = true;
+      } else {
+        aw = curW(); ah = curH();
+      }
+      if (imgA) files.push({ name: dir + uniqueName(withExt(aName, ext)), data: dataURLBytes(encoded(imgA, aw, ah)) });
+      if (imgB) files.push({ name: dir + uniqueName(withExt(bName, ext)), data: dataURLBytes(encoded(imgB, aw, ah)) });
     } else {
       // 原本があればそのまま、無ければ現在の作業画像をPNGで
       if (origSrcA || imgA) files.push({ name: dir + uniqueName(aName), data: dataURLBytes(origSrcA || imageDataURL("A")) });
       if (origSrcB || imgB) files.push({ name: dir + uniqueName(bName), data: dataURLBytes(origSrcB || imageDataURL("B")) });
     }
-    files.push({ name: dir + prefix + ".json", data: new TextEncoder().encode(entryJSON(submit ? ext : null) + "\n") });
+    files.push({
+      name: dir + prefix + ".json",
+      data: new TextEncoder().encode(entryJSON(submit ? ext : null, sx, sy) + "\n")
+    });
     var tw = Number($("rewW").value), th = Number($("rewH").value);
     stock.forEach(function (item) {
       if (!item.src) return;
@@ -1324,7 +1433,10 @@
         files.push({ name: dir + "images/" + uniqueName(item.name), data: dataURLBytes(item.src) });
       }
     });
-    return { blob: zipStore(files), name: prefix + (submit ? "" : "_full") + ".zip", count: files.length, webp: webp };
+    return {
+      blob: zipStore(files), name: prefix + (submit ? "" : "_full") + ".zip",
+      count: files.length, webp: webp, autoResized: autoResized
+    };
   }
   function downloadZip(mode) {
     try {
@@ -1334,8 +1446,11 @@
       a.download = z.name;
       a.click();
       setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
-      var note = (mode === "submit" && !z.webp) ? " — WebP unsupported, saved as PNG" : "";
-      msg("Downloaded " + z.name + " (" + z.count + " files, " + Math.round(z.blob.size / 1024) + " KB)" + note, mode === "submit" && !z.webp);
+      var note = "";
+      if (mode === "submit" && z.autoResized) note += " — A/B resized to " + $("outW").value + "x" + $("outH").value + " (spots converted)";
+      if (mode === "submit" && !z.webp) note += " — WebP unsupported, saved as PNG";
+      msg("Downloaded " + z.name + " (" + z.count + " files, " + Math.round(z.blob.size / 1024) + " KB)" + note,
+        mode === "submit" && !z.webp);
     } catch (err) {
       msg("Cannot export zip (source restriction?)", true);
     }
@@ -1450,16 +1565,17 @@
       if (shown) ctx.drawImage(shown, 0, 0);
     }
     if (!imgB) drawLoadHint(ctx, cv, "Click to load B (modified)");
-    drawSpots(ctx, true, viewScale());
+    if (showSpots) drawSpots(ctx, true, viewScale());
     // 左: A 固定表示(スポットの写し込みのみ、ハンドルなし)
     ctxA.clearRect(0, 0, cvA.width, cvA.height);
     ctxA.fillStyle = "#455A64";
     ctxA.fillRect(0, 0, cvA.width, cvA.height);
     if (imgA) ctxA.drawImage(imgA, 0, 0);
     if (!imgA) drawLoadHint(ctxA, cvA, "Click to load A (original)");
-    drawSpots(ctxA, false, viewScaleFor(cvA));
+    if (showSpots) drawSpots(ctxA, false, viewScaleFor(cvA));
     // 空キャンバスはクリックでファイル選択を開けることをカーソルでも示す
-    cv.style.cursor = imgB ? "crosshair" : "pointer";
+    // スポット非表示中は編集も止めるので、カーソルでも「今は触れない」ことを示す
+    cv.style.cursor = !imgB ? "pointer" : (showSpots ? "crosshair" : "default");
     cvA.style.cursor = imgA ? "" : "pointer";
   }
   function drawLoadHint(g, c, text) {
@@ -1549,6 +1665,8 @@
   cv.addEventListener("mousedown", function (e) {
     if (e.button !== 0) return;
     if (!imgB) { $("fileB").click(); return; }
+    // スポットが見えていないときに編集させると、見えないスポットが増えてしまう
+    if (!showSpots) return;
     var p = toLocal(e);
     var handle = findHandle(p);
     if (handle) {
@@ -1592,6 +1710,7 @@
     if (!imgA) $("fileA").click();
   });
   cv.addEventListener("wheel", function (e) {
+    if (!showSpots) return;
     var p = toLocal(e);
     var i = hitSpotIndex(p);
     if (i < 0) i = sel;
@@ -1611,6 +1730,7 @@
     updateAll();
   }, { passive: false });
   cv.addEventListener("contextmenu", function (e) {
+    if (!showSpots) return;
     e.preventDefault();
     var i = hitSpotIndex(toLocal(e));
     if (i >= 0) {
@@ -1647,7 +1767,7 @@
       updateAll();
       return;
     }
-    if (sel >= 0 && e.key.indexOf("Arrow") === 0) {
+    if (showSpots && sel >= 0 && e.key.indexOf("Arrow") === 0) {
       e.preventDefault();
       pushHistory("arrow");
       var step = e.shiftKey ? 10 : 1;
@@ -1861,6 +1981,11 @@
       saveStateDebounced();
     });
   }
+  $("showSpots").addEventListener("change", function () {
+    showSpots = this.checked;
+    draw();
+    saveStateDebounced();
+  });
 
   /* ---------- スポット一覧テーブル ---------- */
   var TYPE_LABELS = [["circle", "Circle"], ["ellipse", "Ellipse"], ["rect", "Rect"]];
@@ -1989,10 +2114,29 @@
     });
   }
 
+  // スポットを別解像度へ等倍変換する(入稿zipで A/B をリサイズしたとき用)
+  function scaleSpot(s, sx, sy) {
+    var o = { type: s.type, x: Math.round(s.x * sx), y: Math.round(s.y * sy) };
+    if (s.type === "circle") o.r = Math.max(8, Math.round(s.r * (sx + sy) / 2));
+    else if (s.type === "ellipse") {
+      o.rx = Math.max(6, Math.round(s.rx * sx));
+      o.ry = Math.max(6, Math.round(s.ry * sy));
+    } else {
+      o.w = Math.max(12, Math.round(s.w * sx));
+      o.h = Math.max(12, Math.round(s.h * sy));
+    }
+    if (s.angle) o.angle = s.angle; // 回転角は拡大縮小しても変わらない
+    return o;
+  }
+
   /* ---------- JSON 入出力 ---------- */
   // extOverride: 入稿zipで画像を変換したとき、base/diff の拡張子を合わせるために使う
-  function entryJSON(extOverride) {
-    var lines = spots.map(function (s) { return "      " + spotJSONLine(s); });
+  // sx / sy: A/B をリサイズして書き出したときのスポット座標の変換倍率
+  function entryJSON(extOverride, sx, sy) {
+    var src = (sx && sy && (sx !== 1 || sy !== 1))
+      ? spots.map(function (s) { return scaleSpot(s, sx, sy); })
+      : spots;
+    var lines = src.map(function (s) { return "      " + spotJSONLine(s); });
     var memo = $("stMemo").value.trim();
     var bn = $("stBase").value, dn = $("stDiff").value;
     if (extOverride) { bn = withExt(bn, extOverride); dn = withExt(dn, extOverride); }
@@ -2089,7 +2233,8 @@
     _restore: function () { loadStage(curStageId); },
     _addStock: addStockImage,
     _buildZip: buildZip,
-    _stages: function () { return { list: stages.map(function (s) { return { id: s.id, name: s.name, customName: s.customName, folderId: s.folderId }; }), cur: curStageId }; },
+    _stages: function () { return { list: stages.map(function (s) { return { id: s.id, name: s.name, num: s.num, customName: s.customName, folderId: s.folderId }; }), cur: curStageId }; },
+    _reorderStage: reorderStage,
     _folders: function () { return folders.map(function (f) { return { id: f.id, name: f.name }; }); },
     _newStage: newStage,
     _switchStage: switchStage,
