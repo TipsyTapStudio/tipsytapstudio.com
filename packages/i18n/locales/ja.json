@@ -3,16 +3,13 @@
   "common_footer_contact": "Contact",
   "common_footer_github": "GitHub",
   "common_locale_switch": "English",
-
   "hub_hero_title": "Tipsy Tap Studio",
   "hub_meta_title": "Tipsy Tap Studio — 音・光・時間で遊ぶ実験スタジオ",
   "hub_hero_subtitle": "鳴らす、光らす、刻む。",
   "hub_hero_substatement": "音もビジュアルも、時計の針もタイマーの拍も、スタンプも拡張機能も。リズムを持つものを叩いて作る、インタラクティブな実験スタジオ。",
-
   "hub_nav_skip_to_works": "Works へスキップ",
   "hub_nav_works": "Works",
   "hub_nav_lab": "Lab",
-
   "hub_works_heading": "Works",
   "hub_works_category_characters": "Characters",
   "hub_works_category_extensions": "Extensions",
@@ -26,7 +23,6 @@
   "hub_works_status_sketch": "Sketch",
   "hub_works_cta_demo": "Demo",
   "hub_works_cta_repo": "Repo",
-
   "hub_works_item_spv2_title": "SPV-2",
   "hub_works_item_spv2_desc": "YouTube の音を拾って描く Chrome 拡張のビジュアライザー。Web Store 公開中。",
   "hub_works_item_spot_difference_editor_title": "Spot the Difference Editor",
@@ -41,27 +37,25 @@
   "hub_works_item_vogel_timer_desc": "時間は減らず、満ちる。ひまわりと同じ黄金角の螺旋に、残り時間を花のように咲かせる。",
   "hub_works_item_fractal_beat_title": "Fractal Beat",
   "hub_works_item_fractal_beat_desc": "拍に合わせてフラクタルが育つビジュアライザー。音楽の幾何をまだ手探りで描いている。",
+  "hub_works_item_sweet_spots_title": "Sweet Spots",
+  "hub_works_item_sweet_spots_desc": "言葉のいらない間違い探し。8つの場面は、解くと絵が華やかに変わる。",
   "hub_works_item_lp_stamps_title": "LINE Stamps",
   "hub_works_item_lp_stamps_desc": "LINE スタンプ枠、準備中。スタジオのキャラクターを別チャンネルに連れていく試み。",
   "hub_works_item_jokkino_title": "Jokkino",
   "hub_works_item_jokkino_desc": "スタジオのキャラクターIP — ブランド＆カラーガイド。",
   "hub_works_item_jokkino_emoji_title": "Jokkino Emoji",
   "hub_works_item_jokkino_emoji_desc": "LINE のリアクション絵文字。",
-
   "hub_lab_heading": "Lab",
   "hub_lab_body": "鳴らす前、光らせる前、刻む前。まだ削っている途中の試作を、触れる状態で置いている棚。",
   "hub_lab_link": "作業台に上がる",
-
   "hub_footer_contact_label": "Contact",
   "hub_footer_lab_label": "Lab",
   "hub_footer_license": "コード: MIT ／ 素材: CC BY-NC",
   "hub_footer_copyright": "© 2026 Tipsy Tap Studio",
-
   "jokkino_doc_title": "TODO: translate",
   "jokkino_doc_lede": "TODO: translate",
   "jokkino_doc_version": "TODO: translate",
   "jokkino_doc_scope": "TODO: translate",
-
   "jokkino_color_heading": "TODO: translate",
   "jokkino_ramp_heading": "TODO: translate",
   "jokkino_ramp_intro": "TODO: translate",
@@ -86,20 +80,16 @@
   "jokkino_fill_rule_flat": "TODO: translate",
   "jokkino_fill_rule_shadow": "TODO: translate",
   "jokkino_fill_rule_forbidden": "TODO: translate",
-
   "jokkino_app_heading": "TODO: translate",
   "jokkino_app_intro": "TODO: translate",
   "jokkino_app_caption_color": "TODO: translate",
   "jokkino_app_caption_mono": "TODO: translate",
   "jokkino_app_placeholder_note": "TODO: translate",
-
   "jokkino_rev_heading": "TODO: translate",
   "jokkino_rev_col_date": "TODO: translate",
   "jokkino_rev_col_version": "TODO: translate",
   "jokkino_rev_col_change": "TODO: translate",
-
   "jokkino_doc_copyright": "TODO: translate",
-
   "lab_meta_title": "Lab — Tipsy Tap Studio",
   "lab_meta_description": "作業中の作業台。揺らぎや拍や光の試作を、触れる状態のまま置いておく場所。",
   "lab_back_to_studio": "← Studio へ戻る",
@@ -115,7 +105,6 @@
   "lab_001_c_caption": "フラグメントシェーダーで連続体を描く。一番重く、一番遠くまで伸びる。",
   "lab_param_speed": "速さ",
   "lab_param_intensity": "振幅",
-
   "lab_002_title": "#002 — 発酵中",
   "lab_002_intro": "タンクの中で麦の色が入れ替わる。淡い黄、濁った白、深い琥珀 — どれを注ぐかは自分で決める。Tipsy Tap の名のとおり、一杯が手元に来る前の景色を覗き込む実験。巡らせ続ける長尺版はスタジオの裏でずっと発酵している。",
   "lab_002_a_name": "Brew / WebGL",
@@ -125,31 +114,26 @@
   "lab_002_beer_pilsner": "ピルスナー",
   "lab_002_beer_wit": "ウィット",
   "lab_002_beer_ipa": "IPA",
-
   "lab_meta_tech": "技術",
   "lab_meta_size": "重さ",
   "lab_meta_motion": "モーション量",
   "lab_meta_license": "ライセンス",
   "lab_motion_off_badge": "モーション停止中",
   "lab_footer_note": "ここの試作が育ったら、Works の棚へ移します。気に入ったものがあれば、その断片を持っていって構いません(MIT)。",
-
   "spv_nav_modules": "計器",
   "spv_nav_sites": "対応サイト",
   "spv_nav_privacy": "プライバシー",
   "spv_nav_releases": "更新履歴",
   "spv_nav_cta": "追加する",
-
   "spv_hero_title": "SPV-2",
   "spv_hero_tagline": "プロの計測器を、リスナーの相棒に。",
   "spv_hero_subtitle": "ブラウザのサイドパネルに、音を「読む」ための計器を5つ。波形・スペクトラム・音名・BPM・キーを、リアルタイムで。",
   "spv_hero_cta": "Chrome に追加",
   "spv_hero_cta_note": "無料 / オープンソース / トラッキングなし",
-
   "spv_demo_heading": "動いているところを。",
   "spv_demo_lede": "5つの計器が音にどう反応するかを見てほしい。",
   "spv_demo_play": "デモ動画を再生",
   "spv_demo_caption": "デモを見る",
-
   "spv_modules_heading": "5つの計器",
   "spv_modules_lede": "それぞれが音のひとつの側面を映す。抽象的なアートではなく、目で「読める」計測器として。",
   "spv_modules_oscilloscope_name": "Oscilloscope",
@@ -164,7 +148,6 @@
   "spv_modules_key_desc": "クロマ分布からキーを推定し、DJ向けに Camelot 記法でも表示。次の一曲とハーモニックにつなぐ判断が速くなる。",
   "spv_modules_trackinfo_name": "Track Info",
   "spv_modules_trackinfo_desc": "曲タイトル・チャンネル名・BPM・キーをひとまとめに。今かかっている曲の素性が、計器の隣でいつでも確認できる。",
-
   "spv_themes_heading": "40以上のテーマ",
   "spv_themes_body": "Default・Neon・Monochrome・Amber・Phosphor・Sakura ほか、10種を内蔵。さらに Strudel 由来の派生テーマで合計40以上。気分やブースの照明に合わせて計器の色を変えられる。",
   "spv_themes_strudel": "Strudel auto-sync: strudel.cc を映しているときは、エディタのテーマに計器の配色が自動で追従する。",
@@ -173,7 +156,6 @@
   "spv_themes_demo_builtin": "内蔵10種",
   "spv_themes_demo_strudel_count": "+ Strudel 由来 41種",
   "spv_themes_demo_preview_alt": "テーマカラーのプレビュー",
-
   "spv_sites_heading": "対応サイト",
   "spv_sites_lede": "主要な音楽・動画サービスにそのまま対応。足りなければ、どんなサイトにも広げられる。",
   "spv_sites_group_streaming": "ストリーミング",
@@ -190,7 +172,6 @@
   "spv_sites_match_caption": "判定はホスト名の完全一致またはサブドメイン一致による。",
   "spv_sites_all": "+ すべてのサイト — 設定 > 詳細 から、任意のサイトに対応を広げられる。",
   "spv_sites_drm_note": "注記: DRM で保護されたストリーム（Spotify Premium・Apple Music のサブスク・Tidal HiFi など）は、ブラウザ側の制約で音を取得できない場合があります。",
-
   "spv_privacy_heading": "何も邪魔しない",
   "spv_privacy_lede": "SPV-2 はページに触れず、あなたを追わず、外に何も送らない。音は Chrome の tabCapture でその場で受け取り、拡張の中だけで処理が完結する。",
   "spv_privacy_point_1_title": "content script なし",
@@ -200,7 +181,6 @@
   "spv_privacy_point_3_title": "ネットワークゼロ",
   "spv_privacy_point_3_desc": "外部へのリクエストは一切発生しない。すべての処理が端末の中で閉じている。",
   "spv_privacy_tech_note": "Manifest V3 ／ Offscreen Document で音声処理 ／ MIT ライセンスのオープンソース。",
-
   "spv_principles_heading": "3つの原則",
   "spv_principles_zeroinjection_kw": "Zero Injection",
   "spv_principles_zeroinjection_desc": "ページには一切触れない。content script も DOM への注入もしない。",
@@ -208,7 +188,6 @@
   "spv_principles_localbydefault_desc": "すべてローカルで処理する。サーバーもテレメトリも持たない。",
   "spv_principles_onepanel_kw": "One panel, one job",
   "spv_principles_onepanel_desc": "サイドパネル1枚に計測を集約。タブを切り替える必要はない。",
-
   "spv_releases_heading": "更新履歴",
   "spv_releases_lede": "初版から、計器・対応サイト・テーマ・対応言語を着実に増やしてきた。",
   "spv_release_v100_note": "初版リリース。5つの計器（Oscilloscope / Spectrum / Chromagram / BPM / Key）と Track Info、10種のテーマ、自由に組めるレイアウトを搭載。",
@@ -216,11 +195,9 @@
   "spv_release_v120_note": "Strudel 統合。Strudel 由来の41テーマを追加し、strudel.cc では計器の配色がエディタのテーマに自動で追従。テーマ選択 UI も追加。",
   "spv_release_v130_note": "日本語とドイツ語に対応（拡張の UI と Web Store の説明文）。",
   "spv_release_v131_note": "Spectrum の低域描画を改善。最低域のバーが平坦になる問題を線形補間で解消し、20Hz まで滑らかに。あわせてスペイン語に対応。",
-
   "spv_finalcta_heading": "音を、見はじめよう。",
   "spv_finalcta_body": "サイドパネルを開けば、いつもの曲が計器の上で動きだす。",
   "spv_finalcta_button": "Chrome に追加",
   "spv_finalcta_trust": "無料 / MIT ライセンス / トラッキングなし",
-
   "spv_footer_tagline": "Tipsy Tap Studio のインタラクティブな実験のひとつ。"
 }

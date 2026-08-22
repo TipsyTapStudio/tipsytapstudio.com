@@ -4,7 +4,9 @@
     "status": "live",
     "category": "extensions",
     "size": "large",
-    "tags": ["extension"],
+    "tags": [
+      "extension"
+    ],
     "thumb": "/icons/spv2.svg",
     "demoUrl": null,
     "repoUrl": "https://github.com/TipsyTapStudio/spv-2",
@@ -16,7 +18,9 @@
     "slug": "spot_difference_editor",
     "status": "live",
     "category": "tools",
-    "tags": ["tool"],
+    "tags": [
+      "tool"
+    ],
     "thumb": "/tools/spot-difference-editor/icon.svg",
     "demoUrl": "/tools/spot-difference-editor/",
     "repoUrl": null,
@@ -28,7 +32,10 @@
     "slug": "galton_timer",
     "status": "live",
     "category": "clocks",
-    "tags": ["gadget", "clock"],
+    "tags": [
+      "gadget",
+      "clock"
+    ],
     "thumb": "/icons/galton_timer.svg",
     "demoUrl": "https://tipsytapstudio.github.io/galton-timer/",
     "repoUrl": "https://github.com/TipsyTapStudio/galton-timer",
@@ -40,7 +47,10 @@
     "slug": "wall_clock",
     "status": "live",
     "category": "clocks",
-    "tags": ["gadget", "clock"],
+    "tags": [
+      "gadget",
+      "clock"
+    ],
     "thumb": "/icons/wall_clock.svg",
     "demoUrl": "https://tipsytapstudio.github.io/wall-clock/",
     "repoUrl": "https://github.com/TipsyTapStudio/wall-clock",
@@ -52,7 +62,9 @@
     "slug": "galton_tempo",
     "status": "live",
     "category": "clocks",
-    "tags": ["gadget"],
+    "tags": [
+      "gadget"
+    ],
     "thumb": "/icons/galton_tempo.svg",
     "demoUrl": "https://tipsytapstudio.github.io/galton-tempo/",
     "repoUrl": "https://github.com/TipsyTapStudio/galton-tempo",
@@ -64,7 +76,10 @@
     "slug": "vogel_timer",
     "status": "live",
     "category": "clocks",
-    "tags": ["gadget", "clock"],
+    "tags": [
+      "gadget",
+      "clock"
+    ],
     "thumb": "/icons/vogel_timer.svg",
     "demoUrl": "https://tipsytapstudio.github.io/vogel-timer/",
     "repoUrl": "https://github.com/TipsyTapStudio/vogel-timer",
@@ -73,10 +88,27 @@
     "addedAt": "2026-05"
   },
   {
+    "slug": "sweet_spots",
+    "status": "live",
+    "category": "games_visuals",
+    "size": "large",
+    "tags": [
+      "game"
+    ],
+    "thumb": "/icons/sweet_spots.webp",
+    "demoUrl": "https://sweetspotsstudio.itch.io/sweet-spots",
+    "repoUrl": null,
+    "lpUrl": null,
+    "featured": false,
+    "addedAt": "2026-08"
+  },
+  {
     "slug": "fractal_beat",
     "status": "tinkering",
     "category": "games_visuals",
-    "tags": ["visualizer"],
+    "tags": [
+      "visualizer"
+    ],
     "thumb": "/icons/fractal_beat.svg",
     "demoUrl": "https://tipsytapstudio.github.io/fractal-beat/",
     "repoUrl": "https://github.com/TipsyTapStudio/fractal-beat",
@@ -89,7 +121,9 @@
     "status": "live",
     "category": "characters",
     "size": "large",
-    "tags": ["character"],
+    "tags": [
+      "character"
+    ],
     "thumb": "/jokkino/jokkino-kimochi-001.svg",
     "demoUrl": null,
     "repoUrl": null,
@@ -101,7 +135,9 @@
     "slug": "jokkino_emoji",
     "status": "live",
     "category": "characters",
-    "tags": ["emoji"],
+    "tags": [
+      "emoji"
+    ],
     "thumb": "/jokkino/jokkino-kimochi-001.svg",
     "demoUrl": "https://store.line.me/emojishop/product/6a30f06d02e16a6dce5b444e/ja",
     "repoUrl": null,
@@ -113,7 +149,9 @@
     "slug": "lp_stamps",
     "status": "sketch",
     "category": "characters",
-    "tags": ["sticker"],
+    "tags": [
+      "sticker"
+    ],
     "thumb": null,
     "demoUrl": "https://store.line.me/stickershop/author/5362208/",
     "repoUrl": null,

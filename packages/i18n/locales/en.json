@@ -3,16 +3,13 @@
   "common_footer_contact": "Contact",
   "common_footer_github": "GitHub",
   "common_locale_switch": "日本語",
-
   "hub_hero_title": "Tipsy Tap Studio",
   "hub_meta_title": "Tipsy Tap Studio — an interactive lab of sounds, visuals & timers",
   "hub_hero_subtitle": "Tap it, light it, let it tick.",
   "hub_hero_substatement": "Sounds, visuals, clocks, timers, stickers, extensions — an interactive studio that builds things with a beat you can tap.",
-
   "hub_nav_skip_to_works": "Skip to Works",
   "hub_nav_works": "Works",
   "hub_nav_lab": "Lab",
-
   "hub_works_heading": "Works",
   "hub_works_category_characters": "Characters",
   "hub_works_category_extensions": "Extensions",
@@ -26,7 +23,6 @@
   "hub_works_status_sketch": "Sketch",
   "hub_works_cta_demo": "Demo",
   "hub_works_cta_repo": "Repo",
-
   "hub_works_item_spv2_title": "SPV-2",
   "hub_works_item_spv2_desc": "A Chrome extension that listens to YouTube and draws what it hears. Live on the Web Store.",
   "hub_works_item_spot_difference_editor_title": "Spot the Difference Editor",
@@ -41,27 +37,25 @@
   "hub_works_item_vogel_timer_desc": "Time does not tick down, it fills up. A golden-angle spiral blooms while the clock runs.",
   "hub_works_item_fractal_beat_title": "Fractal Beat",
   "hub_works_item_fractal_beat_desc": "A visualizer where fractals grow to the beat. Still feeling out the geometry of music.",
+  "hub_works_item_sweet_spots_title": "Sweet Spots",
+  "hub_works_item_sweet_spots_desc": "A wordless spot-the-difference game. Eight scenes, and each one blooms when you solve it.",
   "hub_works_item_lp_stamps_title": "LINE Stamps",
   "hub_works_item_lp_stamps_desc": "LINE sticker slot, in preparation. Taking the studio's characters out to another channel.",
   "hub_works_item_jokkino_title": "Jokkino",
   "hub_works_item_jokkino_desc": "The studio's character IP — brand & color guide.",
   "hub_works_item_jokkino_emoji_title": "Jokkino Emoji",
   "hub_works_item_jokkino_emoji_desc": "Reaction emoji on LINE.",
-
   "hub_lab_heading": "Lab",
   "hub_lab_body": "Before it taps, lights, or ticks — the shelf where unfinished sketches sit out, still warm, where you can touch them.",
   "hub_lab_link": "Step up to the workbench",
-
   "hub_footer_contact_label": "Contact",
   "hub_footer_lab_label": "Lab",
   "hub_footer_license": "Code: MIT · Assets: CC BY-NC",
   "hub_footer_copyright": "© 2026 Tipsy Tap Studio",
-
   "jokkino_doc_title": "Jokkino — Brand & Color Guide",
   "jokkino_doc_lede": "The designated color specification for Jokkino. Values are listed as Hex and RGB (the screen master), an approximate CMYK conversion for print, and a single-color mono percentage. Color is applied as flat, discrete steps.",
   "jokkino_doc_version": "Version 1.0 · 2026-06-19",
   "jokkino_doc_scope": "These are Jokkino's designated colors and the reference all artwork returns to. A specific context may still call for a deliberate, appropriate deviation.",
-
   "jokkino_color_heading": "Color specification",
   "jokkino_ramp_heading": "Beer-color ramp",
   "jokkino_ramp_intro": "Every character body is filled from a single seven-step beer-color ramp, light to dark. Characters are told apart by silhouette, eye shape, and foam — never by a family color. Hex and RGB are the master values; CMYK is an approximate print conversion.",
@@ -86,20 +80,16 @@
   "jokkino_fill_rule_flat": "Fills are flat. Color is applied as discrete cel steps from the ramp.",
   "jokkino_fill_rule_shadow": "A shadow is the next ramp step down, applied as a flat region — not a gradient.",
   "jokkino_fill_rule_forbidden": "No gradients, no soft or blurred shadows, no 3D shading.",
-
   "jokkino_app_heading": "Application",
   "jokkino_app_intro": "Two reference specimens: the full-color version and the single-color version. No callout lines.",
   "jokkino_app_caption_color": "Full-color",
   "jokkino_app_caption_mono": "Single-color",
   "jokkino_app_placeholder_note": "The full-color specimen is the production emoji from the Jokkino toolchain (きもち set, 001). The single-color specimen is a mono version of the same emoji, built by remapping its fills to the mono-ladder values (not an auto-grayed image). A dedicated single-color asset from the toolchain is still pending.",
-
   "jokkino_rev_heading": "Revision history",
   "jokkino_rev_col_date": "Date",
   "jokkino_rev_col_version": "Version",
   "jokkino_rev_col_change": "Change",
-
   "jokkino_doc_copyright": "© Tipsy Tap Studio. All rights reserved.",
-
   "lab_meta_title": "Lab — Tipsy Tap Studio",
   "lab_meta_description": "The workbench, mid-build. Drafts of motion, beat, and light — left out where you can touch them.",
   "lab_back_to_studio": "← Back to the studio",
@@ -115,7 +105,6 @@
   "lab_001_c_caption": "A fragment shader drawing one continuous field. Heaviest of the three, and the one that reaches furthest.",
   "lab_param_speed": "Speed",
   "lab_param_intensity": "Amplitude",
-
   "lab_002_title": "#002 — Brewing",
   "lab_002_intro": "Colors shift inside the tank — pale gold, cloudy white, deep amber. Which one pours is yours to choose. A look inside the moment before a Tipsy Tap pour. The long version that keeps cycling is fermenting behind the studio itself.",
   "lab_002_a_name": "Brew / WebGL",
@@ -125,31 +114,26 @@
   "lab_002_beer_pilsner": "Pilsner",
   "lab_002_beer_wit": "Wit",
   "lab_002_beer_ipa": "IPA",
-
   "lab_meta_tech": "Tech",
   "lab_meta_size": "Size",
   "lab_meta_motion": "Motion budget",
   "lab_meta_license": "License",
   "lab_motion_off_badge": "motion paused",
   "lab_footer_note": "Sketches that grow up move over to Works. Take any fragment you like with you — it's MIT.",
-
   "spv_nav_modules": "Modules",
   "spv_nav_sites": "Sites",
   "spv_nav_privacy": "Privacy",
   "spv_nav_releases": "Releases",
   "spv_nav_cta": "Add to Chrome",
-
   "spv_hero_title": "SPV-2",
   "spv_hero_tagline": "Studio-grade meters, in your sidebar.",
   "spv_hero_subtitle": "Five real-time meters for reading sound — waveform, spectrum, notes, BPM, and key — right in your browser's side panel.",
   "spv_hero_cta": "Add to Chrome",
   "spv_hero_cta_note": "Free · Open source · No tracking",
-
   "spv_demo_heading": "See it move.",
   "spv_demo_lede": "Watch all five meters react to live sound.",
   "spv_demo_play": "Play demo video",
   "spv_demo_caption": "Watch the demo",
-
   "spv_modules_heading": "Five meters",
   "spv_modules_lede": "Each meter reads one dimension of sound — built to be read, not just admired.",
   "spv_modules_oscilloscope_name": "Oscilloscope",
@@ -164,7 +148,6 @@
   "spv_modules_key_desc": "Estimates the key from the chroma profile and shows it in DJ-friendly Camelot notation — so you can pick a harmonically matching next track in seconds.",
   "spv_modules_trackinfo_name": "Track Info",
   "spv_modules_trackinfo_desc": "Title, channel, BPM, and key in one compact readout — the identity of whatever's playing, always next to the meters.",
-
   "spv_themes_heading": "40+ themes",
   "spv_themes_body": "Ten built in — Default, Neon, Monochrome, Amber, Phosphor, Sakura and more — plus Strudel-derived variants for 40+ in total. Recolor the meters to match your mood or the lighting in the booth.",
   "spv_themes_strudel": "Strudel auto-sync: when you're capturing strudel.cc, the meters automatically follow your editor's theme.",
@@ -173,7 +156,6 @@
   "spv_themes_demo_builtin": "10 built in",
   "spv_themes_demo_strudel_count": "+ 41 from Strudel",
   "spv_themes_demo_preview_alt": "Theme color preview",
-
   "spv_sites_heading": "Where it works",
   "spv_sites_lede": "Works out of the box across the major music and video services — and extends to anywhere you need.",
   "spv_sites_group_streaming": "Streaming",
@@ -190,7 +172,6 @@
   "spv_sites_match_caption": "Matching is by exact hostname or subdomain.",
   "spv_sites_all": "+ All websites — enable any site you like under Settings › Advanced.",
   "spv_sites_drm_note": "Note: DRM-protected streams (such as Spotify Premium, Apple Music subscriptions, or Tidal HiFi) may not be capturable — this is a browser-side limitation.",
-
   "spv_privacy_heading": "Zero interference",
   "spv_privacy_lede": "SPV-2 doesn't touch the page, doesn't track you, and doesn't send anything out. Audio is captured via Chrome's tabCapture API and processed entirely inside the extension.",
   "spv_privacy_point_1_title": "No content scripts",
@@ -200,7 +181,6 @@
   "spv_privacy_point_3_title": "Zero network",
   "spv_privacy_point_3_desc": "No outbound requests at all. Everything happens on your machine.",
   "spv_privacy_tech_note": "Manifest V3 · audio processed in an Offscreen Document · open source under the MIT license.",
-
   "spv_principles_heading": "Three principles",
   "spv_principles_zeroinjection_kw": "Zero Injection",
   "spv_principles_zeroinjection_desc": "Never touch the page — no content scripts, no DOM injection.",
@@ -208,7 +188,6 @@
   "spv_principles_localbydefault_desc": "Everything runs locally — no servers, no telemetry.",
   "spv_principles_onepanel_kw": "One panel, one job",
   "spv_principles_onepanel_desc": "All the meters live in one side panel — no tab-switching.",
-
   "spv_releases_heading": "Release notes",
   "spv_releases_lede": "Since launch, the meters, supported sites, themes, and languages have grown steadily.",
   "spv_release_v100_note": "First release. Five meters (Oscilloscope, Spectrum, Chromagram, BPM, Key) plus Track Info, ten themes, and a customizable layout.",
@@ -216,11 +195,9 @@
   "spv_release_v120_note": "Strudel integration. Added 41 Strudel-derived themes; on strudel.cc the meters auto-sync to your editor theme. New theme picker, too.",
   "spv_release_v130_note": "Japanese and German localization (both the extension UI and the Web Store listing).",
   "spv_release_v131_note": "Smoother low-end in the Spectrum view: the lowest bars no longer flatten out, now interpolated cleanly down to 20 Hz. Spanish localization added.",
-
   "spv_finalcta_heading": "Start watching your sound.",
   "spv_finalcta_body": "Open the side panel and the song you're already playing comes alive on the meters.",
   "spv_finalcta_button": "Add to Chrome",
   "spv_finalcta_trust": "Free · MIT licensed · No tracking",
-
   "spv_footer_tagline": "One of Tipsy Tap Studio's interactive experiments."
 }
