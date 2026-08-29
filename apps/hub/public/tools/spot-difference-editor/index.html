@@ -32,7 +32,11 @@
   .folderItem { padding: 7px 8px 7px 12px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #90CAF9; }
   .folderItem:hover { background: #263238; }
   .dropTarget { background: #2E4A5A !important; }
-  #sbBtns { display: flex; gap: 6px; margin: 10px 14px 14px; }
+  #sbBtns { display: flex; gap: 6px; margin: 10px 14px 8px; }
+  /* バックアップは頻繁に押すものではないので、新規作成より一段沈めて置く */
+  #sbBackup { display: flex; gap: 6px; margin: 0 14px 14px; padding-top: 10px; border-top: 1px solid #2E3C43; }
+  #sbBackup button { flex: 1; font-size: 11px; padding: 5px 4px; background: #455A64; }
+  #sbBackup button:hover { background: #546E7A; }
   #ctxMenu { display: none; position: fixed; z-index: 200; background: #263238; border: 1px solid #546E7A; border-radius: 4px; min-width: 120px; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
   #ctxMenu .mi { padding: 7px 14px; font-size: 12px; cursor: pointer; }
   #ctxMenu .mi:hover { background: #37474F; }
@@ -91,7 +95,7 @@
   <button id="sbToggle" class="mini" title="Toggle sidebar" style="font-size:15px;padding:4px 11px">≡</button>
   <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true" style="flex:none"><rect x="0" y="0" width="32" height="32" rx="7" fill="#263238"/><rect x="6" y="6" width="20" height="20" rx="2" fill="#455A64"/><path d="M9 22.5 L14 16 L18.5 22.5 Z" fill="#B0BEC5"/><circle cx="20" cy="12.5" r="4" fill="none" stroke="#FF3B30" stroke-width="2.4"/></svg>
   <span id="brand">Spot the Difference Editor</span>
-  <span class="ver">v1.18 (2026-08-18)</span>
+  <span class="ver">v1.19 (2026-08-28)</span>
   <a id="credit" href="https://tipsytapstudio.com/" target="_blank" rel="noopener">© 2026 Tipsy Tap Studio</a>
 </header>
 <div id="cols">
@@ -99,6 +103,13 @@
     <div id="sbTitle">Stages</div>
     <div id="stageList"></div>
     <div id="sbBtns"><button id="newStageBtn">+ Stage</button><button id="newFolderBtn">+ Folder</button></div>
+    <!-- 全ステージが対象なので、ステージ一覧と同じパネルに置く。
+         右ペインに置くと隣の "Clear this stage" に引きずられて
+         「今のステージだけ」に見えてしまう -->
+    <div id="sbBackup">
+      <button id="backupBtn" title="Download every stage (spots, images, settings) as one JSON file.">Backup all</button>
+      <button id="restoreBtn" title="Replace ALL stages with a backup file.">Restore</button>
+    </div>
   </div>
   <div id="sbResizer"></div>
   <div id="appmain">
@@ -135,7 +146,7 @@
         <div id="status">Load images to start</div>
         <section id="spotsec">
           <h2 style="display:flex;align-items:center;gap:10px">Spots <button id="sortAreaBtn" style="font-size:11px;padding:3px 8px">Sort by area</button></h2>
-          <table id="spotTable"><thead><tr><th></th><th>#</th><th>Shape</th><th>x</th><th>y</th><th>W/r</th><th>H</th><th>Deg</th><th>Area</th><th></th><th></th></tr></thead><tbody></tbody></table>
+          <table id="spotTable"><thead><tr><th></th><th>#</th><th>Shape</th><th>x</th><th>y</th><th>W/r</th><th>H</th><th>Deg</th><th>Area</th><th>Kind</th><th></th><th></th></tr></thead><tbody></tbody></table>
           <div id="overlapWarn" style="font-size:12px;color:#FF8A65;margin-top:6px;min-height:16px"></div>
         </section>
       </div>
@@ -198,7 +209,7 @@
       <textarea id="jsonOut" readonly></textarea>
       <div class="row">
         <button id="copyBtn">Copy</button>
-        <button id="zipBtn" title="Resized + WebP. For dropping into the game.">ZIP for game</button>
+        <button id="zipBtn" title="Resized + WebP, memo stripped. For dropping into the game.">ZIP for game</button>
         <button id="zipFullBtn" title="Original files, untouched. For archiving." style="background:#546E7A">ZIP full-size</button>
         <span id="copyMsg" style="font-size:12px;color:#A5D6A7"></span>
       </div>
@@ -309,16 +320,25 @@
     var s;
     if (o.w != null && o.h != null) s = { type: "rect", x: o.x, y: o.y, w: o.w, h: o.h };
     else if (o.rx != null && o.ry != null) s = { type: "ellipse", x: o.x, y: o.y, rx: o.rx, ry: o.ry };
-    else return { type: "circle", x: o.x, y: o.y, r: o.r != null ? o.r : 40 };
+    else s = { type: "circle", x: o.x, y: o.y, r: o.r != null ? o.r : 40 };
     if (o.angle) s.angle = o.angle;
+    if (o.kind) s.kind = o.kind;
     return s;
   }
+  /* 差分の種類。ゲーム側は参照しないが、実プレイのログと突き合わせて
+   * 「どの種類が難しいか」を後から検証するために記録しておく。
+   * 値は GAME_DESIGN.md と合わせること(form は幾何形状の Shape 列と別物) */
+  var KIND_LABELS = [
+    ["", "-"], ["exist", "Exist"], ["color", "Color"], ["count", "Count"],
+    ["form", "Form"], ["angle", "Angle"], ["size", "Size"], ["pose", "Pose"]
+  ];
   function spotJSONLine(s) {
     var x = Math.round(s.x), y = Math.round(s.y);
     var ang = angleOf(s) ? ', "angle": ' + Math.round(angleOf(s)) : "";
-    if (s.type === "rect") return '{ "x": ' + x + ', "y": ' + y + ', "w": ' + Math.round(s.w) + ', "h": ' + Math.round(s.h) + ang + ' }';
-    if (s.type === "ellipse") return '{ "x": ' + x + ', "y": ' + y + ', "rx": ' + Math.round(s.rx) + ', "ry": ' + Math.round(s.ry) + ang + ' }';
-    return '{ "x": ' + x + ', "y": ' + y + ', "r": ' + Math.round(s.r) + ' }';
+    var kd = s.kind ? ', "kind": "' + s.kind + '"' : "";
+    if (s.type === "rect") return '{ "x": ' + x + ', "y": ' + y + ', "w": ' + Math.round(s.w) + ', "h": ' + Math.round(s.h) + ang + kd + ' }';
+    if (s.type === "ellipse") return '{ "x": ' + x + ', "y": ' + y + ', "rx": ' + Math.round(s.rx) + ', "ry": ' + Math.round(s.ry) + ang + kd + ' }';
+    return '{ "x": ' + x + ', "y": ' + y + ', "r": ' + Math.round(s.r) + kd + ' }';
   }
   function defaultR() { return Math.max(24, Math.round(Math.max(curW(), curH()) * 0.08)); }
   function spotArea(s) {
@@ -477,6 +497,39 @@
         req.onsuccess = function () { cb(req.result); };
         req.onerror = function () { cb(undefined); };
       } catch (e) { cb(undefined); }
+    });
+  }
+  /* 全キーを列挙して丸ごと取り出す。バックアップ専用。
+   * このエディタの全データ(全ステージのスポット・画像・設定・Stock)は
+   * file:// オリジンの IndexedDB 1箇所にしかないので、
+   * ブラウザの「閲覧データを削除」一発で消える。その保険。 */
+  function dbDumpAll(cb) {
+    dbOpen(function (db) {
+      if (!db) { cb(null); return; }
+      try {
+        var tx = db.transaction(DB_STORE, "readonly");
+        var os = tx.objectStore(DB_STORE);
+        var kReq = os.getAllKeys(), vReq = os.getAll();
+        tx.oncomplete = function () {
+          var out = {}, ks = kReq.result || [], vs = vReq.result || [];
+          for (var i = 0; i < ks.length; i++) out[ks[i]] = vs[i];
+          cb(out);
+        };
+        tx.onerror = function () { cb(null); };
+      } catch (e) { cb(null); }
+    });
+  }
+  function dbRestoreAll(obj, cb) {
+    dbOpen(function (db) {
+      if (!db) { cb(false); return; }
+      try {
+        var tx = db.transaction(DB_STORE, "readwrite");
+        var os = tx.objectStore(DB_STORE);
+        os.clear();
+        Object.keys(obj).forEach(function (k) { os.put(obj[k], k); });
+        tx.oncomplete = function () { cb(true); };
+        tx.onerror = function () { cb(false); };
+      } catch (e) { cb(false); }
     });
   }
   function dbClear(cb) {
@@ -1422,7 +1475,7 @@
     }
     files.push({
       name: dir + prefix + ".json",
-      data: new TextEncoder().encode(entryJSON(submit ? ext : null, sx, sy) + "\n")
+      data: new TextEncoder().encode(entryJSON(submit ? ext : null, sx, sy, submit) + "\n")
     });
     var tw = Number($("rewW").value), th = Number($("rewH").value);
     stock.forEach(function (item) {
@@ -1960,6 +2013,55 @@
   ["numDiffs", "outW", "outH"].forEach(function (id) {
     $(id).addEventListener("change", saveStateDebounced);
   });
+  /* ---------- バックアップ / 復元 ----------
+   * 全データが file:// の IndexedDB 1箇所にしかないので、
+   * ブラウザの「閲覧データを削除」で全ステージが消える。その保険。
+   * 画像は dataURL のまま入るのでファイルは大きい(数十〜数百MB)が、
+   * Google ドライブ等へ置く前提の保管用なので圧縮はしない。 */
+  $("backupBtn").addEventListener("click", function () {
+    clearTimeout(saveTimer);
+    saveState(); // 編集中の内容を確実に書き出してからダンプする
+    setTimeout(function () {
+      dbDumpAll(function (all) {
+        if (!all) { msg("Backup failed (no database)", true); return; }
+        var n = Object.keys(all).filter(function (k) { return k.indexOf("state:") === 0; }).length;
+        var blob = new Blob([JSON.stringify({ v: 1, savedAt: new Date().toISOString(), data: all })],
+          { type: "application/json" });
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "spot_editor_backup.json";
+        a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+        msg("Backed up " + n + " stages (" + Math.round(blob.size / 1024 / 1024 * 10) / 10 + " MB)");
+      });
+    }, 50);
+  });
+
+  $("restoreBtn").addEventListener("click", function () {
+    var inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = "application/json,.json";
+    inp.addEventListener("change", function () {
+      var f = inp.files && inp.files[0];
+      if (!f) return;
+      var fr = new FileReader();
+      fr.onload = function () {
+        var obj;
+        try { obj = JSON.parse(fr.result); } catch (e) { msg("Not a valid backup file", true); return; }
+        var data = obj && obj.data;
+        if (!data || typeof data !== "object") { msg("Not a valid backup file", true); return; }
+        var n = Object.keys(data).filter(function (k) { return k.indexOf("state:") === 0; }).length;
+        if (!window.confirm("Replace ALL current stages with this backup (" + n + " stages)?\nEverything not in the backup will be lost.")) return;
+        dbRestoreAll(data, function (ok) {
+          if (!ok) { msg("Restore failed", true); return; }
+          location.reload();
+        });
+      };
+      fr.readAsText(f);
+    });
+    inp.click();
+  });
+
   $("resetBtn").addEventListener("click", function () {
     if (!window.confirm("Clear images, spots and stock of THIS stage?")) return;
     restoring = true;
@@ -2074,6 +2176,24 @@
       tdArea.textContent = areaPct(s);
       tdArea.style.color = "#B0BEC5";
       tr.appendChild(tdArea);
+      // 差分の種類。未設定("-")のままでも出力に影響しない
+      var tdKind = document.createElement("td");
+      var kindEl = document.createElement("select");
+      KIND_LABELS.forEach(function (kl) {
+        var op = document.createElement("option");
+        op.value = kl[0];
+        op.textContent = kl[1];
+        kindEl.appendChild(op);
+      });
+      kindEl.value = s.kind || "";
+      kindEl.addEventListener("change", function () {
+        pushHistory();
+        if (kindEl.value) s.kind = kindEl.value;
+        else delete s.kind;
+        updateAll();
+      });
+      tdKind.appendChild(kindEl);
+      tr.appendChild(tdKind);
       var tdMove = document.createElement("td");
       [["▲", -1], ["▼", 1]].forEach(function (mv) {
         var mb = document.createElement("button");
@@ -2126,18 +2246,23 @@
       o.h = Math.max(12, Math.round(s.h * sy));
     }
     if (s.angle) o.angle = s.angle; // 回転角は拡大縮小しても変わらない
+    if (s.kind) o.kind = s.kind;    // 差分の種類も寸法とは独立
     return o;
   }
 
   /* ---------- JSON 入出力 ---------- */
   // extOverride: 入稿zipで画像を変換したとき、base/diff の拡張子を合わせるために使う
   // sx / sy: A/B をリサイズして書き出したときのスポット座標の変換倍率
-  function entryJSON(extOverride, sx, sy) {
+  // dropMemo: 入稿zip(ZIP for game)では memo を落とす。
+  //   memo には「意図した間違いの一覧」= 全問の答えが日本語で入っており、
+  //   hitbox.json は実行時にクライアントへ配信されるので、そのまま出すと攻略テキストの同梱になる。
+  //   マスターは ZIP full-size 側とエディタのセッションに残る。
+  function entryJSON(extOverride, sx, sy, dropMemo) {
     var src = (sx && sy && (sx !== 1 || sy !== 1))
       ? spots.map(function (s) { return scaleSpot(s, sx, sy); })
       : spots;
     var lines = src.map(function (s) { return "      " + spotJSONLine(s); });
-    var memo = $("stMemo").value.trim();
+    var memo = dropMemo ? "" : $("stMemo").value.trim();
     var bn = $("stBase").value, dn = $("stDiff").value;
     if (extOverride) { bn = withExt(bn, extOverride); dn = withExt(dn, extOverride); }
     return '{\n' +
